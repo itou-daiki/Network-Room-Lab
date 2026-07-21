@@ -16,11 +16,13 @@
 - リアルタイムの参加状況、教員メッセージ、イベント履歴
 - 振り返り回答と授業記録のCSV／JSON出力
 - 教員・参加者トークン、役割・フェーズ別権限、入力検証
+- 初学者向けの手順ガイド、用語説明、やり直しやすい操作設計
+- Tailwind CSSとDodgerBlue（`#1E90FF`）を基調にしたレスポンシブUI
 
 ## 構成
 
 ```text
-React + Vite (Static Assets)
+React + Vite + Tailwind CSS (Static Assets)
           │ REST / WebSocket
 Cloudflare Worker
           │ room code → Durable Object

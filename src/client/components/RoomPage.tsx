@@ -40,7 +40,10 @@ function Brand() {
   return (
     <span className="brand room-brand">
       <span className="brand-mark" aria-hidden="true"><i /><i /><i /></span>
-      <span><b>Network Room</b><small>LAB</small></span>
+      <span className="brand-copy">
+        <span className="brand-title"><b>Network Room</b><small>LAB</small></span>
+        <span className="brand-credit">Created by Dit-Lab,（Daiki ITO）</span>
+      </span>
     </span>
   );
 }
@@ -122,8 +125,8 @@ function TopologyPanel({ snapshot, busy, act }: SharedPanelProps) {
     <section className="panel topology-panel" aria-labelledby="topology-title">
       <div className="panel-heading">
         <div>
-          <p className="panel-kicker">ROOM TOPOLOGY</p>
-          <h2 id="topology-title">仮想ネットワーク</h2>
+          <p className="panel-kicker">通信が通る道</p>
+          <h2 id="topology-title">ネットワークの全体図</h2>
         </div>
         <div className="topology-legend"><span><i className="packet-dot" />現在地</span><span><i className="link-dot" />接続中</span></div>
       </div>
@@ -175,14 +178,14 @@ function AddressingMission({ snapshot, busy, act }: SharedPanelProps) {
   return (
     <form className="address-form" onSubmit={submit}>
       <div className="mission-callout">
-        <span>MISSION</span>
-        <p>PCが外部ネットワークへ送れるように、アドレスとデフォルトゲートウェイを整えます。</p>
+        <span>やること</span>
+        <p>PCが外のネットワークへデータを送れるように、4つの設定を順番に確認します。</p>
       </div>
       <div className="field-grid">
-        <label>IPv4アドレス<input value={config.address} disabled={!canEdit} onChange={(event) => setConfig({ ...config, address: event.target.value })} /></label>
-        <label>Prefix<input type="number" min={1} max={30} value={config.prefix} disabled={!canEdit} onChange={(event) => setConfig({ ...config, prefix: Number(event.target.value) })} /></label>
-        <label>Default gateway<input value={config.gateway} disabled={!canEdit} onChange={(event) => setConfig({ ...config, gateway: event.target.value })} /></label>
-        <label>DNS server<input value={config.dns} disabled={!canEdit} onChange={(event) => setConfig({ ...config, dns: event.target.value })} /></label>
+        <label>PCのIPアドレス<input value={config.address} disabled={!canEdit} onChange={(event) => setConfig({ ...config, address: event.target.value })} /></label>
+        <label>範囲（/ の後ろ）<input type="number" min={1} max={30} value={config.prefix} disabled={!canEdit} onChange={(event) => setConfig({ ...config, prefix: Number(event.target.value) })} /></label>
+        <label>出口となるルータ<input value={config.gateway} disabled={!canEdit} onChange={(event) => setConfig({ ...config, gateway: event.target.value })} /></label>
+        <label>名前を調べるDNS<input value={config.dns} disabled={!canEdit} onChange={(event) => setConfig({ ...config, dns: event.target.value })} /></label>
       </div>
       <div className="subnet-check"><span>PC network</span><b>192.168.10.0/24</b><span>GW</span><b>192.168.10.1</b></div>
       {canEdit ? <button className="primary-button" disabled={busy}>設定を保存</button> : <p className="waiting-note">PC担当の設定を観察しています。</p>}
@@ -227,15 +230,15 @@ function ProtocolMission({ snapshot, busy, act }: SharedPanelProps) {
         {snapshot.viewer.role === activeStep.actorRole && <em>あなたの番です</em>}
       </div>
       <label className="decision-field">
-        判断と根拠
-        <textarea rows={3} value={decision} disabled={!canAdvance} onChange={(event) => setDecision(event.target.value)} />
+        なぜこの操作をする？
+        <textarea rows={3} value={decision} disabled={!canAdvance} placeholder="例：外のネットワークへ送るため、まず出口となるルータを確認します。" onChange={(event) => setDecision(event.target.value)} />
       </label>
       {canAdvance ? (
         <button className="primary-button packet-action" disabled={busy || decision.trim().length < 1} onClick={() => void act({ type: "ADVANCE_PROTOCOL", decision })}>
-          判断を記録して転送 <span>→</span>
+          この判断で次へ進む <span>→</span>
         </button>
       ) : (
-        <p className="waiting-note"><i /> {roleDefinition(activeStep.actorRole).shortLabel}担当の操作を待っています。</p>
+        <p className="waiting-note"><i /> 今は{roleDefinition(activeStep.actorRole).label}の担当者が操作する番です。</p>
       )}
     </div>
   );
@@ -247,14 +250,14 @@ function DiagnosisMission({ snapshot, busy, act }: SharedPanelProps) {
   const latest = snapshot.room.diagnostics.at(-1);
   return (
     <div className="diagnosis-mission">
-      <div className="mission-callout warning"><span>DIAGNOSE</span><p>一つの操作で仮説を確かめ、到達範囲を広い層から順に切り分けます。</p></div>
+      <div className="mission-callout warning"><span>調べ方</span><p>「どこまでは届くのか」を一つずつ確認すると、問題の場所を見つけやすくなります。</p></div>
       <div className="diagnostic-tools">
         {(["PING", "NSLOOKUP", "TRACEROUTE", "HTTPS"] as DiagnosticTool[]).map((value) => (
           <button type="button" className={tool === value ? "active" : ""} key={value} onClick={() => setTool(value)}>{value.toLowerCase()}</button>
         ))}
       </div>
-      <label>診断対象<input value={target} onChange={(event) => setTarget(event.target.value)} /></label>
-      <button className="primary-button" disabled={busy || !target.trim()} onClick={() => void act({ type: "RUN_DIAGNOSTIC", tool, target })}>診断を実行</button>
+      <label>調べたい相手<input value={target} onChange={(event) => setTarget(event.target.value)} /></label>
+      <button className="primary-button" disabled={busy || !target.trim()} onClick={() => void act({ type: "RUN_DIAGNOSTIC", tool, target })}>この方法で調べる</button>
       {latest && (
         <div className={`terminal-card ${latest.success ? "success" : "failure"}`}>
           <div><span>●</span><span>●</span><span>●</span><b>{latest.tool.toLowerCase()} / {latest.success ? "SUCCESS" : "FAILED"}</b></div>
@@ -277,7 +280,7 @@ function ReflectionMission({ snapshot, busy, act }: SharedPanelProps) {
   if (snapshot.viewer.kind === "teacher") {
     return (
       <div className="teacher-reflection-summary">
-        <div className="mission-callout"><span>REVIEW</span><p>受講者の回答は履歴CSVに含まれます。提出状況を確認して講評してください。</p></div>
+        <div className="mission-callout"><span>振り返り</span><p>学習者の回答は履歴CSVに含まれます。提出状況を確認して講評してください。</p></div>
         <div className="reflection-count"><b>{snapshot.reflections.length}</b><span>保存済み回答</span></div>
       </div>
     );
@@ -313,17 +316,17 @@ function MissionPanel({ snapshot, busy, act }: SharedPanelProps) {
   let content: React.ReactNode;
 
   if (snapshot.room.phase === "LOBBY") {
-    content = <div className="lobby-mission"><div className="radar" aria-hidden="true"><i /><i /><i /></div><h3>チームの接続を待っています</h3><p>参加者は部屋コード <b>{snapshot.room.code}</b> で入室します。</p><span>{snapshot.room.participants.length} / {snapshot.room.capacity} connected</span></div>;
+    content = <div className="lobby-mission"><div className="radar" aria-hidden="true"><i /><i /><i /></div><h3>チームがそろうのを待っています</h3><p>先生から聞いた部屋コード <b>{snapshot.room.code}</b> を入力して参加します。</p><span>{snapshot.room.participants.length} / {snapshot.room.capacity} 人が参加中</span></div>;
   } else if (snapshot.room.phase === "ROLES") {
     content = role ? (
       <div className="role-mission" style={{ "--role-accent": role.accent } as React.CSSProperties}>
-        <span className="role-id">YOUR ROLE / {role.shortLabel.toUpperCase()}</span>
+        <span className="role-id">あなたの担当 / {role.shortLabel.toUpperCase()}</span>
         <h3>{role.label}</h3><p>{role.description}</p>
-        <h4>あなたが見られる情報</h4><div className="tag-list">{role.observes.map((item) => <span key={item}>{item}</span>)}</div>
+        <h4>この担当で確認できる情報</h4><div className="tag-list">{role.observes.map((item) => <span key={item}>{item}</span>)}</div>
       </div>
     ) : <p>教員モードです。参加者へ役割を割り当ててください。</p>;
   } else if (snapshot.room.phase === "TOPOLOGY") {
-    content = <div className="topology-mission"><div className="mission-callout"><span>BUILD</span><p>線を選び、媒体と接続状態を確認します。PCからルータまでの役割の違いを声に出しましょう。</p></div><ul>{snapshot.room.links.map((link) => <li key={link.id}><span className={link.up ? "ok" : "ng"}>{link.up ? "UP" : "DOWN"}</span><b>{link.from} → {link.to}</b><small>{link.medium}</small></li>)}</ul></div>;
+    content = <div className="topology-mission"><div className="mission-callout"><span>やること</span><p>機器をつなぐ線を確認します。緑は「つながっている」、赤は「切れている」という意味です。</p></div><ul>{snapshot.room.links.map((link) => <li key={link.id}><span className={link.up ? "ok" : "ng"}>{link.up ? "接続中" : "切断"}</span><b>{link.from} → {link.to}</b><small>{link.medium}</small></li>)}</ul></div>;
   } else if (snapshot.room.phase === "ADDRESSING") {
     content = <AddressingMission snapshot={snapshot} busy={busy} act={act} />;
   } else if (snapshot.room.phase === "PROTOCOL") {
@@ -336,7 +339,7 @@ function MissionPanel({ snapshot, busy, act }: SharedPanelProps) {
 
   return (
     <section className="panel mission-panel" aria-labelledby="mission-title">
-      <div className="panel-heading"><div><p className="panel-kicker">CURRENT MISSION</p><h2 id="mission-title">{phase.label}</h2></div><span className="phase-number">PHASE {phase.index}</span></div>
+      <div className="panel-heading"><div><p className="panel-kicker">いま取り組むこと</p><h2 id="mission-title">{phase.label}</h2></div><span className="phase-number">ステップ {phase.index + 1}</span></div>
       <p className="phase-instruction">{phase.instruction}</p>
       {content}
     </section>
@@ -352,7 +355,8 @@ function PacketInspector({ snapshot }: { snapshot: RoomSnapshot }) {
 
   return (
     <section className="panel packet-panel" aria-labelledby="packet-title">
-      <div className="panel-heading"><div><p className="panel-kicker">PACKET INSPECTOR</p><h2 id="packet-title">パケットカード</h2></div><span className={`packet-state ${complete ? "complete" : "moving"}`}>{complete ? "DELIVERED" : "IN TRANSIT"}</span></div>
+      <div className="panel-heading"><div><p className="panel-kicker">流れているデータ</p><h2 id="packet-title">パケットの中身</h2></div><span className={`packet-state ${complete ? "complete" : "moving"}`}>{complete ? "到着" : "通信中"}</span></div>
+      <p className="beginner-glossary"><b>パケットとは？</b> ネットワークを流れる、小さく分けられたデータのまとまりです。</p>
       <div className="packet-meta"><span>ID</span><b>pkt_web_001</b><span>FLOW</span><b>{step.protocol}</b></div>
       <div className="packet-layers">
         {layers.map((layer, layerIndex) => (
@@ -362,7 +366,7 @@ function PacketInspector({ snapshot }: { snapshot: RoomSnapshot }) {
         ))}
       </div>
       <div className="packet-progress"><div><span>通信シーケンス</span><b>{Math.min(index, PROTOCOL_STEPS.length)} / {PROTOCOL_STEPS.length}</b></div><progress max={PROTOCOL_STEPS.length} value={index} /></div>
-      <p className="model-note"><b>教育用簡略化</b> 再送制御・輻輳制御・暗号アルゴリズム詳細は省略しています。</p>
+      <p className="model-note"><b>学習用モデル</b> まず全体の流れをつかめるよう、細かな処理は省略しています。</p>
     </section>
   );
 }
@@ -370,13 +374,13 @@ function PacketInspector({ snapshot }: { snapshot: RoomSnapshot }) {
 function ParticipantsPanel({ snapshot }: { snapshot: RoomSnapshot }) {
   return (
     <section className="panel participants-panel" aria-labelledby="participants-title">
-      <div className="panel-heading"><div><p className="panel-kicker">TEAM</p><h2 id="participants-title">参加者と役割</h2></div><span>{snapshot.room.participants.filter((item) => item.connectionState === "online").length} online</span></div>
+      <div className="panel-heading"><div><p className="panel-kicker">一緒に学ぶ仲間</p><h2 id="participants-title">チームメンバーと担当</h2></div><span>{snapshot.room.participants.filter((item) => item.connectionState === "online").length} 人が接続中</span></div>
       <div className="participant-list">
         {snapshot.room.participants.map((participant) => {
           const role = roleDefinition(participant.role);
           return <div className="participant" key={participant.id}><span className={`presence ${participant.connectionState}`} /><div className="avatar" style={{ background: role.accent }}>{participant.displayName.slice(0, 1).toUpperCase()}</div><div><b>{participant.displayName}</b><small>{role.label}</small></div><em>{role.shortLabel}</em></div>;
         })}
-        {snapshot.room.participants.length === 0 && <p className="empty-state">まだ参加者はいません。</p>}
+        {snapshot.room.participants.length === 0 && <p className="empty-state">まだ参加者はいません。部屋コードを伝えて、参加を待ちましょう。</p>}
       </div>
     </section>
   );
@@ -386,7 +390,7 @@ function EventPanel({ snapshot }: { snapshot: RoomSnapshot }) {
   const events = snapshot.room.latestEvents.slice(-12).reverse();
   return (
     <section className="panel events-panel" aria-labelledby="events-title">
-      <div className="panel-heading"><div><p className="panel-kicker">EVENT LOG</p><h2 id="events-title">直前の出来事</h2></div><span>v{snapshot.room.version}</span></div>
+      <div className="panel-heading"><div><p className="panel-kicker">これまでの操作</p><h2 id="events-title">チームの活動履歴</h2></div><span>更新 {snapshot.room.version}</span></div>
       <div className="event-list">
         {events.map((event) => <div className="event-row" key={event.id}><time>{formatTime(event.createdAt)}</time><i /><div><b>{event.summary}</b><small>{event.type} · event #{event.id}</small></div></div>)}
       </div>
@@ -406,7 +410,7 @@ function TeacherPanel({ snapshot, busy, act, session }: SharedPanelProps & { ses
 
   return (
     <section className="panel teacher-panel" aria-labelledby="teacher-title">
-      <div className="panel-heading"><div><p className="panel-kicker">INSTRUCTOR CONSOLE</p><h2 id="teacher-title">教員コントロール</h2></div><button className="secondary-button" disabled={exporting} onClick={() => void exportData()}>{exporting ? "出力中…" : "CSVを出力"}</button></div>
+      <div className="panel-heading"><div><p className="panel-kicker">先生用メニュー</p><h2 id="teacher-title">授業の進行とサポート</h2></div><button className="secondary-button" disabled={exporting} onClick={() => void exportData()}>{exporting ? "出力中…" : "記録をCSVで保存"}</button></div>
       <div className="teacher-grid">
         <div>
           <h3>フェーズ</h3>
@@ -440,6 +444,8 @@ export function RoomPage({ session, onLeave }: RoomPageProps) {
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1500);
   };
+  const currentPhase = phaseDefinition(snapshot.room.phase);
+  const viewerRole = snapshot.viewer.role ? roleDefinition(snapshot.viewer.role) : null;
 
   return (
     <div className="room-shell">
@@ -449,8 +455,19 @@ export function RoomPage({ session, onLeave }: RoomPageProps) {
         <div className="room-user"><span className={`connection-badge ${connectionStatus}`}><i />{connectionStatus === "online" ? "同期中" : connectionStatus === "connecting" ? "接続中" : "再接続中"}</span><div><b>{snapshot.viewer.displayName}</b><small>{snapshot.viewer.kind === "teacher" ? "担当教員" : roleDefinition(snapshot.viewer.role ?? "OBSERVER").label}</small></div><button onClick={onLeave} aria-label="部屋から退出">退出</button></div>
       </header>
 
-      <div className="teacher-message-banner"><span>INSTRUCTION</span><p>{snapshot.room.teacherMessage}</p></div>
+      <div className="teacher-message-banner"><span>先生からの案内</span><p>{snapshot.room.teacherMessage}</p></div>
       <PhaseStepper snapshot={snapshot} />
+      <section className="beginner-guide" aria-label="現在の学習ガイド">
+        <span className="guide-number" aria-hidden="true">{currentPhase.index + 1}</span>
+        <div className="guide-task">
+          <small>いまやること</small>
+          <b>{currentPhase.instruction}</b>
+        </div>
+        <div className="guide-role">
+          <small>{snapshot.viewer.kind === "teacher" ? "利用モード" : "あなたの担当"}</small>
+          <b>{snapshot.viewer.kind === "teacher" ? "先生として進行" : viewerRole?.label ?? "観察者"}</b>
+        </div>
+      </section>
       {error && <div className="room-error" role="alert"><span>!</span>{error}<button onClick={dismissError}>閉じる</button></div>}
 
       <main className="room-grid">
@@ -462,7 +479,7 @@ export function RoomPage({ session, onLeave }: RoomPageProps) {
         {snapshot.viewer.kind === "teacher" && <TeacherPanel snapshot={snapshot} busy={busy} act={act} session={session} />}
       </main>
 
-      <footer className="room-footer"><span>Network Room Lab · 教育用シミュレーション</span><span>HTTPS / Durable Object / WebSocket <i className={connectionStatus} /></span></footer>
+      <footer className="room-footer"><span>Network Room Lab · Created by Dit-Lab,（Daiki ITO）</span><span>学習用ネットワークシミュレーション <i className={connectionStatus} /></span></footer>
     </div>
   );
 }

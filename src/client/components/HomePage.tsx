@@ -48,7 +48,7 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
   };
 
   return (
-    <main className="landing-shell">
+    <main className="landing-shell bg-dodger-50 text-slate-900">
       <nav className="landing-nav" aria-label="メインナビゲーション">
         <a className="brand" href="/" aria-label="Network Room Lab トップ">
           <span className="brand-mark" aria-hidden="true">
@@ -56,32 +56,39 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
             <i />
             <i />
           </span>
-          <span>
-            <b>Network Room</b>
-            <small>LAB</small>
+          <span className="brand-copy">
+            <span className="brand-title">
+              <b>Network Room</b>
+              <small>LAB</small>
+            </span>
+            <span className="brand-credit">Created by Dit-Lab,（Daiki ITO）</span>
           </span>
         </a>
         <div className="nav-context">
           <span className="status-dot" />
-          協働型ネットワーク演習
+          はじめてのネットワーク学習
         </div>
       </nav>
 
       <section className="hero-section">
         <div className="hero-copy">
-          <p className="eyebrow"><span>●</span> PACKET JOURNEY / TEAM LEARNING</p>
+          <p className="eyebrow"><span>●</span> はじめてでも安心のネットワーク体験</p>
           <h1>
-            通信を、<br />
-            <span>チームで動かす。</span>
+            通信のしくみを、<br />
+            <span>チームで体験。</span>
           </h1>
           <p className="hero-lead">
-            PC・無線AP・L2スイッチ・ルータ・DNS・Webサーバ。
-            一人ひとりが機器になって、URLから画面が届くまでを実験します。
+            むずかしい設定を暗記する必要はありません。画面の案内に沿って役割を担当し、
+            Webページが届くまでを仲間と一緒に少しずつ確かめます。
           </p>
+          <div className="beginner-promise" role="note" aria-label="初めて利用する方へ">
+            <span aria-hidden="true">✓</span>
+            <div><b>初めてでも大丈夫です</b><p>分からない言葉は画面の中で説明します。失敗しても、何度でもやり直せます。</p></div>
+          </div>
           <div className="hero-facts" aria-label="利用想定">
-            <div><b>6</b><span>つの役割</span></div>
-            <div><b>7</b><span>つの学習フェーズ</span></div>
-            <div><b>ARP → HTTPS</b><span>一続きの通信体験</span></div>
+            <div><b>1</b><span>案内を読む</span></div>
+            <div><b>2</b><span>仲間と相談する</span></div>
+            <div><b>3</b><span>操作して確かめる</span></div>
           </div>
         </div>
 
@@ -94,7 +101,7 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
               className={mode === "join" ? "active" : ""}
               onClick={() => setMode("join")}
             >
-              部屋に参加
+              学習者として参加
             </button>
             <button
               type="button"
@@ -103,23 +110,31 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
               className={mode === "create" ? "active" : ""}
               onClick={() => setMode("create")}
             >
-              教員として作成
+              教員として始める
             </button>
           </div>
 
           <form onSubmit={submit} className="entry-form">
             <div className="entry-heading">
-              <span className="step-chip">{mode === "join" ? "JOIN" : "CREATE"}</span>
+              <span className="step-chip">{mode === "join" ? "参加" : "作成"}</span>
               <div>
-                <h2>{mode === "join" ? "実験ルームに入る" : "新しい授業を始める"}</h2>
-                <p>{mode === "join" ? "教員から共有されたコードを入力します。" : "30日間有効な実験ルームを作成します。"}</p>
+                <h2>{mode === "join" ? "授業の部屋に入る" : "新しい授業を始める"}</h2>
+                <p>{mode === "join" ? "先生から教えてもらった6文字のコードを入力します。" : "授業名と人数を決めて部屋を作ります。"}</p>
               </div>
             </div>
+
+            {mode === "join" && (
+              <ol className="join-steps" aria-label="参加までの手順">
+                <li><span>1</span>部屋コードを入力</li>
+                <li><span>2</span>表示名を入力</li>
+                <li><span>3</span>参加ボタンを押す</li>
+              </ol>
+            )}
 
             {mode === "join" ? (
               <>
                 <label>
-                  部屋コード
+                  部屋コード（6文字）
                   <input
                     className="code-input"
                     autoComplete="one-time-code"
@@ -132,7 +147,7 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
                   />
                 </label>
                 <label>
-                  表示名（ニックネーム・座席番号）
+                  あなたの表示名
                   <input
                     autoComplete="name"
                     maxLength={32}
@@ -165,21 +180,21 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
 
             {error && <div className="form-error" role="alert">{error}</div>}
             <button className="primary-button entry-submit" disabled={busy}>
-              {busy ? "接続しています…" : mode === "join" ? "部屋に入る →" : "ルームを作成 →"}
+              {busy ? "接続しています…" : mode === "join" ? "この部屋に参加する" : "授業の部屋を作る"}
             </button>
-            <p className="privacy-note">個人アカウント不要。氏名やメールアドレスは収集しません。</p>
+            <p className="privacy-note">個人アカウントは不要です。分からないときは先生と一緒に確認してください。</p>
           </form>
         </div>
       </section>
 
       <section className="flow-showcase" aria-labelledby="flow-title">
-        <div className="section-kicker">VIRTUAL NETWORK TOPOLOGY</div>
+        <div className="section-kicker">みんなでつなぐ通信の道</div>
         <div className="flow-title-row">
           <div>
-            <h2 id="flow-title">見える情報が違うから、相談が始まる。</h2>
-            <p>各担当には、その機器が本当に参照する層・ヘッダ・表だけを表示します。</p>
+            <h2 id="flow-title">パケットを、チームでバトンリレー。</h2>
+            <p>一人ひとりが機器を担当し、データがどこを通るのか順番に確かめます。</p>
           </div>
-          <span className="live-pill"><i /> REAL-TIME SYNC</span>
+          <span className="live-pill"><i /> みんなの画面が同時に更新</span>
         </div>
         <div className="landing-network" aria-label="PCからサーバまでの仮想ネットワーク">
           {flowNodes.map((node, index) => (
@@ -200,18 +215,18 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
       <section className="principles-grid" aria-label="学びの特徴">
         <article>
           <span>01</span>
-          <h3>判断して転送</h3>
-          <p>正解ボタンではなく、次ホップ・出力ポート・応答内容と、その根拠を選びます。</p>
+          <h3>まずは「見る」</h3>
+          <p>自分の担当機器に届いた情報を、やさしい説明と図で確認します。</p>
         </article>
         <article>
           <span>02</span>
-          <h3>失敗から診断</h3>
-          <p>ping・名前解決・経路追跡で、最初の正常地点と失敗地点を切り分けます。</p>
+          <h3>仲間と「相談する」</h3>
+          <p>次にどこへ送ればよいか、役割の違う仲間と情報を持ち寄って考えます。</p>
         </article>
         <article>
           <span>03</span>
-          <h3>履歴から説明</h3>
-          <p>各ホップで変化したヘッダと判断を振り返り、高校生向けの説明へ変換します。</p>
+          <h3>操作して「確かめる」</h3>
+          <p>失敗しても大丈夫。診断ツールと操作履歴を使って、理由を一緒に見つけます。</p>
         </article>
       </section>
 
