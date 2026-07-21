@@ -1,0 +1,128 @@
+import { SELF } from "cloudflare:test";
+import { describe, expect, it } from "vitest";
+
+import type {
+  CreateRoomResponse,
+  JoinRoomResponse,
+  RoomSnapshot,
+} from "../src/shared/types";
+
+async function createTestRoom() {
+  const response = await SELF.fetch("http://example.com/api/rooms", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      title: "統合テスト授業",
+      capacity: 6,
+      scenario: "STANDARD_WEB_ACCESS",
+    }),
+  });
+  expect(response.status).toBe(201);
+  return response.json<CreateRoomResponse>();
+}
+
+async function join(code: string, displayName: string) {
+  const response = await SELF.fetch(`http://example.com/api/rooms/${code}/join`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ displayName }),
+  });
+  expect(response.status).toBe(201);
+  return response.json<JoinRoomResponse>();
+}
+
+async function snapshot(code: string, token: string) {
+  const response = await SELF.fetch(`http://example.com/api/rooms/${code}/snapshot`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  expect(response.status).toBe(200);
+  return response.json<RoomSnapshot>();
+}
+
+async function action(code: string, token: string, roomVersion: number, payload: object) {
+  return SELF.fetch(`http://example.com/api/rooms/${code}/actions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ roomVersion, action: payload }),
+  });
+}
+
+describe("Network Room API", () => {
+  it("creates a room and assigns the six network roles in order", async () => {
+    const room = await createTestRoom();
+    const names = ["PC担当", "AP担当", "L2担当", "Router担当", "DNS担当", "Web担当"];
+    const joins = [];
+    for (const name of names) joins.push(await join(room.code, name));
+
+    expect(joins.map((item) => item.role)).toEqual([
+      "CLIENT_PC",
+      "ACCESS_POINT",
+      "L2_SWITCH",
+      "ROUTER",
+      "DNS_SERVER",
+      "WEB_SERVER",
+    ]);
+
+    const state = await snapshot(room.code, room.teacherToken);
+    expect(state.viewer.kind).toBe("teacher");
+    expect(state.room.participants).toHaveLength(6);
+    expect(state.room.latestEvents.at(-1)?.type).toBe("JOIN_ROOM");
+  });
+
+  it("enforces phase and role permissions for protocol progression", async () => {
+    const room = await createTestRoom();
+    const participant = await join(room.code, "PC担当");
+    let state = await snapshot(room.code, room.teacherToken);
+
+    const phaseResponse = await action(room.code, room.teacherToken, state.room.version, {
+      type: "CHANGE_PHASE",
+      phase: "PROTOCOL",
+    });
+    expect(phaseResponse.status).toBe(200);
+
+    state = await snapshot(room.code, participant.participantToken);
+    const advanceResponse = await action(room.code, participant.participantToken, state.room.version, {
+      type: "ADVANCE_PROTOCOL",
+      decision: "外部宛てなので、まずゲートウェイのMACアドレスをARPで問い合わせます。",
+    });
+    expect(advanceResponse.status).toBe(200);
+
+    const after = await snapshot(room.code, participant.participantToken);
+    expect(after.room.protocolIndex).toBe(1);
+    expect(after.room.latestEvents.at(-1)?.type).toBe("CREATE_PACKET");
+  });
+
+  it("hides fault identities from learners while preserving observable symptoms", async () => {
+    const room = await createTestRoom();
+    const participant = await join(room.code, "診断担当");
+    let teacherState = await snapshot(room.code, room.teacherToken);
+
+    let response = await action(room.code, room.teacherToken, teacherState.room.version, {
+      type: "CHANGE_PHASE",
+      phase: "DIAGNOSIS",
+    });
+    expect(response.status).toBe(200);
+    teacherState = await snapshot(room.code, room.teacherToken);
+
+    response = await action(room.code, room.teacherToken, teacherState.room.version, {
+      type: "INJECT_FAULT",
+      faultType: "DNS_DOWN",
+    });
+    expect(response.status).toBe(200);
+
+    const learnerState = await snapshot(room.code, participant.participantToken);
+    expect(learnerState.room.activeFaults).toEqual([]);
+    expect(learnerState.room.observedSymptoms).toContain("IP直指定なら開きますがURLでは開きません。");
+  });
+
+  it("rejects invalid bearer tokens", async () => {
+    const room = await createTestRoom();
+    const response = await SELF.fetch(`http://example.com/api/rooms/${room.code}/snapshot`, {
+      headers: { Authorization: "Bearer invalid-token" },
+    });
+    expect(response.status).toBe(401);
+  });
+});
