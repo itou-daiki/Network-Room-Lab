@@ -1,6 +1,8 @@
 export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue = JsonPrimitive;
 
+export type LearningMode = "CLASSROOM" | "SOLO";
+
 export type RoomPhase =
   | "LOBBY"
   | "ROLES"
@@ -146,6 +148,7 @@ export interface ReflectionResponse {
 export interface RoomPublicState {
   code: string;
   title: string;
+  learningMode: LearningMode;
   phase: RoomPhase;
   scenario: "STANDARD_WEB_ACCESS";
   status: "waiting" | "active" | "completed";
@@ -182,12 +185,16 @@ export interface CreateRoomRequest {
   title: string;
   capacity: number;
   scenario: "STANDARD_WEB_ACCESS";
+  learningMode: LearningMode;
+  displayName?: string;
 }
 
 export interface CreateRoomResponse {
   code: string;
   teacherToken: string;
   expiresAt: string;
+  participantId?: string;
+  participantToken?: string;
 }
 
 export interface JoinRoomRequest {

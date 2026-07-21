@@ -15,6 +15,23 @@ async function createTestRoom() {
       title: "統合テスト授業",
       capacity: 6,
       scenario: "STANDARD_WEB_ACCESS",
+      learningMode: "CLASSROOM",
+    }),
+  });
+  expect(response.status).toBe(201);
+  return response.json<CreateRoomResponse>();
+}
+
+async function createSoloRoom() {
+  const response = await SELF.fetch("http://example.com/api/rooms", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      title: "ひとり学習テスト",
+      capacity: 1,
+      scenario: "STANDARD_WEB_ACCESS",
+      learningMode: "SOLO",
+      displayName: "ひとり学習者",
     }),
   });
   expect(response.status).toBe(201);
@@ -51,6 +68,49 @@ async function action(code: string, token: string, roomVersion: number, payload:
 }
 
 describe("Network Room API", () => {
+  it("lets one learner operate every role and progress at their own pace", async () => {
+    const room = await createSoloRoom();
+    expect(room.participantToken).toBeTruthy();
+    const token = room.participantToken!;
+
+    let state = await snapshot(room.code, token);
+    expect(state.room.learningMode).toBe("SOLO");
+    expect(state.room.phase).toBe("ROLES");
+    expect(state.room.capacity).toBe(1);
+    expect(state.room.participants).toHaveLength(1);
+
+    let response = await action(room.code, token, state.room.version, {
+      type: "CHANGE_PHASE",
+      phase: "PROTOCOL",
+    });
+    expect(response.status).toBe(200);
+
+    state = await snapshot(room.code, token);
+    response = await action(room.code, token, state.room.version, {
+      type: "ADVANCE_PROTOCOL",
+      decision: "PCとしてゲートウェイのMACアドレスを確認します。",
+    });
+    expect(response.status).toBe(200);
+
+    state = await snapshot(room.code, token);
+    response = await action(room.code, token, state.room.version, {
+      type: "ADVANCE_PROTOCOL",
+      decision: "次は無線APとして有線LANへ橋渡しします。",
+    });
+    expect(response.status).toBe(200);
+    state = await snapshot(room.code, token);
+    expect(state.room.protocolIndex).toBe(2);
+
+    response = await action(room.code, token, state.room.version, {
+      type: "CHANGE_PHASE",
+      phase: "DIAGNOSIS",
+    });
+    expect(response.status).toBe(200);
+    state = await snapshot(room.code, token);
+    expect(state.room.activeFaults).toEqual([]);
+    expect(state.room.observedSymptoms).toHaveLength(1);
+  });
+
   it("creates a room and assigns the six network roles in order", async () => {
     const room = await createTestRoom();
     const names = ["PC担当", "AP担当", "L2担当", "Router担当", "DNS担当", "Web担当"];

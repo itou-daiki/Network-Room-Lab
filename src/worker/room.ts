@@ -16,7 +16,9 @@ import type {
   ActiveFault,
   ClientAction,
   DiagnosticResult,
+  FaultType,
   JsonValue,
+  LearningMode,
   ParticipantPublic,
   ReflectionResponse,
   RoleId,
@@ -34,6 +36,7 @@ import type {
 interface StoredRoom {
   code: string;
   title: string;
+  learningMode: LearningMode;
   phase: RoomPhase;
   scenario: "STANDARD_WEB_ACCESS";
   status: "waiting" | "active" | "completed";
@@ -102,6 +105,8 @@ interface InitInput {
   title: string;
   capacity: number;
   scenario: "STANDARD_WEB_ACCESS";
+  learningMode: LearningMode;
+  displayName?: string;
   teacherToken: string;
   expiresAt: string;
 }
@@ -119,6 +124,8 @@ const ROLE_ORDER: RoleId[] = [
   "DNS_SERVER",
   "WEB_SERVER",
 ];
+
+const SOLO_FAULT_TYPES: FaultType[] = ["BAD_GATEWAY", "DNS_DOWN", "ROUTE_MISSING", "CERT_ERROR", "WEB_DOWN"];
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -235,23 +242,35 @@ export class RoomDurableObject extends DurableObject<Env> {
     `);
   }
 
-  async initialize(input: InitInput): Promise<{ created: boolean }> {
+  async initialize(input: InitInput): Promise<{
+    created: boolean;
+    participantId?: string;
+    participantToken?: string;
+  }> {
     if (this.loadRoomOrNull()) return { created: false };
 
     const createdAt = nowIso();
     const teacherTokenHash = await sha256Hex(input.teacherToken);
+    const soloParticipantId = input.learningMode === "SOLO" ? `p_${crypto.randomUUID()}` : undefined;
+    const soloParticipantToken = input.learningMode === "SOLO" ? randomToken() : undefined;
+    const soloParticipantTokenHash = soloParticipantToken ? await sha256Hex(soloParticipantToken) : undefined;
+    const soloDisplayName = input.displayName?.trim().replace(/\s+/g, " ").slice(0, 32);
     const room: StoredRoom = {
       code: input.code,
       title: input.title.trim().slice(0, 80),
-      phase: "LOBBY",
+      learningMode: input.learningMode,
+      phase: input.learningMode === "SOLO" ? "ROLES" : "LOBBY",
       scenario: input.scenario,
-      status: "waiting",
+      status: input.learningMode === "SOLO" ? "active" : "waiting",
       version: 1,
-      capacity: Math.min(8, Math.max(2, input.capacity)),
+      capacity: input.learningMode === "SOLO" ? 1 : Math.min(8, Math.max(2, input.capacity)),
       createdAt,
       expiresAt: input.expiresAt,
       teacherTokenHash,
-      teacherMessage: "まずは自分の担当機器が見られる情報を確認しましょう。",
+      teacherMessage:
+        input.learningMode === "SOLO"
+          ? "6つの役割を順番に体験します。説明を読んだら「次のステップへ」を押しましょう。"
+          : "まずは自分の担当機器が見られる情報を確認しましょう。",
       links: structuredClone(DEFAULT_LINKS),
       interfaceConfig: {
         address: "192.168.10.23",
@@ -275,10 +294,22 @@ export class RoomDurableObject extends DurableObject<Env> {
         room.version,
         "ROOM_CREATED",
         "teacher",
-        "実験ルームを作成しました",
-        JSON.stringify({ title: room.title, capacity: room.capacity }),
+        input.learningMode === "SOLO" ? "ひとり学習を開始しました" : "実験ルームを作成しました",
+        JSON.stringify({ title: room.title, capacity: room.capacity, learningMode: room.learningMode }),
         createdAt,
       );
+      if (soloParticipantId && soloParticipantTokenHash && soloDisplayName) {
+        this.ctx.storage.sql.exec(
+          `INSERT INTO participants
+           (id, display_name, role, token_hash, connection_state, joined_at, last_seen_at)
+           VALUES (?, ?, 'CLIENT_PC', ?, 'offline', ?, ?)`,
+          soloParticipantId,
+          soloDisplayName,
+          soloParticipantTokenHash,
+          createdAt,
+          createdAt,
+        );
+      }
       this.ctx.storage.sql.exec(
         "INSERT INTO snapshots (room_version, state_json, created_at) VALUES (?, ?, ?)",
         room.version,
@@ -287,7 +318,11 @@ export class RoomDurableObject extends DurableObject<Env> {
       );
     });
 
-    return { created: true };
+    return {
+      created: true,
+      participantId: soloParticipantId,
+      participantToken: soloParticipantToken,
+    };
   }
 
   async join(displayNameInput: string): Promise<JoinResult> {
@@ -470,6 +505,16 @@ export class RoomDurableObject extends DurableObject<Env> {
       case "CHANGE_PHASE": {
         nextRoom.phase = action.phase;
         nextRoom.status = action.phase === "LOBBY" ? "waiting" : action.phase === "REFLECTION" ? "completed" : "active";
+        if (nextRoom.learningMode === "SOLO" && action.phase === "DIAGNOSIS" && nextRoom.activeFaults.length === 0) {
+          const faultType = SOLO_FAULT_TYPES[nextRoom.code.charCodeAt(0) % SOLO_FAULT_TYPES.length]!;
+          const definition = faultDetails(faultType);
+          nextRoom.activeFaults = [{
+            type: faultType,
+            target: definition.target,
+            symptom: definition.symptom,
+            injectedAt: nowIso(),
+          }];
+        }
         eventType = "CHANGE_PHASE";
         summary = `フェーズを「${action.phase}」へ変更しました`;
         payload = { phase: action.phase };
@@ -605,6 +650,32 @@ export class RoomDurableObject extends DurableObject<Env> {
 
     const role = viewer.role;
     if (!role) throw new Error("FORBIDDEN: 役割が設定されていません。");
+    if (room.learningMode === "SOLO") {
+      switch (action.type) {
+        case "CHANGE_PHASE":
+          if (action.phase !== "LOBBY") return;
+          break;
+        case "TOGGLE_LINK":
+          if (room.phase === "TOPOLOGY") return;
+          break;
+        case "CONFIGURE_INTERFACE":
+          if (room.phase === "ADDRESSING") return;
+          break;
+        case "ADVANCE_PROTOCOL":
+        case "RESET_PROTOCOL":
+          if (room.phase === "PROTOCOL") return;
+          break;
+        case "RUN_DIAGNOSTIC":
+          if (room.phase === "DIAGNOSIS") return;
+          break;
+        case "SUBMIT_REFLECTION":
+          if (room.phase === "REFLECTION") return;
+          break;
+        default:
+          break;
+      }
+      throw new Error("FORBIDDEN: ひとり学習では、現在のステップで案内されている操作を行ってください。");
+    }
     switch (action.type) {
       case "TOGGLE_LINK":
         if (room.phase === "TOPOLOGY" && ["ACCESS_POINT", "L2_SWITCH", "ROUTER"].includes(role)) return;
@@ -671,7 +742,8 @@ export class RoomDurableObject extends DurableObject<Env> {
       .exec<{ state_json: string }>("SELECT state_json FROM room_config WHERE id = 1")
       .toArray()[0];
     if (!row) return null;
-    return JSON.parse(row.state_json) as StoredRoom;
+    const parsed = JSON.parse(row.state_json) as StoredRoom;
+    return { ...parsed, learningMode: parsed.learningMode ?? "CLASSROOM" };
   }
 
   private loadRoom(): StoredRoom {
@@ -745,6 +817,7 @@ export class RoomDurableObject extends DurableObject<Env> {
     return {
       code: room.code,
       title: room.title,
+      learningMode: room.learningMode,
       phase: room.phase,
       scenario: room.scenario,
       status: room.status,

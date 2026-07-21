@@ -65,6 +65,27 @@ function PhaseStepper({ snapshot }: { snapshot: RoomSnapshot }) {
   );
 }
 
+function SoloProgressControls({ snapshot, busy, act }: SharedPanelProps) {
+  const current = phaseDefinition(snapshot.room.phase);
+  const previous = PHASE_DEFINITIONS.find((phase) => phase.index === current.index - 1 && phase.id !== "LOBBY");
+  const next = PHASE_DEFINITIONS.find((phase) => phase.index === current.index + 1);
+  const protocolIncomplete = snapshot.room.phase === "PROTOCOL" && snapshot.room.protocolIndex < PROTOCOL_STEPS.length;
+
+  return (
+    <section className="solo-progress" aria-label="ひとり学習の進行">
+      <div>
+        <small>ひとり学習</small>
+        <b>{next ? `説明と操作を確認したら「${next.label}」へ進みます。` : "振り返りを保存したら学習完了です。"}</b>
+        {protocolIncomplete && <span>通信実験は17ステップを最後まで進めると、次へ移動できます。</span>}
+      </div>
+      <div className="solo-progress-actions">
+        <button className="secondary-button" type="button" disabled={busy || !previous} onClick={() => previous && void act({ type: "CHANGE_PHASE", phase: previous.id })}>← 前へ</button>
+        {next && <button className="primary-button" type="button" disabled={busy || protocolIncomplete} onClick={() => void act({ type: "CHANGE_PHASE", phase: next.id })}>次のステップへ →</button>}
+      </div>
+    </section>
+  );
+}
+
 function DeviceNode({
   id,
   label,
@@ -116,7 +137,7 @@ function TopologyPanel({ snapshot, busy, act }: SharedPanelProps) {
   const room = snapshot.room;
   const currentStep = PROTOCOL_STEPS[room.protocolIndex];
   const editableRole = snapshot.viewer.role && ["ACCESS_POINT", "L2_SWITCH", "ROUTER"].includes(snapshot.viewer.role);
-  const canEdit = snapshot.viewer.kind === "teacher" || (room.phase === "TOPOLOGY" && Boolean(editableRole));
+  const canEdit = snapshot.viewer.kind === "teacher" || (room.phase === "TOPOLOGY" && (room.learningMode === "SOLO" || Boolean(editableRole)));
   const link = (id: string) => room.links.find((candidate) => candidate.id === id)!;
   const device = (id: string) => room.devices.find((candidate) => candidate.id === id)!;
   const faulted = (id: string) => room.activeFaults.some((fault) => fault.target === id || fault.target.includes(id));
@@ -168,7 +189,7 @@ function TopologyPanel({ snapshot, busy, act }: SharedPanelProps) {
 function AddressingMission({ snapshot, busy, act }: SharedPanelProps) {
   const [config, setConfig] = useState<InterfaceConfig>(snapshot.room.interfaceConfig);
   useEffect(() => setConfig(snapshot.room.interfaceConfig), [snapshot.room.interfaceConfig]);
-  const canEdit = snapshot.viewer.kind === "teacher" || snapshot.viewer.role === "CLIENT_PC";
+  const canEdit = snapshot.viewer.kind === "teacher" || snapshot.room.learningMode === "SOLO" || snapshot.viewer.role === "CLIENT_PC";
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -197,9 +218,10 @@ function ProtocolMission({ snapshot, busy, act }: SharedPanelProps) {
   const [decision, setDecision] = useState("");
   const step = PROTOCOL_STEPS[snapshot.room.protocolIndex];
   const complete = snapshot.room.protocolIndex >= PROTOCOL_STEPS.length;
+  const isSolo = snapshot.room.learningMode === "SOLO";
   const canAdvance =
     !complete &&
-    (snapshot.viewer.kind === "teacher" || snapshot.viewer.role === step?.actorRole);
+    (snapshot.viewer.kind === "teacher" || isSolo || snapshot.viewer.role === step?.actorRole);
 
   useEffect(() => setDecision(step ? `${step.description}` : ""), [step?.id]);
 
@@ -208,7 +230,7 @@ function ProtocolMission({ snapshot, busy, act }: SharedPanelProps) {
       <div className="mission-complete">
         <span>✓</span><h3>Webページが表示されました</h3>
         <p>ARP・DNS・TCP・TLS・HTTPが連動し、全17ステップを完了しました。</p>
-        {snapshot.viewer.kind === "teacher" && <button className="secondary-button" disabled={busy} onClick={() => void act({ type: "RESET_PROTOCOL" })}>最初から再生</button>}
+        {(snapshot.viewer.kind === "teacher" || isSolo) && <button className="secondary-button" disabled={busy} onClick={() => void act({ type: "RESET_PROTOCOL" })}>最初から再生</button>}
       </div>
     );
   }
@@ -226,8 +248,8 @@ function ProtocolMission({ snapshot, busy, act }: SharedPanelProps) {
       <p>{activeStep.description}</p>
       <div className="actor-line">
         <span style={{ background: roleDefinition(activeStep.actorRole).accent }} />
-        次の担当: <b>{roleDefinition(activeStep.actorRole).label}</b>
-        {snapshot.viewer.role === activeStep.actorRole && <em>あなたの番です</em>}
+        {isSolo ? "いま体験する役割" : "次の担当"}: <b>{roleDefinition(activeStep.actorRole).label}</b>
+        {(isSolo || snapshot.viewer.role === activeStep.actorRole) && <em>{isSolo ? "この役割として考えます" : "あなたの番です"}</em>}
       </div>
       <label className="decision-field">
         なぜこの操作をする？
@@ -318,7 +340,18 @@ function MissionPanel({ snapshot, busy, act }: SharedPanelProps) {
   if (snapshot.room.phase === "LOBBY") {
     content = <div className="lobby-mission"><div className="radar" aria-hidden="true"><i /><i /><i /></div><h3>チームがそろうのを待っています</h3><p>先生から聞いた部屋コード <b>{snapshot.room.code}</b> を入力して参加します。</p><span>{snapshot.room.participants.length} / {snapshot.room.capacity} 人が参加中</span></div>;
   } else if (snapshot.room.phase === "ROLES") {
-    content = role ? (
+    content = snapshot.room.learningMode === "SOLO" ? (
+      <div className="solo-role-overview">
+        <div className="mission-callout"><span>ひとり学習の進め方</span><p>通信の場所に合わせて役割が自動で切り替わります。それぞれの機器が「何を見て、どう判断するか」を確認しましょう。</p></div>
+        <div className="solo-role-grid">
+          {ROLE_DEFINITIONS.filter((definition) => definition.id !== "OBSERVER").map((definition, index) => (
+            <article key={definition.id} style={{ "--role-accent": definition.accent } as React.CSSProperties}>
+              <span>{String(index + 1).padStart(2, "0")}</span><div><b>{definition.label}</b><small>{definition.description}</small></div>
+            </article>
+          ))}
+        </div>
+      </div>
+    ) : role ? (
       <div className="role-mission" style={{ "--role-accent": role.accent } as React.CSSProperties}>
         <span className="role-id">あなたの担当 / {role.shortLabel.toUpperCase()}</span>
         <h3>{role.label}</h3><p>{role.description}</p>
@@ -351,7 +384,7 @@ function PacketInspector({ snapshot }: { snapshot: RoomSnapshot }) {
   const step = PROTOCOL_STEPS[Math.min(index, PROTOCOL_STEPS.length - 1)]!;
   const complete = index >= PROTOCOL_STEPS.length;
   const role = snapshot.viewer.role;
-  const layers = step.layers.filter((layer) => snapshot.viewer.kind === "teacher" || role === "OBSERVER" || (role && layer.visibleTo.includes(role)));
+  const layers = step.layers.filter((layer) => snapshot.viewer.kind === "teacher" || snapshot.room.learningMode === "SOLO" || role === "OBSERVER" || (role && layer.visibleTo.includes(role)));
 
   return (
     <section className="panel packet-panel" aria-labelledby="packet-title">
@@ -372,6 +405,17 @@ function PacketInspector({ snapshot }: { snapshot: RoomSnapshot }) {
 }
 
 function ParticipantsPanel({ snapshot }: { snapshot: RoomSnapshot }) {
+  if (snapshot.room.learningMode === "SOLO") {
+    const roles = ROLE_DEFINITIONS.filter((definition) => definition.id !== "OBSERVER");
+    return (
+      <section className="panel participants-panel" aria-labelledby="participants-title">
+        <div className="panel-heading"><div><p className="panel-kicker">一人で順番に体験</p><h2 id="participants-title">あなたが担当する6つの役割</h2></div><span>自分のペースで進行</span></div>
+        <div className="participant-list solo-role-list">
+          {roles.map((role, index) => <div className="participant solo-role-card" key={role.id}><div className="avatar" style={{ background: role.accent }}>{index + 1}</div><div><b>{role.label}</b><small>{role.observes.slice(0, 2).join("・")}</small></div><em>{role.shortLabel}</em></div>)}
+        </div>
+      </section>
+    );
+  }
   return (
     <section className="panel participants-panel" aria-labelledby="participants-title">
       <div className="panel-heading"><div><p className="panel-kicker">一緒に学ぶ仲間</p><h2 id="participants-title">チームメンバーと担当</h2></div><span>{snapshot.room.participants.filter((item) => item.connectionState === "online").length} 人が接続中</span></div>
@@ -390,7 +434,7 @@ function EventPanel({ snapshot }: { snapshot: RoomSnapshot }) {
   const events = snapshot.room.latestEvents.slice(-12).reverse();
   return (
     <section className="panel events-panel" aria-labelledby="events-title">
-      <div className="panel-heading"><div><p className="panel-kicker">これまでの操作</p><h2 id="events-title">チームの活動履歴</h2></div><span>更新 {snapshot.room.version}</span></div>
+      <div className="panel-heading"><div><p className="panel-kicker">これまでの操作</p><h2 id="events-title">{snapshot.room.learningMode === "SOLO" ? "あなたの活動履歴" : "チームの活動履歴"}</h2></div><span>更新 {snapshot.room.version}</span></div>
       <div className="event-list">
         {events.map((event) => <div className="event-row" key={event.id}><time>{formatTime(event.createdAt)}</time><i /><div><b>{event.summary}</b><small>{event.type} · event #{event.id}</small></div></div>)}
       </div>
@@ -446,16 +490,23 @@ export function RoomPage({ session, onLeave }: RoomPageProps) {
   };
   const currentPhase = phaseDefinition(snapshot.room.phase);
   const viewerRole = snapshot.viewer.role ? roleDefinition(snapshot.viewer.role) : null;
+  const isSolo = snapshot.room.learningMode === "SOLO";
+  const soloActor = snapshot.room.phase === "PROTOCOL" ? PROTOCOL_STEPS[snapshot.room.protocolIndex]?.actorRole : undefined;
+  const currentRoleLabel = isSolo
+    ? soloActor
+      ? roleDefinition(soloActor).label
+      : "6つの役割を順番に担当"
+    : viewerRole?.label ?? "観察者";
 
   return (
     <div className="room-shell">
       <header className="room-header">
         <Brand />
-        <div className="room-heading"><div><small>{snapshot.viewer.kind === "teacher" ? "INSTRUCTOR ROOM" : "TEAM ROOM"}</small><h1>{snapshot.room.title}</h1></div><button className="room-code" onClick={() => void copyCode()}><span>ROOM CODE</span><b>{snapshot.room.code}</b><em>{copied ? "コピー済み" : "COPY"}</em></button></div>
-        <div className="room-user"><span className={`connection-badge ${connectionStatus}`}><i />{connectionStatus === "online" ? "同期中" : connectionStatus === "connecting" ? "接続中" : "再接続中"}</span><div><b>{snapshot.viewer.displayName}</b><small>{snapshot.viewer.kind === "teacher" ? "担当教員" : roleDefinition(snapshot.viewer.role ?? "OBSERVER").label}</small></div><button onClick={onLeave} aria-label="部屋から退出">退出</button></div>
+        <div className="room-heading"><div><small>{snapshot.viewer.kind === "teacher" ? "INSTRUCTOR ROOM" : isSolo ? "SELF-PACED LAB" : "TEAM ROOM"}</small><h1>{snapshot.room.title}</h1></div>{isSolo ? <span className="solo-mode-badge">ひとり学習</span> : <button className="room-code" onClick={() => void copyCode()}><span>ROOM CODE</span><b>{snapshot.room.code}</b><em>{copied ? "コピー済み" : "COPY"}</em></button>}</div>
+        <div className="room-user"><span className={`connection-badge ${connectionStatus}`}><i />{connectionStatus === "online" ? "同期中" : connectionStatus === "connecting" ? "接続中" : "再接続中"}</span><div><b>{snapshot.viewer.displayName}</b><small>{snapshot.viewer.kind === "teacher" ? "担当教員" : isSolo ? "ひとり学習者" : roleDefinition(snapshot.viewer.role ?? "OBSERVER").label}</small></div><button onClick={onLeave} aria-label="部屋から退出">退出</button></div>
       </header>
 
-      <div className="teacher-message-banner"><span>先生からの案内</span><p>{snapshot.room.teacherMessage}</p></div>
+      <div className="teacher-message-banner"><span>{isSolo ? "学習ガイド" : "先生からの案内"}</span><p>{snapshot.room.teacherMessage}</p></div>
       <PhaseStepper snapshot={snapshot} />
       <section className="beginner-guide" aria-label="現在の学習ガイド">
         <span className="guide-number" aria-hidden="true">{currentPhase.index + 1}</span>
@@ -464,10 +515,11 @@ export function RoomPage({ session, onLeave }: RoomPageProps) {
           <b>{currentPhase.instruction}</b>
         </div>
         <div className="guide-role">
-          <small>{snapshot.viewer.kind === "teacher" ? "利用モード" : "あなたの担当"}</small>
-          <b>{snapshot.viewer.kind === "teacher" ? "先生として進行" : viewerRole?.label ?? "観察者"}</b>
+          <small>{snapshot.viewer.kind === "teacher" ? "利用モード" : isSolo ? "いまの役割" : "あなたの担当"}</small>
+          <b>{snapshot.viewer.kind === "teacher" ? "先生として進行" : currentRoleLabel}</b>
         </div>
       </section>
+      {isSolo && <SoloProgressControls snapshot={snapshot} busy={busy} act={act} />}
       {error && <div className="room-error" role="alert"><span>!</span>{error}<button onClick={dismissError}>閉じる</button></div>}
 
       <main className="room-grid">

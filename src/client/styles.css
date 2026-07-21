@@ -97,7 +97,7 @@ button:disabled { cursor: not-allowed; opacity: .52; }
 .hero-facts span { color: var(--muted); font-size: 11px; margin-top: 5px; }
 
 .entry-card { background: linear-gradient(145deg, rgba(15, 43, 58, .96), rgba(8, 27, 39, .96)); border: 1px solid rgba(105, 192, 226, .25); box-shadow: 0 28px 80px rgba(0,0,0,.36), inset 0 1px rgba(255,255,255,.04); }
-.entry-tabs { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--line); }
+.entry-tabs { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--line); }
 .entry-tabs button { border: 0; background: rgba(0,0,0,.16); color: #7894a4; padding: 17px 10px; font-size: 12px; font-weight: 700; cursor: pointer; border-bottom: 2px solid transparent; }
 .entry-tabs button.active { background: rgba(64, 200, 255, .06); color: #dff8ff; border-bottom-color: var(--cyan); }
 .entry-form { padding: 30px clamp(24px, 3vw, 38px) 26px; }
@@ -119,6 +119,8 @@ textarea { resize: vertical; line-height: 1.7; }
 .entry-submit { width: 100%; margin-top: 2px; padding: 15px; }
 .privacy-note { margin: 15px 0 0; text-align: center; color: #66808f; font-size: 10px; }
 .form-error { padding: 10px 12px; margin: -4px 0 14px; background: rgba(255, 96, 116, .08); border-left: 2px solid var(--danger); color: #ffb6bf; font-size: 12px; }
+.solo-intro { display: flex; flex-direction: column; gap: 5px; margin: 0 0 18px; padding: 13px 14px; border: 1px solid var(--line-strong); }
+.solo-intro b { font-size: 11px; }.solo-intro span { color: var(--muted); font-size: 10px; line-height: 1.7; }
 
 .flow-showcase { max-width: 1380px; margin: 30px auto 0; padding: 68px clamp(24px, 5vw, 70px); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: rgba(10, 30, 42, .46); }
 .section-kicker { margin-bottom: 14px; }
@@ -159,6 +161,7 @@ textarea { resize: vertical; line-height: 1.7; }
 .room-code span { grid-column: 1 / -1; color: #708d9d; font: 500 7px var(--mono); letter-spacing: .15em; text-align: left; }
 .room-code b { font: 600 14px var(--mono); letter-spacing: .18em; color: #d8f5ff; }
 .room-code em { color: var(--cyan); font: 500 7px var(--mono); font-style: normal; }
+.solo-mode-badge { border: 1px solid var(--line-strong); padding: 10px 14px; color: var(--cyan); font-size: 10px; font-weight: 800; }
 .room-user { display: flex; align-items: center; gap: 12px; min-width: 280px; justify-content: flex-end; }
 .room-user > div { display: flex; flex-direction: column; align-items: flex-end; }
 .room-user b { font-size: 11px; }.room-user small { color: var(--muted); font-size: 9px; }
@@ -219,6 +222,7 @@ textarea { resize: vertical; line-height: 1.7; }
 .event-list{max-height:286px;overflow:auto;padding:6px 14px 10px}.event-row{display:grid;grid-template-columns:auto 8px 1fr;gap:9px;padding:9px 0;border-bottom:1px solid rgba(145,182,201,.08)}.event-row time{color:#5c7886;font:500 7px var(--mono)}.event-row i{width:5px;height:5px;border-radius:50%;background:#39748a;margin-top:3px}.event-row:first-child i{background:var(--cyan);box-shadow:0 0 6px var(--cyan)}.event-row div{display:flex;flex-direction:column;gap:3px}.event-row b{font-size:8px;font-weight:600}.event-row small{color:#55717e;font:500 7px var(--mono)}
 .teacher-panel .panel-heading{background:rgba(64,200,255,.025)}.teacher-grid{display:grid;grid-template-columns:1.05fr .75fr 1fr;gap:0}.teacher-grid>div{padding:16px;border-right:1px solid var(--line)}.teacher-grid>div:last-child{border:0}.teacher-grid h3{font-size:10px;margin:0 0 11px}.teacher-phase-buttons{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.teacher-phase-buttons button{border:1px solid var(--line);background:rgba(0,0,0,.12);padding:7px 2px;color:#66818f;font-size:7px;cursor:pointer}.teacher-phase-buttons span{display:block;font:600 8px var(--mono);margin-bottom:3px}.teacher-phase-buttons button.active{color:var(--cyan);border-color:var(--cyan);background:rgba(64,200,255,.07)}.teacher-message{margin:13px 0 0}.teacher-message div{display:flex}.teacher-message input{border-radius:3px 0 0 3px;font-size:9px;padding:9px}.teacher-message button{border:0;background:#1f8db2;color:white;padding:0 12px;font-size:8px;font-weight:700}.role-assignments{display:grid;gap:5px}.role-assignments label{display:grid;grid-template-columns:1fr 1.2fr;align-items:center;gap:7px;color:#8199a5;font-size:8px}.role-assignments select{padding:6px 7px;font-size:8px}.fault-controls{display:grid;grid-template-columns:1fr 1fr;gap:5px}.fault-controls button{border:1px solid var(--line);background:rgba(0,0,0,.1);padding:7px;text-align:left;font-size:8px;color:#7d98a5;cursor:pointer}.fault-controls button span{color:var(--danger);margin-right:5px}.fault-controls button.active{border-color:var(--danger);background:rgba(255,120,136,.07);color:#ffc0c7}.clear-faults{margin-top:7px;border:0;background:none;color:var(--cyan);font-size:8px;cursor:pointer;padding:4px 0}
 .room-error{max-width:1510px;margin:12px auto 0;padding:10px 14px;background:rgba(255,120,136,.08);border:1px solid rgba(255,120,136,.22);display:flex;align-items:center;gap:10px;color:#ffbdc5;font-size:10px}.room-error>span{display:grid;place-items:center;width:18px;height:18px;border:1px solid var(--danger);border-radius:50%;color:var(--danger);font-weight:800}.room-error button{margin-left:auto;border:0;background:none;color:#ffbdc5;font-size:9px;cursor:pointer}.room-footer{padding:16px 24px}.room-footer span:last-child{display:flex;align-items:center;gap:8px}
+.solo-progress{max-width:1510px;margin:12px auto 0;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:20px;border:1px solid var(--line);background:var(--panel)}.solo-progress>div:first-child{display:flex;flex-direction:column;gap:4px}.solo-progress small{color:var(--cyan);font-size:8px;font-weight:800}.solo-progress b{font-size:11px}.solo-progress span{color:var(--muted);font-size:9px}.solo-progress-actions{display:flex;gap:8px;flex-shrink:0}.solo-role-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:14px}.solo-role-grid article{display:grid;grid-template-columns:auto 1fr;gap:11px;padding:12px;border:1px solid var(--line);border-left:4px solid var(--role-accent)}.solo-role-grid article>span{color:var(--role-accent);font:700 10px var(--mono)}.solo-role-grid article div{display:flex;flex-direction:column;gap:4px}.solo-role-grid article b{font-size:10px}.solo-role-grid article small{color:var(--muted);font-size:8px;line-height:1.6}.solo-role-card{grid-template-columns:auto 1fr auto}.solo-role-card .avatar{border-radius:50%}
 .loading-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:radial-gradient(circle,rgba(64,200,255,.08),transparent 24rem),#06131d}.loading-screen p{color:var(--muted);font-size:11px}.loader{display:flex;gap:7px}.loader i{width:8px;height:8px;border:1px solid var(--cyan);transform:rotate(45deg);animation:loader 1.2s infinite}.loader i:nth-child(2){animation-delay:.15s}.loader i:nth-child(3){animation-delay:.3s}@keyframes loader{50%{background:var(--cyan);box-shadow:0 0 10px var(--cyan)}}
 
 /* Beginner-friendly Tailwind theme */
@@ -253,6 +257,8 @@ body { @apply font-sans text-slate-800 antialiased; }
 .entry-tabs { @apply border-dodger-100 bg-dodger-50; }
 .entry-tabs button { @apply bg-transparent py-4 text-sm text-slate-500; }
 .entry-tabs button.active { @apply border-dodger-500 bg-white text-dodger-700; }
+.solo-intro { @apply rounded-xl border-dodger-200 bg-dodger-50; }
+.solo-intro b { @apply text-dodger-900; }.solo-intro span { @apply text-slate-600; }
 .entry-heading h2 { @apply text-xl text-slate-900; }
 .entry-heading p { @apply text-sm leading-relaxed text-slate-600; }
 .step-chip { @apply shrink-0 whitespace-nowrap rounded-full border-dodger-200 bg-dodger-50 px-3 py-1 text-dodger-700; letter-spacing: .02em; }
@@ -286,6 +292,7 @@ input:disabled, select:disabled, textarea:disabled { @apply bg-slate-100 text-sl
 .room-code { @apply rounded-xl border-dodger-200 bg-dodger-50; }
 .room-code span { @apply text-dodger-700; }
 .room-code b { @apply text-dodger-900; }
+.solo-mode-badge { @apply rounded-full border-dodger-200 bg-dodger-50 text-dodger-700; }
 .room-user > button { @apply rounded-lg border-slate-200 bg-white text-slate-600; }
 .connection-badge { @apply border-slate-200 text-slate-600; }
 .teacher-message-banner { @apply border-amber-200 bg-amber-50; }
@@ -304,6 +311,8 @@ input:disabled, select:disabled, textarea:disabled { @apply bg-slate-100 text-sl
 .guide-task b { @apply text-sm leading-relaxed text-slate-800; }
 .guide-role { @apply flex shrink-0 flex-col gap-1 border-l border-dodger-100 pl-5; }
 .guide-role b { @apply text-sm text-dodger-900; }
+.solo-progress { @apply rounded-2xl border-dodger-200 bg-white shadow-sm; }
+.solo-progress small { @apply text-dodger-600; }.solo-progress b { @apply text-sm text-slate-800; }.solo-progress span { @apply text-xs text-slate-500; }
 .panel { @apply overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm; background: white; box-shadow: 0 8px 25px rgba(30, 78, 121, .07); }
 .panel-heading { @apply border-slate-200 bg-white; }
 .panel-heading h2 { @apply text-base text-slate-900; }
@@ -327,6 +336,8 @@ input:disabled, select:disabled, textarea:disabled { @apply bg-slate-100 text-sl
 .lobby-mission p, .mission-complete p { @apply text-sm text-slate-600; }
 .role-mission p { @apply text-sm text-slate-600; }
 .role-mission h4 { @apply text-sm text-slate-700; }
+.solo-role-grid article { @apply rounded-xl border-slate-200 bg-slate-50; }
+.solo-role-grid article b { @apply text-sm text-slate-800; }.solo-role-grid article small { @apply text-xs text-slate-600; }
 .tag-list span { @apply rounded-full border-dodger-200 bg-dodger-50 text-dodger-800; }
 .topology-mission li { @apply rounded-xl border-slate-200 bg-slate-50; }
 .topology-mission li small { @apply text-slate-500; }
@@ -393,6 +404,7 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
   .landing-footer { flex-direction: column; padding: 25px 18px; }
   .room-header { padding: 0 10px; }.room-brand { min-width: auto; }.room-brand > span:last-child { display: none; }.room-heading { margin: 0 auto; }.room-code em { display: none; }.room-user { margin-left: 8px; }.connection-badge { display: none; }
   .beginner-guide { align-items: flex-start; flex-wrap: wrap; margin: 12px 10px 0; padding: 15px; }.guide-task { padding-top: 2px; }.guide-role { width: 100%; margin-left: 59px; border-left: 0; border-top: 1px solid var(--line); padding: 10px 0 0; }
+  .solo-progress { align-items: stretch; flex-direction: column; margin: 10px 10px 0; }.solo-progress-actions { display: grid; grid-template-columns: 1fr 1.4fr; }.solo-role-grid { grid-template-columns: 1fr; }
   .teacher-message-banner { justify-content: flex-start; }.teacher-message-banner p { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .room-grid { padding: 10px; }.panel-heading { padding: 13px 14px; }
   .topology-canvas { padding-left: 14px; }.participant-list { grid-template-columns: 1fr; }

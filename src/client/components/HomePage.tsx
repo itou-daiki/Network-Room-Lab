@@ -7,7 +7,7 @@ interface HomePageProps {
   onEnterRoom: (session: AppSession) => void;
 }
 
-type EntryMode = "join" | "create";
+type EntryMode = "join" | "solo" | "create";
 
 const flowNodes = [
   { id: "pc", label: "PC", sub: "URL・IP", tone: "blue" },
@@ -32,8 +32,18 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
     setError(null);
     try {
       if (mode === "create") {
-        const room = await createRoom({ title, capacity, scenario: "STANDARD_WEB_ACCESS" });
+        const room = await createRoom({ title, capacity, scenario: "STANDARD_WEB_ACCESS", learningMode: "CLASSROOM" });
         onEnterRoom({ code: room.code, token: room.teacherToken, mode: "teacher" });
+      } else if (mode === "solo") {
+        const room = await createRoom({
+          title: "ひとりで学ぶネットワーク",
+          capacity: 1,
+          scenario: "STANDARD_WEB_ACCESS",
+          learningMode: "SOLO",
+          displayName,
+        });
+        if (!room.participantToken) throw new Error("ひとり学習を開始できませんでした。もう一度お試しください。");
+        onEnterRoom({ code: room.code, token: room.participantToken, mode: "participant" });
       } else {
         const code = roomCode.trim().toUpperCase();
         if (!/^[A-Z2-9]{6}$/.test(code)) throw new Error("部屋コードは英数字6文字で入力してください。");
@@ -75,11 +85,11 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
           <p className="eyebrow"><span>●</span> はじめてでも安心のネットワーク体験</p>
           <h1>
             通信のしくみを、<br />
-            <span>チームで体験。</span>
+            <span>ひとりでも、チームでも。</span>
           </h1>
           <p className="hero-lead">
-            むずかしい設定を暗記する必要はありません。画面の案内に沿って役割を担当し、
-            Webページが届くまでを仲間と一緒に少しずつ確かめます。
+            むずかしい設定を暗記する必要はありません。ひとりで全機器を順番に体験するか、
+            仲間と役割分担して、Webページが届くまでを少しずつ確かめます。
           </p>
           <div className="beginner-promise" role="note" aria-label="初めて利用する方へ">
             <span aria-hidden="true">✓</span>
@@ -87,7 +97,7 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
           </div>
           <div className="hero-facts" aria-label="利用想定">
             <div><b>1</b><span>案内を読む</span></div>
-            <div><b>2</b><span>仲間と相談する</span></div>
+            <div><b>2</b><span>役割を体験する</span></div>
             <div><b>3</b><span>操作して確かめる</span></div>
           </div>
         </div>
@@ -101,7 +111,16 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
               className={mode === "join" ? "active" : ""}
               onClick={() => setMode("join")}
             >
-              学習者として参加
+              授業に参加
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === "solo"}
+              className={mode === "solo" ? "active" : ""}
+              onClick={() => setMode("solo")}
+            >
+              ひとりで学ぶ
             </button>
             <button
               type="button"
@@ -110,16 +129,16 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
               className={mode === "create" ? "active" : ""}
               onClick={() => setMode("create")}
             >
-              教員として始める
+              先生用
             </button>
           </div>
 
           <form onSubmit={submit} className="entry-form">
             <div className="entry-heading">
-              <span className="step-chip">{mode === "join" ? "参加" : "作成"}</span>
+              <span className="step-chip">{mode === "join" ? "参加" : mode === "solo" ? "ひとり学習" : "作成"}</span>
               <div>
-                <h2>{mode === "join" ? "授業の部屋に入る" : "新しい授業を始める"}</h2>
-                <p>{mode === "join" ? "先生から教えてもらった6文字のコードを入力します。" : "授業名と人数を決めて部屋を作ります。"}</p>
+                <h2>{mode === "join" ? "授業の部屋に入る" : mode === "solo" ? "自分のペースで始める" : "新しい授業を始める"}</h2>
+                <p>{mode === "join" ? "先生から教えてもらった6文字のコードを入力します。" : mode === "solo" ? "6つの機器の役割を一人で順番に体験します。" : "授業名と人数を決めて部屋を作ります。"}</p>
               </div>
             </div>
 
@@ -129,6 +148,13 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
                 <li><span>2</span>表示名を入力</li>
                 <li><span>3</span>参加ボタンを押す</li>
               </ol>
+            )}
+
+            {mode === "solo" && (
+              <div className="solo-intro" role="note">
+                <b>先生や部屋コードは不要です</b>
+                <span>画面が次の操作を案内します。途中で失敗しても、何度でもやり直せます。</span>
+              </div>
             )}
 
             {mode === "join" ? (
@@ -158,6 +184,18 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
                   />
                 </label>
               </>
+            ) : mode === "solo" ? (
+              <label>
+                あなたの表示名
+                <input
+                  autoComplete="name"
+                  maxLength={32}
+                  placeholder="例：やまなし"
+                  value={displayName}
+                  onChange={(event) => setDisplayName(event.target.value)}
+                  required
+                />
+              </label>
             ) : (
               <>
                 <label>
@@ -180,9 +218,9 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
 
             {error && <div className="form-error" role="alert">{error}</div>}
             <button className="primary-button entry-submit" disabled={busy}>
-              {busy ? "接続しています…" : mode === "join" ? "この部屋に参加する" : "授業の部屋を作る"}
+              {busy ? "接続しています…" : mode === "join" ? "この部屋に参加する" : mode === "solo" ? "ひとり学習を始める" : "授業の部屋を作る"}
             </button>
-            <p className="privacy-note">個人アカウントは不要です。分からないときは先生と一緒に確認してください。</p>
+            <p className="privacy-note">個人アカウントは不要です。入力した表示名は、この学習画面の中だけで使用します。</p>
           </form>
         </div>
       </section>
@@ -192,7 +230,7 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
         <div className="flow-title-row">
           <div>
             <h2 id="flow-title">パケットを、チームでバトンリレー。</h2>
-            <p>一人ひとりが機器を担当し、データがどこを通るのか順番に確かめます。</p>
+            <p>一人で役割を切り替えることも、仲間と分担することもできます。</p>
           </div>
           <span className="live-pill"><i /> みんなの画面が同時に更新</span>
         </div>
@@ -220,8 +258,8 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
         </article>
         <article>
           <span>02</span>
-          <h3>仲間と「相談する」</h3>
-          <p>次にどこへ送ればよいか、役割の違う仲間と情報を持ち寄って考えます。</p>
+          <h3>役割を変えて「考える」</h3>
+          <p>ひとりなら全機器を順番に、授業なら仲間と情報を持ち寄って考えます。</p>
         </article>
         <article>
           <span>03</span>
