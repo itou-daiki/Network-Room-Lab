@@ -177,11 +177,14 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
             <span aria-hidden="true">✓</span>
             <div><b>初めてでも大丈夫です</b><p>分からない言葉は画面の中で説明します。失敗しても、何度でもやり直せます。</p></div>
           </div>
-          <div className="hero-facts" aria-label="利用想定">
-            <div><b>1</b><span>案内を読む</span></div>
-            <div><b>2</b><span>役割を体験する</span></div>
-            <div><b>3</b><span>操作して確かめる</span></div>
-          </div>
+          <section className="hero-facts" aria-labelledby="learning-flow-title">
+            <p id="learning-flow-title">このアプリでの学び方</p>
+            <ol>
+              <li><span>1</span><div><b>案内を読む</b><small>画面に表示される「次にやること」を確認します。</small></div></li>
+              <li><span>2</span><div><b>役割を体験する</b><small>PCやルータなどの機器になって考えます。</small></div></li>
+              <li><span>3</span><div><b>操作して確かめる</b><small>選んだ操作の結果と、その理由を確認します。</small></div></li>
+            </ol>
+          </section>
         </div>
 
         <div className="entry-card">

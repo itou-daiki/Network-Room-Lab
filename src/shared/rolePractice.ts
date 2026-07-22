@@ -106,7 +106,7 @@ export const ROLE_PRACTICES: RolePracticeDefinition[] = [
     explainPrompt: "なぜWebサーバではなく、ゲートウェイのMACアドレスを調べたのですか？",
     sentenceStarter: "宛先は別のネットワークにあるので、PCはまず",
     explainKeywords: ["出口", "ゲートウェイ", "MACアドレス"],
-    termIds: ["ip-address", "prefix", "subnet-mask", "gateway", "arp", "arp-cache", "mac-address"],
+    termIds: ["url", "ip-address", "prefix", "subnet-mask", "gateway", "arp", "arp-cache", "mac-address"],
   },
   {
     role: "ACCESS_POINT",

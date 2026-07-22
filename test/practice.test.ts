@@ -82,6 +82,35 @@ describe("experiential practice commands", () => {
     expect(learnerText).not.toMatch(/ARP who has/i);
   });
 
+  it("explains common abbreviations with their full names and detailed beginner context", () => {
+    const expectedFullNames: Record<string, string> = {
+      url: "Uniform Resource Locator",
+      "ip-address": "Internet Protocol Address",
+      "mac-address": "Media Access Control Address",
+      arp: "Address Resolution Protocol",
+      dns: "Domain Name System",
+      ttl: "Time To Live",
+      tcp: "Transmission Control Protocol",
+      tls: "Transport Layer Security",
+      http: "Hypertext Transfer Protocol",
+      https: "Hypertext Transfer Protocol Secure",
+      ssid: "Service Set Identifier",
+    };
+
+    for (const [id, fullName] of Object.entries(expectedFullNames)) {
+      const term = NETWORK_GLOSSARY.find((item) => item.id === id);
+      expect(term?.fullName, id).toContain(fullName);
+      expect(term?.short.length, id).toBeGreaterThan(20);
+      expect(term?.detail.length, id).toBeGreaterThan(50);
+      expect(term?.example.length, id).toBeGreaterThan(20);
+    }
+
+    const arp = NETWORK_GLOSSARY.find((term) => term.id === "arp");
+    expect(arp?.detail).toContain("Addressは");
+    expect(arp?.detail).toContain("デフォルトゲートウェイ");
+    expect(arp?.detail).toContain("コマンドではなく");
+  });
+
   it("maps easy_Packet style commands to safe simulated diagnostics", () => {
     expect(parsePracticeCommand("nslookup www.mext.go.jp")).toMatchObject({
       kind: "DIAGNOSTIC",

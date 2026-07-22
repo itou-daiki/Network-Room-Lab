@@ -13,8 +13,12 @@ export function ContextTerms({ ids, title = "この場面の用語" }: { ids: st
         {terms.map((term) => (
           <details key={term.id} className="context-term">
             <summary>{term.label}{term.reading && <small>（{term.reading}）</small>}</summary>
-            <p><b>{term.short}</b>{term.detail}</p>
-            <span>例：{term.example}</span>
+            <div className="context-term-body">
+              {term.fullName && <div className="term-explanation formal-name"><span>正式名称・略語の元</span><p><b>{term.fullName}</b></p></div>}
+              <div className="term-explanation"><span>まず覚える意味</span><p><b>{term.short}</b></p></div>
+              <div className="term-explanation"><span>何のために使い、どう動くか</span><p>{term.detail}</p></div>
+              <div className="term-explanation example"><span>この実習での具体例</span><p>{term.example}</p></div>
+            </div>
           </details>
         ))}
       </div>
@@ -28,7 +32,7 @@ export function GlossaryPanel() {
     const normalized = query.trim().toLowerCase();
     if (!normalized) return NETWORK_GLOSSARY;
     return NETWORK_GLOSSARY.filter((term) =>
-      [term.label, term.reading, term.short, term.detail, term.example, term.category]
+      [term.label, term.reading, term.fullName, term.short, term.detail, term.example, term.category]
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(normalized)),
     );
@@ -40,12 +44,17 @@ export function GlossaryPanel() {
         <div><p className="panel-kicker">分からない言葉をその場で確認</p><h2 id="glossary-title">やさしいネットワーク用語集</h2></div>
         <label><span className="sr-only">用語を検索</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="例：DNS、出口、暗号化" /></label>
       </div>
-      <p className="glossary-guide">暗記するための一覧ではありません。操作中に分からない言葉が出たとき、意味と具体例を確かめるために使います。</p>
+      <p className="glossary-guide">暗記するための一覧ではありません。用語を開くと、正式名称、まず覚える意味、使う目的と動き、この実習での具体例の順に確認できます。</p>
       <div className="glossary-grid">
         {terms.map((term) => (
           <details key={term.id} className="glossary-card">
             <summary><span>{term.category}</span><b>{term.label}</b>{term.reading && <small>{term.reading}</small>}</summary>
-            <div><b>{term.short}</b><p>{term.detail}</p><small>具体例：{term.example}</small></div>
+            <div className="glossary-card-body">
+              {term.fullName && <div className="term-explanation formal-name"><span>正式名称・略語の元</span><p><b>{term.fullName}</b></p></div>}
+              <div className="term-explanation"><span>まず覚える意味</span><p><b>{term.short}</b></p></div>
+              <div className="term-explanation"><span>何のために使い、どう動くか</span><p>{term.detail}</p></div>
+              <div className="term-explanation example"><span>この実習での具体例</span><p>{term.example}</p></div>
+            </div>
           </details>
         ))}
         {terms.length === 0 && <p className="empty-state">該当する用語がありません。別の言葉で検索してください。</p>}
