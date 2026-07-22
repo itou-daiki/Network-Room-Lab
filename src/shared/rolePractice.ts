@@ -84,7 +84,7 @@ export const ROLE_PRACTICES: RolePracticeDefinition[] = [
     mission: "Webサーバへ送るデータの、最初の渡し先を決める",
     beginnerStory: "あなたは、Webページを見たい人が使っているPCです。入力されたWebサイトへデータを送り始めます。",
     everydayExample: "遠くの相手へ荷物を送るとき、自分で相手の家まで運ばず、まず近くの郵便局へ持ち込みます。PCも、遠くのWebサーバへ送るデータを、まず近くの出口となるルータへ渡します。",
-    situation: "ブラウザに、Webページの場所を表すURLが入力されました。Webサーバは、このPCとは別のネットワークにあります。",
+    situation: "ブラウザに、見たいWebページの場所を表すURLが入力されました。そのWebページのデータを保存し、PCから求められたときに返す機器がWebサーバです。このWebサーバは、PCとは別のネットワークにあります。",
     observationTitle: "PCのネットワーク設定",
     observationPurpose: "Webサーバが同じネットワークにいるかを判断し、最初にデータを渡す相手を決めるためです。",
     observations: [
