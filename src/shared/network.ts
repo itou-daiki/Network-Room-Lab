@@ -42,19 +42,19 @@ export function validateInterfaceConfig(input: {
   dns: string;
 }): string[] {
   const errors: string[] = [];
-  if (!isValidIpv4(input.address)) errors.push("IPアドレスの形式が正しくありません。");
+  if (!isValidIpv4(input.address)) errors.push("PCのIPアドレスは、192.168.10.23のように0〜255の数を4つ、点で区切って入力します。");
   if (!Number.isInteger(input.prefix) || input.prefix < 1 || input.prefix > 30) {
-    errors.push("プレフィックス長は1〜30で指定してください。");
+    errors.push("同じネットワークの範囲を表す数は1〜30で入力します。この実習の推奨値は24です。");
   }
-  if (!isValidIpv4(input.gateway)) errors.push("デフォルトゲートウェイの形式が正しくありません。");
-  if (!isValidIpv4(input.dns)) errors.push("DNSサーバの形式が正しくありません。");
+  if (!isValidIpv4(input.gateway)) errors.push("外部への出口は、192.168.10.1のようなIPアドレスの形で入力します。");
+  if (!isValidIpv4(input.dns)) errors.push("DNSサーバは、198.51.100.53のようなIPアドレスの形で入力します。");
   if (
     isValidIpv4(input.address) &&
     isValidIpv4(input.gateway) &&
     Number.isInteger(input.prefix) &&
     !isSameSubnet(input.address, input.gateway, input.prefix)
   ) {
-    errors.push("PCとデフォルトゲートウェイが同じサブネットにありません。");
+    errors.push(`PC（${input.address}/${input.prefix}）と出口（${input.gateway}）が同じネットワークにありません。PCは同じLAN内にある出口へ最初に渡すため、この実習では出口を192.168.10.1へ戻します。`);
   }
   return errors;
 }
@@ -79,7 +79,7 @@ export function simulateDiagnostic(
 ): DiagnosticResult {
   let success = true;
   let output: string[] = [];
-  let inference = "要求は最後まで到達しました。正常系の経路と各層の働きを説明できます。";
+  let inference = "確認用の通信は目的地まで届き、返事もPCへ戻りました。この結果から、途中の接続と経路は使えると判断できます。Webページ自体が正常かは、HTTPSの確認結果と分けて考えます。";
 
   const targetIsIp = isValidIpv4(target);
   const gatewayTarget = target === "192.168.10.1";
@@ -94,11 +94,11 @@ export function simulateDiagnostic(
   if (localLinkDown) {
     success = false;
     output = [`link: ${localLinkDown} is down`, "reply: none"];
-    inference = "PCからルータまでの途中で接続が切れています。全体図で赤いリンクを探し、接続を戻して比較します。";
+    inference = "PCから最初の出口であるルータへ届く前に、返事が途切れています。全体図の赤い接続線を探すと、どの2機器の間で止まったかを確認できます。接続を戻した後に同じコマンドを実行し、結果を比べます。";
   } else if (externalLinkDown && !gatewayTarget) {
     success = false;
     output = ["hop 1: 192.168.10.1 reachable", "hop 2: uplink is down"];
-    inference = "ルータまでは正常ですが、その先のWANリンクで止まっています。最後に成功した地点はルータです。";
+    inference = "出口のルータからは返事があるため、PCからルータまでは使えます。次の外部側接続で返事が途切れているため、原因の範囲をルータより先へ絞れます。";
   } else if (dnsLinkDown && needsDns) {
     success = false;
     output = [`query: ${target}`, "server: 198.51.100.53", "result: timed out"];
@@ -106,7 +106,7 @@ export function simulateDiagnostic(
   } else if (webLinkDown && tool !== "NSLOOKUP") {
     success = false;
     output = ["DNS: 203.0.113.80", "last reachable hop: internet", "destination: timed out"];
-    inference = "名前解決はできていますが、Webサーバへ向かう最後のリンクで止まっています。";
+    inference = "DNSからIPアドレスの答えは返っているため、名前の確認は完了しています。一方、Webサーバからは返事がないため、原因はDNSではなくWebサーバへ向かう最後の接続側にあります。";
   } else if (config && config.gateway !== "192.168.10.1" && !gatewayTarget) {
     success = false;
     output = [`local LAN: ${config.address}/${config.prefix}`, `gateway ${config.gateway}: no route to host`];

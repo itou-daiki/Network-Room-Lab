@@ -12,13 +12,21 @@ interface RouteNode {
   action: string;
 }
 
-const commonRoute: RouteNode[] = [
-  { id: "pc", label: "PC", action: "URLを入力し、通信を始める" },
-  { id: "ap", label: "無線AP", action: "Wi-Fiのデータを有線LANへ渡す" },
-  { id: "switch", label: "L2スイッチ", action: "次の機器につながる差込口を選ぶ" },
-  { id: "router", label: "ルータ", action: "PCの出口として、外部へ続く道を選ぶ" },
-  { id: "internet", label: "インターネット", action: "校外のサーバへ運ぶ" },
-];
+const commonRoute = (routeId: "dns" | "web"): RouteNode[] => routeId === "dns"
+  ? [
+      { id: "pc", label: "PC", action: "URLからWebサイト名を取り出し、DNSへの質問を作る" },
+      { id: "ap", label: "無線AP", action: "DNSへの質問をWi-Fiから有線LANへ渡す" },
+      { id: "switch", label: "L2スイッチ", action: "DNSへの質問をルータ側の差込口へ送る" },
+      { id: "router", label: "ルータ", action: "DNSサーバのIPアドレスを見て、外部へ続く道を選ぶ" },
+      { id: "internet", label: "インターネット", action: "DNSへの質問を校外のDNSサーバまで運ぶ" },
+    ]
+  : [
+      { id: "pc", label: "PC", action: "DNSで分かったIPアドレスを使い、「ページをください」という要求を作る" },
+      { id: "ap", label: "無線AP", action: "ページの要求をWi-Fiから有線LANへ渡す" },
+      { id: "switch", label: "L2スイッチ", action: "ページの要求をルータ側の差込口へ送る" },
+      { id: "router", label: "ルータ", action: "WebサーバのIPアドレスを見て、外部へ続く道を選ぶ" },
+      { id: "internet", label: "インターネット", action: "ページの要求を校外のWebサーバまで運ぶ" },
+    ];
 
 const routes: Array<{
   id: "dns" | "web";
@@ -37,10 +45,10 @@ const routes: Array<{
     id: "dns",
     step: "往復 1",
     title: "Webサイト名から、通信先のIPアドレスを調べる",
-    purpose: "PCはURLの名前だけでは通信先を決められないため、最初にDNSサーバへ質問します。",
+    purpose: "URLに書かれたwww.mext.go.jpは人が読みやすい名前です。PCは通信に使うIPアドレスをまだ知らないため、最初にDNSサーバへ質問します。",
     startState: "PCはWebサイト名「www.mext.go.jp」を知っていますが、通信先のIPアドレスはまだ知りません。",
     roundGoal: "DNSサーバから答えを受け取り、PCが通信先IPアドレス「203.0.113.80」を知ること",
-    outbound: "Webサイト名についての質問を送る",
+    outbound: "「www.mext.go.jpのIPアドレスを教えて」という質問を送る",
     returnText: "DNSサーバが、WebサーバのIPアドレス「203.0.113.80」を答えとしてPCへ返します。",
     afterLabel: "往復1が終わったら",
     afterReturn: "PCは受け取ったIPアドレスを使い、往復2でWebサーバへ学習指導要領ページを取りに行きます。",
@@ -50,10 +58,10 @@ const routes: Array<{
     id: "web",
     step: "往復 2",
     title: "分かったIPアドレスへ、学習指導要領ページを取りに行く",
-    purpose: "PCはWebサーバの場所が分かった後、安全な通信を準備して学習指導要領ページを要求します。",
+    purpose: "PCはWebサーバのIPアドレスが分かった後、通信路と暗号化を準備し、「学習指導要領ページをください」という要求を送ります。Webサーバはその返事としてページのデータを返します。",
     startState: "PCは往復1で、WebサーバのIPアドレス「203.0.113.80」を受け取りました。",
     roundGoal: "Webサーバからページのデータを受け取り、PCのブラウザに学習指導要領ページを表示すること",
-    outbound: "学習指導要領ページをください、という要求を送る",
+    outbound: "「学習指導要領ページをください」という要求を送る",
     returnText: "Webサーバが、成功の返事「200 OK」と学習指導要領ページのデータをPCへ返します。",
     afterLabel: "往復2が終わったら",
     afterReturn: "PCが受け取ったデータをブラウザで組み立て、学習指導要領ページを画面に表示します。これで大きなゴールを達成します。",
@@ -81,7 +89,7 @@ export function LearningRouteMap({ activeNodeId, focus = "all", compact = false 
 
       <div className="route-lanes">
         {routes.map((route) => {
-          const nodes = [...commonRoute, route.destination];
+          const nodes = [...commonRoute(route.id), route.destination];
           const focused = focus === "all" || focus === "gateway" || focus === route.id;
           return (
             <article className={`route-lane route-${route.id} ${focused ? "focused" : "muted"}`} key={route.id}>

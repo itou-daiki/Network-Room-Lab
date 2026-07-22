@@ -8,7 +8,7 @@ import {
 } from "../src/shared/practice";
 import { LEARNING_SCENARIO_GOAL, PROTOCOL_STEPS } from "../src/shared/scenario";
 import { NETWORK_GLOSSARY } from "../src/shared/glossary";
-import { CORE_ROLE_IDS, ROLE_PRACTICES, ROLE_READING_GUIDES, rolePractice } from "../src/shared/rolePractice";
+import { CORE_ROLE_IDS, ROLE_PRACTICES, ROLE_READING_GUIDES, ROLE_STAGE_TERM_IDS, rolePractice } from "../src/shared/rolePractice";
 
 describe("experiential practice commands", () => {
   it("provides one hands-on exercise with a single correct action for every core role", () => {
@@ -47,6 +47,12 @@ describe("experiential practice commands", () => {
       for (const termId of practice.termIds) {
         expect(NETWORK_GLOSSARY.some((term) => term.id === termId), `${practice.role}: ${termId}`).toBe(true);
       }
+      for (const [stage, termIds] of Object.entries(ROLE_STAGE_TERM_IDS[practice.role])) {
+        expect(termIds.length, `${practice.role} stage ${stage}`).toBeGreaterThanOrEqual(3);
+        for (const termId of termIds) {
+          expect(NETWORK_GLOSSARY.some((term) => term.id === termId), `${practice.role} stage ${stage}: ${termId}`).toBe(true);
+        }
+      }
     }
     expect(rolePractice("OBSERVER")).toBeUndefined();
   });
@@ -64,6 +70,8 @@ describe("experiential practice commands", () => {
     expect(pcPractice?.beginnerStory).toContain("ページのデータをPCへ返します");
     expect(pcPractice?.situation).toContain("DNSへの問い合わせが終わり");
     expect(pcPractice?.successMeanings.join(" ")).toContain("このページをください");
+    expect(ROLE_STAGE_TERM_IDS.CLIENT_PC[1]).toContain("dns");
+    expect(ROLE_STAGE_TERM_IDS.CLIENT_PC[1]).toContain("request-response");
 
     for (const task of PRACTICE_TASKS) {
       expect(task.purpose.length, task.id).toBeGreaterThan(20);
@@ -166,5 +174,10 @@ describe("experiential practice commands", () => {
       expect(choices.filter((choice) => choice.correct)).toHaveLength(1);
       expect(new Set(choices.map((choice) => choice.label)).size).toBe(3);
     }
+    expect(PROTOCOL_STEPS[0]?.description).toContain("DNSへ質問");
+    expect(PROTOCOL_STEPS[2]?.description).toContain("ブロードキャスト");
+    expect(PROTOCOL_STEPS[3]?.description).toContain("学習モデルでは同じLAN内の繰り返しを省略");
+    expect(PROTOCOL_STEPS[7]?.description).toContain("DNSの答え");
+    expect(PROTOCOL_STEPS.at(-1)?.description).toContain("ブラウザがHTMLを読み取り");
   });
 });

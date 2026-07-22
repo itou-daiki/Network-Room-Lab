@@ -177,7 +177,7 @@ function DeviceNode({
       <div className="device-glyph" aria-hidden="true">{id === "internet" ? "◎" : definition?.shortLabel.slice(0, 3) ?? "NET"}</div>
       <b>{label}</b>
       <small>{id === "router" ? `PCの出口（デフォルトゲートウェイ）${address ? ` / ${address}` : ""}` : address ?? definition?.observes[0] ?? "複数経路"}</small>
-      {active && <em>通信データ</em>}
+      {active && <em>いま処理中</em>}
       {faulted && <em className="fault-tag">障害中</em>}
     </div>
   );
@@ -275,7 +275,7 @@ function AddressingMission({ snapshot, busy, act }: SharedPanelProps) {
     <form className="address-form" onSubmit={submit}>
       <div className="mission-callout">
         <span>この実験の目的</span>
-        <p>PCが文部科学省の学習指導要領ページへデータを送れる設定を理解するために、出口の設定をわざと間違え、理由を確認してから正しい設定へ戻します。</p>
+        <p>PCがDNSへ質問し、Webサーバへ「ページをください」と要求し、返事を受け取れる設定を理解します。外部への出口をわざと間違え、通信できない理由を確認してから正しい設定へ戻します。</p>
       </div>
       <div className="inline-learning-lead" role="status"><span>次にやること</span><div><b>{addressAction.title}</b><p>{addressAction.detail}</p></div></div>
       <div className="field-grid">
@@ -336,7 +336,7 @@ function ProtocolMission({ snapshot, busy, act }: SharedPanelProps) {
   const protocolAction = !canAdvance
     ? { title: `${roleDefinition(activeStep.actorRole).label}の操作を待ちます`, detail: "担当者が進めると、この画面は自動で次の段階へ切り替わります。" }
     : selectedChoice?.correct
-      ? { title: "理由を読み、青い「次の段階へ進む」を押します", detail: "目的に合う操作を選べています。通信データを次の機器へ渡します。" }
+      ? { title: "理由を読み、青い「次の段階へ進む」を押します", detail: `目的に合う操作を選べています。「${activeStep.title}」の結果を確定し、次の通信段階へ進みます。` }
       : selectedChoice
         ? { title: "表示された理由を読み、別の答えを選びます", detail: "間違えても減点されません。A・B・Cは何度でも選び直せます。" }
         : sharedUnassignedRole
@@ -358,7 +358,7 @@ function ProtocolMission({ snapshot, busy, act }: SharedPanelProps) {
         ))}
       </div>
       <div className="step-counter"><span>全17段階の {activeStep.index + 1}</span><b>{activeStep.title}</b></div>
-      <p>学習指導要領ページの表示に一歩近づけるため、いまの機器が行う操作を1つ選びます。</p>
+      <p>上に表示された目的を達成するため、いま担当している機器が行う操作を1つ選びます。現在運んでいるものは、段階によりARPの質問、DNSの質問、接続の合図、ページの要求、ページの返事のいずれかです。</p>
       <div className="actor-line">
         <span style={{ background: roleDefinition(activeStep.actorRole).accent }} />
         {isSolo ? "いま体験する役割" : "次の担当"}: <b>{roleDefinition(activeStep.actorRole).label}</b>
@@ -505,7 +505,7 @@ function MissionPanel({ snapshot, busy, act }: SharedPanelProps) {
       </div>
     ) : <p>教員モードです。参加者へ役割を割り当ててください。</p>;
   } else if (snapshot.room.phase === "TOPOLOGY") {
-    content = <div className="topology-mission"><div className="mission-callout"><span>この実験の目的</span><p>文部科学省の学習指導要領ページを見るために、PCのデータがどの機器を順番に通るかを確かめます。次に道の線を1本だけ切り、どこまで届かなくなるかを体験してから、同じ線を押して元に戻します。</p></div><ul>{snapshot.room.links.map((link) => <li key={link.id}><span className={link.up ? "ok" : "ng"}>{link.up ? "接続中" : "切断"}</span><b>{deviceLabel(link.from)} → {deviceLabel(link.to)}</b><small>{link.medium}</small></li>)}</ul><ContextTerms ids={PHASE_TERM_IDS.TOPOLOGY ?? []} /></div>;
+    content = <div className="topology-mission"><div className="mission-callout"><span>この実験の目的</span><p>DNSへの質問とWebサーバへのページ要求が、PCからどの機器を通って校外へ進むかを確かめます。サーバからの答えとページのデータは、同じ機器を反対向きに通ってPCへ戻ります。次に接続線を1本だけ切り、どこから先へ届かなくなるかを確認してから、同じ線を押して元に戻します。</p></div><ul>{snapshot.room.links.map((link) => <li key={link.id}><span className={link.up ? "ok" : "ng"}>{link.up ? "接続中" : "切断"}</span><b>{deviceLabel(link.from)} → {deviceLabel(link.to)}</b><small>{link.medium}</small></li>)}</ul><ContextTerms ids={PHASE_TERM_IDS.TOPOLOGY ?? []} /></div>;
   } else if (snapshot.room.phase === "ADDRESSING") {
     content = <AddressingMission snapshot={snapshot} busy={busy} act={act} />;
   } else if (snapshot.room.phase === "PROTOCOL") {
@@ -535,7 +535,7 @@ function PacketInspector({ snapshot }: { snapshot: RoomSnapshot }) {
   return (
     <section className="panel packet-panel" aria-labelledby="packet-title">
       <div className="panel-heading"><div><p className="panel-kicker">流れているデータ</p><h2 id="packet-title">パケットの中身</h2></div><span className={`packet-state ${complete ? "complete" : "moving"}`}>{complete ? "到着" : "通信中"}</span></div>
-      <p className="beginner-glossary"><b>パケットとは？</b> ネットワークを流れる、小さく分けられたデータのまとまりです。</p>
+      <p className="beginner-glossary"><b>パケットとは？</b> DNSへの質問、ページの要求、サーバからの返事などを、ネットワークで運びやすい大きさに分けたまとまりです。この欄には、現在どの内容を運んでいるかが表示されます。</p>
       <div className="packet-meta"><span>データの識別名</span><b>pkt_web_001</b><span>いまの通信</span><b>{step.protocol}</b></div>
       <div className="packet-layers">
         {layers.map((layer, layerIndex) => (

@@ -51,10 +51,10 @@ export function learningLead(
       const step = PROTOCOL_STEPS[snapshot.room.protocolIndex]!;
       const actorAssigned = snapshot.room.participants.some((participant) => participant.role === step.actorRole);
       if (actorAssigned && snapshot.viewer.role !== step.actorRole) {
-        return { title: `${roleDefinition(step.actorRole).label}の操作を待ちます`, detail: "担当者が進めると画面は自動で更新されます。その間、経路図で通信データの現在地を見ます。", after: "自分の担当になったら選択肢が押せるようになります。", targetId: "topology-panel", targetLabel: "現在地を見る", state: "waiting" };
+        return { title: `${roleDefinition(step.actorRole).label}の操作を待ちます`, detail: `担当者が進めると画面は自動で更新されます。その間、経路図で「${step.title}」を行っている機器の位置を見ます。`, after: "自分の担当になったら選択肢が押せるようになります。", targetId: "topology-panel", targetLabel: "現在地を見る", state: "waiting" };
       }
       return actorAssigned
-        ? { title: `あなたの番です。全17段階の${step.index + 1}で、操作を1つ選びます`, detail: `学習指導要領ページの表示に近づけるため、「${step.title}」を行う操作をA・B・Cから選びます。`, after: "目的に合う操作を選ぶと、通信データを次の担当へ渡せます。", targetId: "mission-panel", targetLabel: "選択肢へ", state: "action" }
+        ? { title: `あなたの番です。全17段階の${step.index + 1}で、操作を1つ選びます`, detail: `学習指導要領ページの表示に近づけるため、「${step.title}」を行う操作をA・B・Cから選びます。`, after: "目的に合う操作を選ぶと、次の通信段階へ進みます。", targetId: "mission-panel", targetLabel: "選択肢へ", state: "action" }
         : { title: `班で担当します。全17段階の${step.index + 1}で、操作を1つ選びます`, detail: `${roleDefinition(step.actorRole).label}の担当者がいないため、班のみんなで「${step.title}」を行う操作を考えます。`, after: "班の誰かが目的に合う操作を選ぶと、全員の画面が次へ進みます。", targetId: "mission-panel", targetLabel: "選択肢へ", state: "action" };
     }
     if (phase === "REFLECTION") {

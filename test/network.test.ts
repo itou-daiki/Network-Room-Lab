@@ -18,7 +18,7 @@ describe("network learning model", () => {
       gateway: "192.168.20.1",
       dns: "198.51.100.53",
     });
-    expect(errors).toContain("PCとデフォルトゲートウェイが同じサブネットにありません。");
+    expect(errors.some((error) => error.includes("PC（192.168.10.23/24）と出口（192.168.20.1）が同じネットワークにありません"))).toBe(true);
   });
 
   it("separates DNS failure from IP reachability", () => {

@@ -624,6 +624,10 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
 .role-overall-goal h3 { @apply m-0 text-lg font-black text-slate-900; }
 .role-overall-goal code { @apply mt-2 inline-block rounded-lg bg-white px-3 py-2 text-xs font-bold text-dodger-700; }
 .role-overall-goal p { @apply m-0 mt-2 text-sm leading-relaxed text-slate-600; }
+.role-sequence-note { @apply mx-5 mb-5 flex gap-3 rounded-xl border border-dodger-200 bg-white p-4; }
+.role-sequence-note > span { @apply h-fit shrink-0 rounded-full bg-dodger-100 px-3 py-1 text-xs font-black text-dodger-800; }
+.role-sequence-note p { @apply m-0 flex flex-col text-sm leading-relaxed text-slate-600; }
+.role-sequence-note b { @apply text-slate-900; }
 
 .role-practice-tabs { @apply mt-5 border-y; }
 .role-practice-tabs button { min-height:68px; }
@@ -779,7 +783,7 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
   .role-practice-heading, .practice-heading, .glossary-heading { align-items: flex-start; flex-direction: column; gap: 10px; }.role-practice-tabs { grid-template-columns: repeat(3,1fr); }.role-practice-intro { grid-template-columns: 36px 1fr; margin:10px 10px 0; }.role-practice-intro em { display:none; }.role-practice-intro h3 { @apply text-lg; }.role-practice-cycle { grid-template-columns:1fr 1fr; margin:10px; }.role-practice-cycle i { display:none; }.role-reading-guide { margin:10px; }.role-reading-guide > summary em { display:none; }.role-practice-layout { grid-template-columns:1fr; padding:10px; }.role-result { grid-column:auto; }.role-explanation-area { grid-template-columns:1fr; margin:0 10px 10px; }.role-explanation-area > button { @apply w-full; }.practice-cycle { grid-template-columns: 1fr; }.practice-layout { padding: 10px; }.terminal-output { min-height: 270px; }.context-term-list, .hypothesis-choices, .glossary-grid { grid-template-columns: 1fr; }.context-terms-heading small { display: none; }.glossary-heading label { max-width: none; }
   .role-next-action { @apply mx-3 mt-3 grid-cols-[42px_1fr] p-3; }.role-next-action > span { @apply h-10 w-10; }.role-next-action b { @apply text-base; }.role-next-action p { @apply text-xs; }
   .role-all-complete { @apply m-3 grid-cols-[44px_1fr] p-4; }.role-all-complete > span { @apply h-11 w-11; }.role-all-complete > button { @apply col-span-2 w-full; }
-  .role-overall-goal { @apply m-3 grid-cols-1 gap-3 p-4; }.role-overall-goal > span { @apply w-fit; }.role-overall-goal h3 { @apply text-base; }.role-overall-goal code { @apply break-all; }
+  .role-overall-goal { @apply m-3 grid-cols-1 gap-3 p-4; }.role-overall-goal > span { @apply w-fit; }.role-overall-goal h3 { @apply text-base; }.role-overall-goal code { @apply break-all; }.role-sequence-note { @apply mx-3 mb-3 flex-col; }.role-sequence-note > span { @apply w-fit; }
   .role-practice-tabs { @apply mt-3; }.role-practice-tabs button { @apply grid-cols-[24px_1fr] gap-x-1 px-2 py-2; min-height:60px; }.role-practice-tabs button > span { @apply h-6 w-6; }.role-practice-tabs button b { @apply text-xs; }.role-practice-tabs button small { @apply text-[9px]; }
   .role-practice-stage { @apply mt-5 px-4; }.role-practice-stage > div { @apply gap-2 pt-3; }.role-practice-stage > div > span { @apply h-7 w-7; }.role-practice-stage b { @apply text-xs; }.role-practice-stage small { display:none; }
   .role-practice-intro,.role-guided-step,.role-support-details { width:calc(100% - 20px); margin-left:10px; margin-right:10px; }

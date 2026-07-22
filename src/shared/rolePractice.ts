@@ -45,6 +45,53 @@ export const CORE_ROLE_IDS: CoreRoleId[] = [
   "WEB_SERVER",
 ];
 
+export type RolePracticeStage = 1 | 2 | 3 | 4 | 5;
+
+export const ROLE_STAGE_TERM_IDS: Record<CoreRoleId, Record<RolePracticeStage, string[]>> = {
+  CLIENT_PC: {
+    1: ["client-server", "url", "dns", "ip-address", "request-response", "gateway"],
+    2: ["ip-address", "prefix", "subnet-mask", "gateway", "arp-cache", "mac-address"],
+    3: ["subnet", "gateway", "arp", "mac-address"],
+    4: ["arp", "arp-cache", "mac-address", "gateway"],
+    5: ["subnet", "gateway", "mac-address"],
+  },
+  ACCESS_POINT: {
+    1: ["access-point", "wifi", "ethernet", "frame", "ip-address", "request-response"],
+    2: ["ssid", "wifi", "ethernet", "frame", "mac-address"],
+    3: ["access-point", "frame", "ip-address", "ethernet"],
+    4: ["wifi", "ethernet", "frame", "ip-address"],
+    5: ["access-point", "frame", "ip-address"],
+  },
+  L2_SWITCH: {
+    1: ["l2-switch", "switch-port", "mac-address", "mac-table", "frame", "router"],
+    2: ["switch-port", "mac-address", "mac-table", "frame", "ethernet"],
+    3: ["l2-switch", "switch-port", "mac-address", "mac-table"],
+    4: ["mac-address", "mac-table", "switch-port"],
+    5: ["mac-address", "mac-table", "switch-port"],
+  },
+  ROUTER: {
+    1: ["router", "lan", "wan", "ip-address", "route", "packet"],
+    2: ["ip-address", "ttl", "route", "prefix", "lan", "wan"],
+    3: ["route", "prefix", "ttl", "wan"],
+    4: ["route", "ttl", "packet", "wan"],
+    5: ["route", "ttl", "lan", "wan"],
+  },
+  DNS_SERVER: {
+    1: ["dns", "domain", "ip-address", "dns-record", "request-response"],
+    2: ["dns", "domain", "dns-record", "ip-address", "ttl"],
+    3: ["dns", "dns-record", "ip-address", "ttl"],
+    4: ["dns", "dns-record", "ip-address", "ttl"],
+    5: ["dns", "domain", "ip-address", "client-server"],
+  },
+  WEB_SERVER: {
+    1: ["client-server", "request-response", "tcp", "tls", "http", "https"],
+    2: ["tcp", "port", "tls", "certificate", "http-method", "status-code", "html"],
+    3: ["request-response", "http-method", "status-code", "tls", "html"],
+    4: ["status-code", "html", "tls", "https", "request-response"],
+    5: ["tcp", "tls", "http", "status-code", "request-response"],
+  },
+};
+
 export const ROLE_READING_GUIDES: Record<CoreRoleId, RoleReadingGuideItem[]> = {
   CLIENT_PC: [
     { target: "PCの住所：192.168.10.23/24", reading: "IPv4アドレスは、点で区切った4つの数です。/24では先頭3つ（192.168.10）が同じネットワーク、最後の23がこのPCを表します。", check: "WindowsのPCでは、ipconfigという確認コマンドを実行します。このPCの住所（IPv4 Address）、範囲（Subnet Mask）、出口（Default Gateway）、DNSサーバ（DNS Servers）の4行を上から確認します。" },
@@ -54,7 +101,7 @@ export const ROLE_READING_GUIDES: Record<CoreRoleId, RoleReadingGuideItem[]> = {
   ACCESS_POINT: [
     { target: "SSID: classroom-net", reading: "SSIDはWi-Fiを見分ける名前です。似た名前ではなく、文字列全体が一致しているかを見ます。", check: "接続端末一覧で、PCがclassroom-netへ接続済みか確認します。" },
     { target: "運び方：Wi-Fi → Ethernet", reading: "PCから受け取る無線区間と、次へ送る有線区間では運び方が変わります。外側の入れ物（フレーム）は替えますが、中の送信元と最終目的地のIPアドレスは変えません。", check: "無線アクセスポイントの管理画面で、PC側のWi-Fi接続と、L2スイッチ側の有線接続がどちらも接続中かを確認します。" },
-    { target: "送った機器と次に届ける機器のMACアドレス", reading: "送信元MACはデータを送った近くの機器、宛先MACは次に渡す近くの機器を示します。", check: "管理画面のフレーム情報で、送った機器（Source MAC）と次に届ける機器（Destination MAC）を別々に確認します。" },
+    { target: "送った機器と次に届ける機器のMACアドレス", reading: "送信元MACは質問や要求を送った近くの機器、宛先MACはそれを次に渡す近くの機器を示します。", check: "管理画面のフレーム情報で、送った機器（Source MAC）と次に届ける機器（Destination MAC）を別々に確認します。" },
   ],
   L2_SWITCH: [
     { target: "対応表：ルータの番号10-01 → 2番の差込口", reading: "左が機器を見分けるMACアドレス、右がその機器につながる差込口です。次に届けるルータの番号と同じ行を探します。", check: "L2スイッチの管理画面で、ルータのMACアドレス02-00-00-00-10-01が2番の差込口（port 2）に登録されているか確認します。" },
@@ -90,14 +137,14 @@ export const ROLE_PRACTICES: RolePracticeDefinition[] = [
     observations: [
       { label: "このPCの住所（IPアドレス）", value: "192.168.10.23/24", meaning: "ネットワーク上で、このPCを見分ける住所です。/24は同じネットワークの範囲を判断する手がかりです。" },
       { label: "Webサーバの住所（宛先IP）", value: "203.0.113.80", meaning: "「このページをください」という要求を届けたいWebサーバの住所です。PCの住所と範囲が違うため、直接は渡せません。" },
-      { label: "外部への出口（デフォルトゲートウェイ）", value: "192.168.10.1", meaning: "別のネットワークへ送るとき、PCが最初にデータを渡すルータです。" },
+      { label: "外部への出口（デフォルトゲートウェイ）", value: "192.168.10.1", meaning: "別のネットワークへページの要求を送るとき、PCが最初にその要求を渡すルータです。" },
       { label: "出口の機器番号を覚えた表（ARPキャッシュ）", value: "192.168.10.1 → 未登録", meaning: "出口へ直接渡すために必要なMACアドレスが、まだ表に登録されていません。" },
     ],
     decisionHint: "自分と宛先のIPは先頭の数字が異なります。遠くのWebサーバへの要求は、まず同じLANにいる「出口」へ渡します。",
     question: "別ネットワークのWebサーバへ「このページをください」という要求を送り始めるために、このPCが最初に行う操作はどれですか？",
     choices: [
       { id: "pc-web-direct", label: "WebサーバのMACアドレスをインターネット全体へ問い合わせる", correct: false, feedback: "MACアドレスを使う範囲は同じリンク内です。遠いWebサーバではなく、まず同じLANにいる出口を調べます。" },
-      { id: "pc-arp-gateway", label: "出口のルータの機器番号（MACアドレス）をARPで調べる", correct: true, feedback: "届け先が別ネットワークなので、PCは最初の出口となるルータの機器番号を調べてからデータを渡します。この仕組みをARPと呼びます。" },
+      { id: "pc-arp-gateway", label: "出口のルータの機器番号（MACアドレス）をARPで調べる", correct: true, feedback: "Webサーバは別ネットワークにあるため、PCは最初の出口となるルータの機器番号を調べてから、ページの要求を渡します。この仕組みをARPと呼びます。" },
       { id: "pc-change-ip", label: "自分のIPアドレスをWebサーバと同じ値へ変更する", correct: false, feedback: "同じIPアドレスを使うと重複します。異なるネットワークへはルータを経由します。" },
     ],
     successTitle: "ARPキャッシュへ出口を登録しました",
@@ -110,20 +157,20 @@ export const ROLE_PRACTICES: RolePracticeDefinition[] = [
   },
   {
     role: "ACCESS_POINT",
-    mission: "PCからWi-Fiで届いたデータを、有線LANへ渡す",
-    beginnerStory: "あなたは無線アクセスポイントです。PCから電波で受け取ったデータを、次の有線機器へ渡します。",
-    everydayExample: "駅の乗り換え通路で、同じ乗客が電車からバスへ乗り換える場面に似ています。運ぶ方法は変わりますが、向かう人と目的地は変わりません。",
-    situation: "接続済みのPCから、Wi-Fiでデータが届きました。次は、有線でつながるL2スイッチへ渡します。",
+    mission: "PCが送った要求を、Wi-Fi区間から有線LAN区間へ橋渡しする",
+    beginnerStory: "あなたは無線アクセスポイントです。PCが送った「このページをください」という要求を電波で受け取り、次のL2スイッチへ有線LANで渡します。要求の内容や最終目的地は変えません。",
+    everydayExample: "駅の乗り換え通路で、同じ乗客が電車からバスへ乗り換える場面に似ています。乗り物は変わっても、乗っている人と目的地は変わりません。",
+    situation: "接続済みのPCから、「このページをください」という要求を入れたWi-Fiフレームが届きました。次は、その要求を有線でつながるL2スイッチへ渡します。",
     observationTitle: "無線アクセスポイントの接続と受信状態",
-    observationPurpose: "PCからのデータを受け取れていて、次のL2スイッチへ渡せる状態かを判断するためです。",
+    observationPurpose: "PCから要求を受け取れていて、同じ要求を次のL2スイッチへ渡せる状態かを判断するためです。",
     observations: [
       { label: "Wi-Fiの名前（SSID）", value: "classroom-net", meaning: "PCが接続しているWi-Fiを見分ける名前です。" },
-      { label: "接続しているPC", value: "PC / 02-00-00-00-10-23", meaning: "データを送ったPCが、このWi-Fiへ接続済みだと分かります。" },
-      { label: "PCから届いたデータ", value: "Wi-Fiフレーム", meaning: "PCから、Wi-Fi区間で使う形のデータを受け取りました。この形をフレームと呼びます。" },
+      { label: "接続しているPC", value: "PC / 02-00-00-00-10-23", meaning: "ページの要求を送ったPCが、このWi-Fiへ接続済みだと分かります。" },
+      { label: "PCから届いた要求の入れ物", value: "Wi-Fiフレーム", meaning: "「このページをください」という要求が、Wi-Fi区間で使う入れ物に入って届きました。この入れ物をフレームと呼びます。" },
       { label: "次の機器へ続く有線接続", value: "Ethernet / 接続中", meaning: "L2スイッチへ続く有線LANが使える状態です。Ethernetは有線LANの通信方式です。" },
     ],
     decisionHint: "入口はWi-Fi、出口はEthernetです。中のIPパケットは同じ相手へ向かうので変更しません。",
-    question: "PCから届いたデータをL2スイッチ側へ渡すために、無線アクセスポイントが行う操作はどれですか？",
+    question: "PCから届いた「ページをください」という要求をL2スイッチ側へ渡すために、無線アクセスポイントが行う操作はどれですか？",
     choices: [
       { id: "ap-change-ip", label: "送信元と宛先のIPアドレスを書き換える", correct: false, feedback: "無線APは、この場面ではIPの経路選択をしません。リンク層の形式を橋渡しします。" },
       { id: "ap-drop", label: "無線で届いたため、有線側へは送らず破棄する", correct: false, feedback: "上りEthernetポートは接続中です。無線端末の通信を有線LANへ渡すのが役割です。" },
@@ -139,28 +186,28 @@ export const ROLE_PRACTICES: RolePracticeDefinition[] = [
   },
   {
     role: "L2_SWITCH",
-    mission: "届いたデータを出す差込口（ポート）を決める",
-    beginnerStory: "あなたはL2スイッチです。複数のケーブルの中から、届け先につながる1本を選びます。",
+    mission: "届いた要求をルータへ渡すため、出す差込口（ポート）を決める",
+    beginnerStory: "あなたはL2スイッチです。無線アクセスポイントから届いた要求をルータへ渡すため、複数のLANケーブルの中から使う差込口を1つ選びます。同じLAN内の次の相手を探す仕事なので、WebサーバのIPアドレスではなく、ルータのMACアドレスと差込口の対応表を使います。",
     everydayExample: "教室の座席表を見て、手紙を相手の席にだけ届ける案内係に似ています。座席表がMACアドレス表、席へ続く通路がポートです。",
-    situation: "無線アクセスポイントにつながる1番の差込口（port 1）から、ルータへ届けたいデータが届きました。",
-    observationTitle: "L2スイッチが受け取ったデータとMACアドレス表",
-    observationPurpose: "届け先のルータがどの差込口につながっているかを調べ、データを出すポートを決めるためです。",
+    situation: "無線アクセスポイントにつながる1番の差込口（port 1）から、「このページをください」という要求を含むEthernetフレームが届きました。次は、出口のルータへ渡します。",
+    observationTitle: "L2スイッチが受け取った要求とMACアドレス表",
+    observationPurpose: "要求の次の渡し先であるルータが、どの差込口につながっているかを調べるためです。",
     observations: [
-      { label: "データが入ってきた差込口（受信ポート）", value: "1番の差込口（port 1） / 無線AP", meaning: "このデータは、無線アクセスポイント側につながる1番の差込口から届きました。" },
-      { label: "送った機器の番号（送信元MAC）", value: "02-00-00-00-10-23", meaning: "同じLAN内で、データを送ったPCを見分ける番号です。" },
+      { label: "要求が入ってきた差込口（受信ポート）", value: "1番の差込口（port 1） / 無線AP", meaning: "「このページをください」という要求は、無線アクセスポイント側につながる1番の差込口から届きました。" },
+      { label: "要求を送った機器の番号（送信元MAC）", value: "02-00-00-00-10-23", meaning: "同じLAN内で、ページの要求を送ったPCを見分ける番号です。" },
       { label: "次に届ける機器の番号（宛先MAC）", value: "02-00-00-00-10-01", meaning: "同じLAN内で、次に届けたいルータを見分ける番号です。" },
       { label: "機器番号と差込口の対応表（MACアドレス表）", value: "10-01 → 2番（port 2） / 10-23 → 1番（port 1）", meaning: "次に届ける機器番号の末尾10-01を探すと、ルータは2番の差込口側にいると分かります。" },
     ],
     decisionHint: "次に届ける機器番号の末尾「10-01」と、対応表の「10-01 → 2番の差込口」を照合します。",
-    question: "ルータへデータを届けるために、L2スイッチはどのポートへ出しますか？",
+    question: "ページの要求を次のルータへ届けるために、L2スイッチはどのポートから送りますか？",
     choices: [
       { id: "switch-port-2", label: "対応表に従い、ルータ側の2番の差込口へ送る", correct: true, feedback: "次に届けるルータのMACアドレスに対応する差込口が分かっているので、2番だけへ送れます。" },
-      { id: "switch-port-1", label: "受け取った無線AP側の1番の差込口へ送り返す", correct: false, feedback: "1番の差込口は、データを送ってきた側です。次に届ける機器番号と対応表を比べます。" },
+      { id: "switch-port-1", label: "受け取った無線AP側の1番の差込口へ送り返す", correct: false, feedback: "1番の差込口は、要求が入ってきた側です。次に届けるルータの機器番号と対応表を比べます。" },
       { id: "switch-dns", label: "DNSへ問い合わせて、出力ポートを決めてもらう", correct: false, feedback: "L2スイッチの転送判断にはDNSではなくMACアドレス表を使います。" },
     ],
     successTitle: "ルータ側の2番の差込口だけへ送りました",
-    successOutput: ["新しく記録：PCのMACアドレス → 1番の差込口", "対応表から発見：ルータのMACアドレス → 2番の差込口", "データを送る場所：2番の差込口"],
-    successMeanings: ["データを送ったPCは1番の差込口側にいると記録しました。", "次に届けるルータは2番の差込口側にいると表から分かりました。", "必要な2番の差込口だけへデータを送りました。"],
+    successOutput: ["新しく記録：PCのMACアドレス → 1番の差込口", "対応表から発見：ルータのMACアドレス → 2番の差込口", "ページの要求を送る場所：2番の差込口"],
+    successMeanings: ["要求を送ったPCは1番の差込口側にいると記録しました。", "次に届けるルータは2番の差込口側にいると表から分かりました。", "ページの要求を、ルータにつながる2番の差込口だけへ送りました。"],
     explainPrompt: "すべての差込口ではなく、2番の差込口だけへ送れた根拠は何ですか？",
     sentenceStarter: "宛先MACアドレスをMACアドレス表で調べると、",
     explainKeywords: ["10-01", "2番の差込口", "MACアドレス表"],
@@ -168,20 +215,20 @@ export const ROLE_PRACTICES: RolePracticeDefinition[] = [
   },
   {
     role: "ROUTER",
-    mission: "宛先のIPアドレスを見て、外部へ続く道を選ぶ",
-    beginnerStory: "あなたはルータです。別のネットワークへ向かうデータを受け取り、次に進む道を選びます。",
+    mission: "要求の宛先IPアドレスを見て、Webサーバへ近づく次の道を選ぶ",
+    beginnerStory: "あなたはルータです。校内LANから受け取った「このページをください」という要求を別のネットワークへ送るため、宛先IPアドレスと経路表を見て、自分の次に渡す方向を選びます。1台のルータがWebサーバまでの全経路を決めるのではなく、途中のルータが同じ判断を繰り返します。",
     everydayExample: "道路の分岐点で、荷物の住所と案内標識を見比べ、進む方向を決める案内係に似ています。経路表が案内標識です。",
-    situation: "校内LAN側から、外部のWebサーバへ届けたい、IPアドレス付きのデータ（IPパケット）が届きました。",
+    situation: "校内LAN側から、外部のWebサーバへ届けたい要求がIPパケットに入って届きました。宛先IPアドレスはWebサーバを示す203.0.113.80です。",
     observationTitle: "ルータの受信情報と経路表",
-    observationPurpose: "WebサーバのIPアドレスに合う道を経路表から探し、データをLAN側と外部側のどちらへ送るか決めるためです。",
+    observationPurpose: "ページの要求に付いたWebサーバのIPアドレスと経路表を比べ、LAN側と外部側のどちらへ送るか決めるためです。",
     observations: [
-      { label: "目的地の住所（宛先IP）", value: "203.0.113.80", meaning: "データが目指しているWebサーバのIPアドレスです。" },
+      { label: "目的地の住所（宛先IP）", value: "203.0.113.80", meaning: "「このページをください」という要求が目指しているWebサーバのIPアドレスです。" },
       { label: "通過できるルータの残り回数（TTL）", value: "64", meaning: "データがルータを通れる残り回数です。ルータを1台通ると1減ります。" },
       { label: "校内LANへ戻す道（LAN経路）", value: "192.168.10.0/24 → LAN", meaning: "宛先が192.168.10から始まる同じ校内LANなら、LAN側へ送るという案内です。" },
       { label: "外部へ出す道（既定経路）", value: "0.0.0.0/0 → WAN", meaning: "ほかの道に当てはまらない宛先を、外部ネットワーク側へ送るための案内です。" },
     ],
     decisionHint: "宛先203.0.113.80はLAN経路の192.168.10.0/24に入りません。残った既定経路を使い、TTLを1減らします。",
-    question: "外部のWebサーバへデータを近づけるために、ルータはどの処理を行いますか？",
+    question: "ページの要求を外部のWebサーバへ近づけるために、ルータはどの処理を行いますか？",
     choices: [
       { id: "router-default", label: "既定経路でWANへ送り、TTLを63へ減らす", correct: true, feedback: "より具体的なLAN経路には一致しないため既定経路を選び、ルータ通過時にTTLを1減らします。" },
       { id: "router-lan", label: "LAN経路を選び、無線AP側へ送り返す", correct: false, feedback: "203.0.113.80は192.168.10.0/24に含まれません。宛先と経路表を照合します。" },
@@ -198,7 +245,7 @@ export const ROLE_PRACTICES: RolePracticeDefinition[] = [
   {
     role: "DNS_SERVER",
     mission: "Webサイト名に対応するIPアドレスを答える",
-    beginnerStory: "あなたはDNSサーバです。PCからWebサイトの名前を受け取り、通信に使うIPアドレスを答えます。",
+    beginnerStory: "あなたはDNSサーバです。PCからWebサイトの名前を受け取り、通信に使うIPアドレスだけを答えます。Webページ本体はWebサーバが持っているため、PCはIPアドレスを受け取った後にWebサーバへページを要求します。",
     everydayExample: "店の名前から電話番号を調べる電話帳に似ています。DNSサーバは、Webサイト名から通信先のIPアドレスを探します。",
     situation: "PCから「www.mext.go.jpのIPv4アドレスを教えて」という質問が届きました。答えは、この学習モデルのDNSサーバに登録されています。",
     observationTitle: "PCからの質問とDNSサーバの登録内容",
@@ -227,7 +274,7 @@ export const ROLE_PRACTICES: RolePracticeDefinition[] = [
   {
     role: "WEB_SERVER",
     mission: "求められた学習指導要領ページを、安全な通信で返す",
-    beginnerStory: "あなたはWebサーバです。PCから届いた「このページをください」という要求を読み、ページの内容を返します。",
+    beginnerStory: "あなたはWebサーバです。PCから届いた「このページをください」という要求を読み、処理できたことを表す200 OK、内容がHTMLであること、ページのデータを返します。PCのブラウザは、その返事を使って画面を組み立てます。",
     everydayExample: "図書館の係が貸出票を読み、指定された本と「用意できました」という返事を渡す場面に似ています。",
     situation: "PCとの通信路と暗号化の準備が終わり、「学習指導要領ページをください」という要求が届きました。",
     observationTitle: "Webサーバが受け取った要求",

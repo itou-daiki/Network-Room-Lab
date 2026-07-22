@@ -46,11 +46,11 @@ function readCreatedTeacherRooms(): CreatedTeacherRoom[] {
 }
 
 const flowNodes = [
-  { id: "pc", label: "PC", sub: "URLを入力して出発", tone: "blue" },
-  { id: "ap", label: "無線AP", sub: "Wi-Fiから有線LANへ", tone: "mint" },
-  { id: "l2", label: "L2スイッチ", sub: "次の差込口を選ぶ", tone: "violet" },
-  { id: "router", label: "ルータ", sub: "PCの出口（ゲートウェイ）", tone: "amber" },
-  { id: "server", label: "DNS・Webサーバ", sub: "IPを答え、ページを返す", tone: "rose" },
+  { id: "pc", label: "PC", sub: "名前の質問とページの要求を送る", tone: "blue" },
+  { id: "ap", label: "無線AP", sub: "質問・要求・返事を無線と有線の間で渡す", tone: "mint" },
+  { id: "l2", label: "L2スイッチ", sub: "次の機器につながる差込口へ送る", tone: "violet" },
+  { id: "router", label: "ルータ", sub: "宛先IPを見て、外部またはPC側の道を選ぶ", tone: "amber" },
+  { id: "server", label: "DNS・Webサーバ", sub: "DNSはIPを答え、Webはページを返す", tone: "rose" },
 ];
 
 export function HomePage({ onEnterRoom }: HomePageProps) {
@@ -348,8 +348,8 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
         <div className="section-kicker">みんなでつなぐ通信の道</div>
         <div className="flow-title-row">
           <div>
-            <h2 id="flow-title">学習指導要領ページを表示するために、データを次の機器へ渡します。</h2>
-            <p>一人で6つの機器を順番に担当することも、仲間と分担することもできます。</p>
+            <h2 id="flow-title">PCの質問と要求がサーバへ届き、答えとページのデータがPCへ戻ります。</h2>
+            <p>行きは「IPアドレスを教えて」「ページをください」を送り、帰りはIPアドレスの答えとページのデータを受け取ります。一人で6つの機器を順番に担当することも、仲間と分担することもできます。</p>
           </div>
           <span className="live-pill"><i /> みんなの画面が同時に更新</span>
         </div>

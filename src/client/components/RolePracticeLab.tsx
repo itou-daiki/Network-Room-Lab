@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { CORE_ROLE_IDS, ROLE_PRACTICES, ROLE_READING_GUIDES, rolePractice, type CoreRoleId } from "../../shared/rolePractice";
+import { CORE_ROLE_IDS, ROLE_PRACTICES, ROLE_READING_GUIDES, ROLE_STAGE_TERM_IDS, rolePractice, type CoreRoleId, type RolePracticeStage } from "../../shared/rolePractice";
 import { LEARNING_SCENARIO_GOAL, roleDefinition } from "../../shared/scenario";
 import type { ClientAction, RoomSnapshot } from "../../shared/types";
 import { ContextTerms } from "./Glossary";
@@ -60,6 +60,7 @@ export function RolePracticeLab({ snapshot, completed, onComplete, act, busy = f
   const hasCorrectDecision = Boolean(selected?.correct) || isComplete;
   const hasReviewedResult = Boolean(resultReviewed[practice.role]) || isComplete;
   const currentStage = !hasIntroduction ? 1 : !hasObserved ? 2 : !hasCorrectDecision ? 3 : !hasReviewedResult ? 4 : 5;
+  const currentStageTerms = ROLE_STAGE_TERM_IDS[practice.role][currentStage as RolePracticeStage];
   const currentAction = isComplete
     ? { title: "この役割は完了しています", detail: allComplete ? "上の緑色のボタンから機器構成へ進みます。" : "上の役割一覧で「いまここ」と表示された次の役割へ進みます。" }
     : currentStage === 1
@@ -113,6 +114,11 @@ export function RolePracticeLab({ snapshot, completed, onComplete, act, busy = f
       <div className="role-overall-goal" role="note">
         <span>この実習全体のゴール</span>
         <div><h3>{LEARNING_SCENARIO_GOAL.title}</h3><code>{LEARNING_SCENARIO_GOAL.url}</code><p>{LEARNING_SCENARIO_GOAL.detail}</p></div>
+      </div>
+
+      <div className="role-sequence-note" role="note">
+        <span>役割番号について</span>
+        <p><b>1〜6は、機器の仕事を学ぶ順番です。</b>通信が実際に進む順番ではありません。ここでは各機器の代表的な場面を体験し、後の「通信実験」で質問・要求・返事が進む順番を17段階で確かめます。</p>
       </div>
 
       <LearningRouteMap
@@ -283,8 +289,8 @@ export function RolePracticeLab({ snapshot, completed, onComplete, act, busy = f
       </details>
 
       <details className="role-support-details term-support-details">
-        <summary><span>あ</span><div><b>分からない言葉を確認する</b><small>{role.label}で使った用語だけを表示します</small></div><em>＋</em></summary>
-        <ContextTerms ids={practice.termIds} title={`${role.label}で使う用語`} />
+        <summary><span>あ</span><div><b>このセクションで出てきた用語</b><small>いま表示している「{currentStage === 1 ? "役割・目的を知る" : currentStage === 2 ? "情報・判断材料を見る" : currentStage === 3 ? "選ぶ・操作を決める" : currentStage === 4 ? "結果・起きたことを見る" : "説明・理由を言葉にする"}」の用語だけを表示します</small></div><em>＋</em></summary>
+        <ContextTerms ids={currentStageTerms} title="このセクションで出てきた用語" />
       </details>
     </section>
   );
