@@ -202,7 +202,7 @@ function DeviceNode({
       <span className="device-status" />
       <div className="device-glyph" aria-hidden="true">{id === "internet" ? "◎" : definition?.shortLabel.slice(0, 3) ?? "NET"}</div>
       <b>{label}</b>
-      <small>{id === "router" ? `PCの出口（デフォルトゲートウェイ）${address ? ` / ${address}` : ""}` : address ?? definition?.observes[0] ?? "複数経路"}</small>
+      <small>{id === "router" ? `PCの出口（デフォルトゲートウェイ）${address ? ` / ルータのLAN側IP ${address}` : ""}` : address ?? definition?.observes[0] ?? "複数経路"}</small>
       {active && <em>いま処理中</em>}
       {faulted && <em className="fault-tag">障害中</em>}
     </div>
@@ -386,7 +386,7 @@ function ProtocolMission({ snapshot, busy, act }: SharedPanelProps) {
         ))}
       </div>
       <div className="step-counter"><span>全17段階の {activeStep.index + 1}</span><b>{activeStep.title}</b></div>
-      <p>上に表示された目的を達成するため、いま担当している機器が行う操作を1つ選びます。現在運んでいるものは、段階によりARPの質問、DNSの質問、接続の合図、ページの要求、ページの返事のいずれかです。</p>
+      <p>上に表示された目的を達成するため、いま担当している機器が行う操作を1つ選びます。現在運んでいるものは、段階によりARPを使った問い合わせ、DNSサーバへの質問、接続の合図、ページの要求、ページの返事のいずれかです。</p>
       <div className="actor-line">
         <span style={{ background: roleDefinition(activeStep.actorRole).accent }} />
         {isSolo ? "いま体験する役割" : "次の担当"}: <b>{roleDefinition(activeStep.actorRole).label}</b>

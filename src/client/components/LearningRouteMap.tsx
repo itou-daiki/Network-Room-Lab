@@ -93,7 +93,7 @@ export function LearningRouteMap({ activeNodeId, focus = "all", compact = false,
           <h2 id={compact ? undefined : "learning-route-title"}>PCのブラウザに、{targetPageLabel(target)}を表示する</h2>
           <p>一度にページを取りに行くのではありません。まず往復1で通信先のIPアドレスを調べ、その答えを使って往復2でページを取りに行きます。</p>
         </div>
-        <div className="gateway-explanation"><b>ルータとゲートウェイは別の機器？</b><span>この実習では同じ機器です。PCから見て、外部への最初の出口として働くルータを「デフォルトゲートウェイ」と呼びます。</span></div>
+        <div className="gateway-explanation"><b>192.168.10.1は、何のアドレス？</b><span>この実習では、PCと同じLANにつながるルータのLAN側IPアドレスです。PCは、別のネットワークへ送るデータを最初にこのルータへ渡します。この役割のルータを、PCから見て「デフォルトゲートウェイ」と呼びます。</span></div>
       </header>
 
       <ol className="route-overview" aria-label={`${targetPageLabel(target)}が表示されるまでの全体の順番`}>

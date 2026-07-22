@@ -164,7 +164,7 @@ export const DEFAULT_LINKS: TopologyLink[] = [
 const allLayers = (protocol: ProtocolStep["protocol"], ttl: number): ProtocolStep["layers"] => {
   const application =
     protocol === "ARP"
-      ? "ARPの問い合わせ：192.168.10.1のMACアドレスは？"
+      ? "PCがARPを使って送る問い合わせ：192.168.10.1を使っている機器へ。あなたのMACアドレスを教えてください"
       : protocol === "DNS"
         ? "DNSの問い合わせ：www.mext.go.jpのIPアドレスは？"
         : protocol === "TCP"
@@ -196,14 +196,14 @@ const allLayers = (protocol: ProtocolStep["protocol"], ttl: number): ProtocolSte
     },
     {
       id: "network",
-      label: "送信元と最終宛先のIP",
-      value: `IPv4 192.168.10.23 → ${protocol === "DNS" ? "1.1.1.1" : "203.0.113.80"} / TTL ${ttl}`,
+      label: protocol === "ARP" ? "ARPでMACアドレスを調べる対象" : "送信元と最終宛先のIP",
+      value: protocol === "ARP" ? "192.168.10.1（デフォルトゲートウェイであるルータのLAN側IP）" : `IPv4 192.168.10.23 → ${protocol === "DNS" ? "1.1.1.1" : "203.0.113.80"} / TTL ${ttl}`,
       visibleTo: ["CLIENT_PC", "ROUTER", "OBSERVER"],
     },
     {
       id: "link",
       label: "次の機器までの運び方",
-      value: "Wi-FiまたはEthernet用のフレーム",
+      value: protocol === "ARP" ? "宛先MAC FF-FF-FF-FF-FF-FFのフレーム（同じLAN内へ一斉送信）" : "Wi-FiまたはEthernet用のフレーム",
       visibleTo: ["CLIENT_PC", "ACCESS_POINT", "L2_SWITCH", "OBSERVER"],
     },
   ];
@@ -232,10 +232,10 @@ const step = (
 });
 
 export const PROTOCOL_STEPS: ProtocolStep[] = [
-  step(0, "ARP", "DNSへの質問を出口へ渡すため、ルータの機器番号を調べる", "PCはWebサイト名をDNSへ質問したいと考えています。まずARPを使い、最初の渡し先であるルータ192.168.10.1のMACアドレスを調べます。", "CLIENT_PC", "pc", "CREATE_PACKET", 64),
-  step(1, "ARP", "ルータの機器番号を尋ねるARPの質問を、有線LANへ渡す", "無線アクセスポイントは、ARPの質問をWi-Fi用フレームからEthernet用フレームへ載せ替えます。尋ねているIPアドレス192.168.10.1は変えません。", "ACCESS_POINT", "ap", "FORWARD_PACKET", 64),
-  step(2, "ARP", "ARPの質問を、届いた差込口以外へ広げて送る", "この時点ではルータのMACアドレスがまだ分からないため、ARPの質問はブロードキャスト用の宛先MACアドレスを使います。L2スイッチは、質問が入ってきた差込口を除く同じLAN内の差込口へ広げて送ります。", "L2_SWITCH", "switch", "FORWARD_PACKET", 64),
-  step(3, "DNS", "Webサイト名の質問を、DNSサーバ側へ送る", "ARPの回答で出口のMACアドレスが分かった後、PCは「www.mext.go.jpのIPアドレスを教えて」というDNSの質問を作りました。この学習モデルでは同じLAN内の繰り返しを省略し、ルータが質問を外部側へ送る判断から続けます。", "ROUTER", "router", "FORWARD_PACKET", 63),
+  step(0, "ARP", "DNSへの質問を出口へ渡す準備として、ルータのMACアドレスを調べる", "DNSサーバはPCとは別のネットワークにあります。PCは最初に、デフォルトゲートウェイであるルータへ質問を渡します。192.168.10.1は、そのルータのLAN側IPアドレスです。Wi-FiやEthernetで実際にルータへ渡すには宛先MACアドレスが必要なため、PCはARPを使って調べます。", "CLIENT_PC", "pc", "CREATE_PACKET", 64),
+  step(1, "ARP", "PCがARPを使って送った問い合わせを、有線LANへ渡す", "無線アクセスポイントは、「192.168.10.1を使っている機器はMACアドレスを教えてください」という問い合わせを、Wi-Fi用フレームからEthernet用フレームへ載せ替えます。問い合わせの対象となるIPアドレスは変えません。", "ACCESS_POINT", "ap", "FORWARD_PACKET", 64),
+  step(2, "ARP", "ARPを使った問い合わせを、同じLAN内へ広げて送る", "この時点ではルータのMACアドレスがまだ分からないため、PCは問い合わせを同じLAN内の全機器へ届くブロードキャストとして送ります。L2スイッチは、問い合わせが入ってきた差込口を除く差込口へ広げます。192.168.10.1を使うルータだけが、自分のMACアドレスを答えます。", "L2_SWITCH", "switch", "FORWARD_PACKET", 64),
+  step(3, "DNS", "Webサイト名の質問を、DNSサーバ側へ送る", "ルータからのARP応答により、「192.168.10.1のMACアドレスは02-00-00-00-10-01」と分かりました。PCはDNSへの質問を、そのMACアドレス宛てのフレームに入れてルータへ渡します。IPパケットの最終宛先はDNSサーバのままです。この学習モデルでは同じLAN内の繰り返しを省略し、ルータが質問を外部側へ送る判断から続けます。", "ROUTER", "router", "FORWARD_PACKET", 63),
   step(4, "DNS", "Webサイト名に対応するIPアドレスを答える", "登録されたAレコードを調べ、WebサーバのIPアドレス203.0.113.80をPCへ返します。", "DNS_SERVER", "dns", "CREATE_PACKET", 63),
   step(5, "DNS", "DNSサーバの答えを、校内LAN側へ戻す", "PCのIPアドレスに合う帰り道を選び、次のLAN区間で使うフレームに入れ替えます。", "ROUTER", "router", "FORWARD_PACKET", 62),
   step(6, "DNS", "DNSサーバの答えを、PCにつながる差込口へ送る", "PCの機器番号（MACアドレス）と対応表を比べ、PC側の1番の差込口へ送ります。", "L2_SWITCH", "switch", "FORWARD_PACKET", 62),

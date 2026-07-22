@@ -83,6 +83,11 @@ describe("experiential practice commands", () => {
     expect(pcPractice?.beginnerStory).toContain("ページのデータをPCへ返します");
     expect(pcPractice?.situation).toContain("DNSへの問い合わせが終わり");
     expect(pcPractice?.successMeanings.join(" ")).toContain("このページをください");
+    expect(pcPractice?.successOutput[0]).toContain("最初の渡し先をデフォルトゲートウェイ");
+    expect(pcPractice?.successOutput[1]).toContain("PCがARPを使って送る問い合わせ");
+    expect(pcPractice?.successOutput[2]).toContain("ルータからのARP応答");
+    expect(pcPractice?.successMeanings.join(" ")).toContain("IPパケットの最終宛先はWebサーバのまま");
+    expect(pcPractice?.observations.find((item) => item.value === "192.168.10.1")?.meaning).toContain("ルータのLAN側IPアドレス");
     expect(ROLE_STAGE_TERM_IDS.CLIENT_PC[1]).toContain("dns");
     expect(ROLE_STAGE_TERM_IDS.CLIENT_PC[1]).toContain("request-response");
 
@@ -152,6 +157,7 @@ describe("experiential practice commands", () => {
     const arp = NETWORK_GLOSSARY.find((term) => term.id === "arp");
     expect(arp?.detail).toContain("Addressは");
     expect(arp?.detail).toContain("デフォルトゲートウェイ");
+    expect(arp?.detail).toContain("質問に答えるサーバ名ではなく");
     expect(arp?.detail).toContain("コマンドではなく");
   });
 
@@ -205,7 +211,10 @@ describe("experiential practice commands", () => {
       expect(choices.filter((choice) => choice.correct)).toHaveLength(1);
       expect(new Set(choices.map((choice) => choice.label)).size).toBe(3);
     }
-    expect(PROTOCOL_STEPS[0]?.description).toContain("DNSへ質問");
+    expect(PROTOCOL_STEPS[0]?.description).toContain("ルータのLAN側IPアドレス");
+    expect(PROTOCOL_STEPS[0]?.layers.find((layer) => layer.id === "network")?.value).toContain("デフォルトゲートウェイ");
+    expect(PROTOCOL_STEPS[0]?.layers.find((layer) => layer.id === "network")?.value).not.toContain("IPv4 192.168.10.23 →");
+    expect(PROTOCOL_STEPS[0]?.layers.find((layer) => layer.id === "link")?.value).toContain("FF-FF-FF-FF-FF-FF");
     expect(PROTOCOL_STEPS[2]?.description).toContain("ブロードキャスト");
     expect(PROTOCOL_STEPS[3]?.description).toContain("学習モデルでは同じLAN内の繰り返しを省略");
     expect(PROTOCOL_STEPS[7]?.description).toContain("DNSの答え");
