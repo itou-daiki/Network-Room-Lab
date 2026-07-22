@@ -125,7 +125,7 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
   };
 
   const copyRoomCodes = async () => {
-    const text = createdRooms.map((room) => `${room.title}：${room.code}（定員${room.capacity}人）`).join("\n");
+    const text = createdRooms.map((room) => `${room.title}：${room.code}（生徒の参加上限${room.capacity}人）`).join("\n");
     await navigator.clipboard.writeText(text);
     setCopiedRoom("ALL");
     window.setTimeout(() => setCopiedRoom(null), 1600);
@@ -166,8 +166,9 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
         <div className="hero-copy">
           <p className="eyebrow"><span>●</span> はじめてでも安心のネットワーク体験</p>
           <h1>
-            通信のしくみを、<br />
-            <span>ひとりでも、チームでも。</span>
+            <span className="hero-title-line">通信のしくみを、</span>
+            <span className="hero-title-line hero-title-accent">ひとりでも、</span>
+            <span className="hero-title-line hero-title-accent">チームでも。</span>
           </h1>
           <p className="hero-lead">
             今回のゴールは「{LEARNING_SCENARIO_GOAL.title}」ことです。
@@ -295,7 +296,7 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
                   {createdRooms.map((room, index) => (
                     <article key={room.code}>
                       <span>{index + 1}班</span>
-                      <div><small>{room.title}</small><b>{room.code}</b><em>定員 {room.capacity}人</em></div>
+                      <div><small>{room.title}</small><b>{room.code}</b><em>生徒は最大 {room.capacity}人</em></div>
                       <div className="created-room-buttons">
                         <button type="button" onClick={() => void copyRoomCode(room.code)}>{copiedRoom === room.code ? "✓ コピー済み" : "コードをコピー"}</button>
                         <button type="button" onClick={() => onEnterRoom({ code: room.code, token: room.teacherToken, mode: "teacher" })}>先生として開く →</button>
@@ -324,13 +325,13 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
                   <small>例：10班なら10部屋を選びます。</small>
                 </label>
                 <label>
-                  1部屋の定員（1班の人数）
+                  1部屋に参加できる生徒の上限
                   <select value={capacity} onChange={(event) => setCapacity(Number(event.target.value))}>
-                    {Array.from({ length: MAX_CLASSROOM_GROUP_SIZE - MIN_CLASSROOM_GROUP_SIZE + 1 }, (_, index) => index + MIN_CLASSROOM_GROUP_SIZE).map((value) => <option key={value} value={value}>{value}人</option>)}
+                    {Array.from({ length: MAX_CLASSROOM_GROUP_SIZE - MIN_CLASSROOM_GROUP_SIZE + 1 }, (_, index) => index + MIN_CLASSROOM_GROUP_SIZE).map((value) => <option key={value} value={value}>最大 {value}人</option>)}
                   </select>
                   <small>2〜5人の班では、担当者がいない機器の操作を班全員で行います。</small>
                 </label>
-                <div className="room-batch-summary"><span>作成予定</span><b>{roomCount}部屋 × 定員{capacity}人</b><small>最大{roomCount * capacity}人が参加できます</small></div>
+                <div className="room-batch-summary"><span>作成予定</span><b>{roomCount}部屋 × 1部屋最大{capacity}人</b><small>生徒は全体で最大{roomCount * capacity}人まで参加できます（先生は含みません）</small></div>
               </>
             )}
 
