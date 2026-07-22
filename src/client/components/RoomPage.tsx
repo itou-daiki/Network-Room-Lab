@@ -772,9 +772,11 @@ export function RoomPage({ session, onLeave }: RoomPageProps) {
           </>
         ) : (
           <>
-            <TopologyPanel snapshot={snapshot} busy={busy} act={act} />
+            <section className="network-observation-stack" aria-label="通信経路と流れているデータ">
+              <TopologyPanel snapshot={snapshot} busy={busy} act={act} />
+              <PacketInspector snapshot={snapshot} />
+            </section>
             <MissionPanel snapshot={snapshot} busy={busy} act={act} />
-            <PacketInspector snapshot={snapshot} />
             {snapshot.room.phase === "ROLES" && <RolePracticeLab snapshot={snapshot} completed={rolePracticeCompleted} onComplete={completeRolePractice} act={act} busy={busy} />}
             {showPractice && <PracticeLab
               snapshot={snapshot}

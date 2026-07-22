@@ -181,11 +181,17 @@ textarea { resize: vertical; line-height: 1.7; }
 .room-grid { max-width: 1550px; margin: 0 auto; padding: 18px 20px 35px; display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(310px, .75fr); gap: 14px; align-items: start; }
 .panel { background: linear-gradient(145deg, rgba(12, 34, 47, .98), rgba(8, 26, 38, .98)); border: 1px solid var(--line); box-shadow: 0 14px 35px rgba(0,0,0,.1); }
 .topology-panel { grid-column: 1; }.mission-panel { grid-column: 1; }.packet-panel { grid-column: 2; grid-row: 1 / span 2; }.participants-panel { grid-column: 1; }.events-panel { grid-column: 2; }.teacher-panel { grid-column: 1 / -1; }
+.network-observation-stack { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.network-observation-stack > .topology-panel,
+.network-observation-stack > .packet-panel { grid-column: 1; grid-row: auto; }
+.network-observation-stack .packet-layers { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.network-observation-stack .packet-layer { grid-template-columns: 30px minmax(0, 1fr); min-width: 0; }
+.network-observation-stack .packet-layer b { overflow-wrap: anywhere; }
 .panel-heading { min-height: 60px; padding: 15px 18px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
 .panel-heading .panel-kicker { margin: 0 0 4px; font-size: 8px; }.panel-heading h2 { margin: 0; font-size: 14px; letter-spacing: -.02em; }.panel-heading > span { color: var(--muted); font: 500 9px var(--mono); }
 .topology-legend { display: flex; gap: 14px; color: #718c9a; font-size: 8px; }.topology-legend span { display: flex; gap: 5px; align-items: center; }.packet-dot, .link-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 7px var(--cyan); }.link-dot { background: var(--green); box-shadow: none; }
 .topology-canvas { min-height: 236px; overflow-x: auto; padding: 32px 22px 28px; background: radial-gradient(circle at 50% 50%, rgba(33, 110, 143, .08), transparent 45%), linear-gradient(rgba(87,146,170,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(87,146,170,.035) 1px, transparent 1px); background-size: auto, 20px 20px, 20px 20px; }
-.topology-mainline { display: flex; align-items: center; min-width: 720px; }
+.topology-mainline { display: flex; align-items: center; justify-content: center; min-width: 720px; }
 .topology-device { --device-accent: #8da5b6; width: 94px; min-height: 100px; flex: 0 0 94px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; padding: 12px 8px 9px; background: rgba(6,20,29,.94); border: 1px solid rgba(133,175,195,.2); transition: border .2s, box-shadow .2s, transform .2s; }
 .topology-device::before { content: ""; position: absolute; top: -1px; left: 25%; right: 25%; height: 2px; background: var(--device-accent); }
 .topology-device.active { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(64,200,255,.08), 0 0 28px rgba(64,200,255,.12); transform: translateY(-3px); }
@@ -284,6 +290,7 @@ input:disabled, select:disabled, textarea:disabled { @apply bg-slate-100 text-sl
 .room-batch-summary > span { @apply row-span-2 rounded-full bg-dodger-500 px-3 py-1 text-xs font-black text-white; }
 .room-batch-summary > b { @apply text-sm text-dodger-900; }
 .room-batch-summary > small { @apply text-xs text-slate-600; }
+.solo-target-summary > b { overflow-wrap: anywhere; }
 .created-rooms { @apply flex flex-col gap-4; }
 .created-rooms-guide { @apply flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4; }
 .created-rooms-guide > span { @apply grid h-8 w-8 shrink-0 place-items-center rounded-full bg-emerald-500 text-sm font-black text-white; }
@@ -618,11 +625,11 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
 .learning-support-drawer > summary > div { @apply flex flex-col; }
 .learning-support-drawer > summary b { @apply text-sm text-slate-800; }
 .learning-support-drawer > summary small { @apply mt-1 text-xs text-slate-500; }
-.room-support-grid { @apply grid gap-3 border-t border-slate-200 bg-slate-50 p-3; grid-template-columns:minmax(0,1fr) 330px; }
+.room-support-grid { @apply grid gap-3 border-t border-slate-200 bg-slate-50 p-3; grid-template-columns:minmax(0,1fr); }
 .room-support-grid > .topology-panel { grid-column:1; }
-.room-support-grid > .packet-panel { grid-column:2; grid-row:1; }
-.room-support-grid > .events-panel { grid-column:1 / -1; grid-row:auto; }
-.room-support-grid > .glossary-panel { grid-column:1 / -1; }
+.room-support-grid > .packet-panel { grid-column:1; grid-row:auto; }
+.room-support-grid > .events-panel { grid-column:1; grid-row:auto; }
+.room-support-grid > .glossary-panel { grid-column:1; }
 
 .role-practice-panel { @apply overflow-hidden rounded-2xl bg-white; }
 .role-next-action { @apply mx-5 mt-5 grid grid-cols-[48px_1fr] items-center gap-4 rounded-2xl border-2 border-dodger-300 bg-dodger-50 p-4; }
@@ -763,6 +770,7 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
   .room-user { min-width: 0; }
   .room-user > div { display: none; }
   .room-grid { grid-template-columns: 1fr 330px; }
+  .network-observation-stack .packet-layers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .role-reading-guide-grid { grid-template-columns:1fr; }.role-practice-layout { grid-template-columns: 1fr 1fr; }.role-result { grid-column: 1 / -1; }.practice-layout { grid-template-columns: 240px minmax(0,1fr); }.practice-observation { grid-column: 1 / -1; }
   .glossary-grid { grid-template-columns: repeat(3,1fr); }
   .teacher-grid { grid-template-columns: 1fr 1fr; }.teacher-grid > div:last-child { grid-column: 1 / -1; border-top: 1px solid var(--line); }
@@ -796,6 +804,7 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
   .teacher-message-banner { justify-content: flex-start; }.teacher-message-banner p { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .learning-target-summary { @apply grid-cols-1; }.learning-target-goal { @apply border-r-0 border-b; }.learning-target-note { @apply col-span-1; }
   .room-grid { padding: 10px; }.panel-heading { padding: 13px 14px; }
+  .network-observation-stack .packet-layers { grid-template-columns: 1fr; }
   .topology-canvas { padding-left: 14px; }.participant-list { grid-template-columns: 1fr; }
   .field-grid { grid-template-columns: 1fr; }.topology-mission ul { grid-template-columns: 1fr 1fr; }.diagnostic-tools { grid-template-columns: 1fr 1fr; }
   .role-practice-heading, .practice-heading, .glossary-heading { align-items: flex-start; flex-direction: column; gap: 10px; }.role-practice-tabs { grid-template-columns: repeat(3,1fr); }.role-practice-intro { grid-template-columns: 36px 1fr; margin:10px 10px 0; }.role-practice-intro em { display:none; }.role-practice-intro h3 { @apply text-lg; }.role-practice-cycle { grid-template-columns:1fr 1fr; margin:10px; }.role-practice-cycle i { display:none; }.role-reading-guide { margin:10px; }.role-reading-guide > summary em { display:none; }.role-practice-layout { grid-template-columns:1fr; padding:10px; }.role-result { grid-column:auto; }.role-explanation-area { grid-template-columns:1fr; margin:0 10px 10px; }.role-explanation-area > button { @apply w-full; }.practice-cycle { grid-template-columns: 1fr; }.practice-layout { padding: 10px; }.terminal-output { min-height: 270px; }.context-term-list, .hypothesis-choices, .glossary-grid { grid-template-columns: 1fr; }.context-terms-heading small { display: none; }.glossary-heading label { max-width: none; }

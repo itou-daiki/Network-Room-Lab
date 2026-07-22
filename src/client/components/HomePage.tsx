@@ -7,7 +7,6 @@ import {
   buildClassroomRoomRequests,
 } from "../../shared/classroom";
 import { DEFAULT_TARGET_URL } from "../../shared/learningTarget";
-import { LEARNING_SCENARIO_GOAL } from "../../shared/scenario";
 import { createRoom, joinRoom } from "../api";
 import type { AppSession } from "../session";
 import type { LearningTarget } from "../../shared/types";
@@ -117,7 +116,7 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
           capacity: 1,
           scenario: "STANDARD_WEB_ACCESS",
           learningMode: "SOLO",
-          targetUrl: DEFAULT_TARGET_URL,
+          targetUrl,
           displayName,
         });
         if (!room.participantToken) throw new Error("ひとり学習を開始できませんでした。もう一度お試しください。");
@@ -182,7 +181,7 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
             <span className="hero-title-line hero-title-accent">チームでも。</span>
           </h1>
           <p className="hero-lead">
-            今回のゴールは「{LEARNING_SCENARIO_GOAL.title}」ことです。
+            今回のゴールは「指定したWebページが表示されるまでの通信を確かめる」ことです。
             むずかしい設定を暗記せず、ページが表示されるまでの6つの機器の仕事を順番に確かめます。
           </p>
           <div className="beginner-promise" role="note" aria-label="初めて利用する方へ">
@@ -235,7 +234,7 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
               <span className="step-chip">{mode === "join" ? "参加" : mode === "solo" ? "ひとり学習" : "作成"}</span>
               <div>
                 <h2>{mode === "join" ? "授業の部屋に入る" : mode === "solo" ? "自分のペースで始める" : showingCreatedRooms ? `${createdRooms.length}部屋を作成しました` : "班ごとの部屋を一括で作る"}</h2>
-                <p>{mode === "join" ? "先生から教えてもらった6文字のコードを入力します。" : mode === "solo" ? "文部科学省の学習指導要領ページを表示するまで、6つの機器の仕事を一人で順番に体験します。" : showingCreatedRooms ? "班ごとに部屋コードを伝えます。先生は一覧から各部屋へ入れます。" : "1回の操作で1〜10部屋を作れます。各部屋は2〜6人の班で利用できます。"}</p>
+                <p>{mode === "join" ? "先生から教えてもらった6文字のコードを入力します。" : mode === "solo" ? "表示したいWebページを自分で選び、ページが表示されるまでの6つの機器の仕事を順番に体験します。" : showingCreatedRooms ? "班ごとに部屋コードを伝えます。先生は一覧から各部屋へ入れます。" : "1回の操作で1〜10部屋を作れます。各部屋は2〜6人の班で利用できます。"}</p>
               </div>
             </div>
 
@@ -250,7 +249,7 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
             {mode === "solo" && (
               <div className="solo-intro" role="note">
                 <b>先生や部屋コードは不要です</b>
-                <span>画面が次の操作を案内します。途中で失敗しても、何度でもやり直せます。</span>
+                <span>下で見たいWebページを選びます。始めた後は、画面が次の操作を一つずつ案内します。</span>
               </div>
             )}
 
@@ -282,17 +281,37 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
                 </label>
               </>
             ) : mode === "solo" ? (
-              <label>
-                あなたの表示名
-                <input
-                  autoComplete="name"
-                  maxLength={32}
-                  placeholder="例：やまなし"
-                  value={displayName}
-                  onChange={(event) => setDisplayName(event.target.value)}
-                  required
-                />
-              </label>
+              <>
+                <label>
+                  あなたの表示名
+                  <input
+                    autoComplete="name"
+                    maxLength={32}
+                    placeholder="例：やまなし"
+                    value={displayName}
+                    onChange={(event) => setDisplayName(event.target.value)}
+                    required
+                  />
+                </label>
+                <label>
+                  学習のゴールにするWebページのURL
+                  <input
+                    type="url"
+                    inputMode="url"
+                    maxLength={2048}
+                    placeholder={DEFAULT_TARGET_URL}
+                    value={targetUrl}
+                    onChange={(event) => setTargetUrl(event.target.value)}
+                    required
+                  />
+                  <small>例として、https:// から始まる、ログインせずに見られるページを選びます。開始時にWebサイト名を実際にDNSへ問い合わせ、返ってきたIPv4アドレスを教材の通信先として使います。</small>
+                </label>
+                <div className="room-batch-summary solo-target-summary">
+                  <span>今回表示したいページ</span>
+                  <b>{targetUrl || "URLを入力してください"}</b>
+                  <small>ページの内容そのものではなく、このURLへ通信するときの機器の仕事を体験します。</small>
+                </div>
+              </>
             ) : showingCreatedRooms ? (
               <section className="created-rooms" aria-label="作成した授業部屋">
                 <div className="created-rooms-guide" role="status">
@@ -361,7 +380,7 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
 
             {error && <div className="form-error" role="alert">{error}</div>}
             {!showingCreatedRooms && <button className="primary-button entry-submit" disabled={busy}>
-              {busy ? mode === "create" ? `${createProgress} / ${roomCount}部屋を作成中…` : "接続しています…" : mode === "join" ? "この部屋に参加する" : mode === "solo" ? "ひとり学習を始める" : `${roomCount}部屋を一括作成する`}
+              {busy ? mode === "create" ? `${createProgress} / ${roomCount}部屋を作成中…` : mode === "solo" ? "DNSを確認して学習を準備しています…" : "接続しています…" : mode === "join" ? "この部屋に参加する" : mode === "solo" ? "このURLでひとり学習を始める" : `${roomCount}部屋を一括作成する`}
             </button>}
             <p className="privacy-note">個人アカウントは不要です。入力した表示名は、この学習画面の中だけで使用します。</p>
           </form>
