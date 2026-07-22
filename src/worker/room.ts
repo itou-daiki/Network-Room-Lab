@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 
 import { DurableObject } from "cloudflare:workers";
 
+import { MAX_CLASSROOM_GROUP_SIZE, MIN_CLASSROOM_GROUP_SIZE } from "../shared/classroom";
 import { faultDetails, simulateDiagnostic, validateInterfaceConfig } from "../shared/network";
 import {
   DEFAULT_LINKS,
@@ -281,7 +282,10 @@ export class RoomDurableObject extends DurableObject<Env> {
       scenario: input.scenario,
       status: input.learningMode === "SOLO" ? "active" : "waiting",
       version: 1,
-      capacity: input.learningMode === "SOLO" ? 1 : Math.min(8, Math.max(2, input.capacity)),
+      capacity:
+        input.learningMode === "SOLO"
+          ? 1
+          : Math.min(MAX_CLASSROOM_GROUP_SIZE, Math.max(MIN_CLASSROOM_GROUP_SIZE, input.capacity)),
       createdAt,
       expiresAt: input.expiresAt,
       teacherTokenHash,
@@ -730,7 +734,10 @@ export class RoomDurableObject extends DurableObject<Env> {
         break;
       case "ADVANCE_PROTOCOL": {
         const current = PROTOCOL_STEPS[room.protocolIndex];
-        if (room.phase === "PROTOCOL" && current?.actorRole === role) return;
+        const actorAssigned = current
+          ? this.loadParticipants().some((participant) => participant.role === current.actorRole)
+          : false;
+        if (room.phase === "PROTOCOL" && current && (current.actorRole === role || !actorAssigned)) return;
         break;
       }
       case "RUN_DIAGNOSTIC":

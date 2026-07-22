@@ -49,10 +49,13 @@ export function learningLead(
     }
     if (phase === "PROTOCOL" && snapshot.room.protocolIndex < PROTOCOL_STEPS.length) {
       const step = PROTOCOL_STEPS[snapshot.room.protocolIndex]!;
-      if (snapshot.viewer.role !== step.actorRole) {
+      const actorAssigned = snapshot.room.participants.some((participant) => participant.role === step.actorRole);
+      if (actorAssigned && snapshot.viewer.role !== step.actorRole) {
         return { title: `${roleDefinition(step.actorRole).label}の操作を待ちます`, detail: "担当者が進めると画面は自動で更新されます。その間、経路図で通信データの現在地を見ます。", after: "自分の担当になったら選択肢が押せるようになります。", targetId: "topology-panel", targetLabel: "現在地を見る", state: "waiting" };
       }
-      return { title: `あなたの番です。全17段階の${step.index + 1}で、操作を1つ選びます`, detail: `教材ページの表示に近づけるため、「${step.title}」を行う操作をA・B・Cから選びます。`, after: "目的に合う操作を選ぶと、通信データを次の担当へ渡せます。", targetId: "mission-panel", targetLabel: "選択肢へ", state: "action" };
+      return actorAssigned
+        ? { title: `あなたの番です。全17段階の${step.index + 1}で、操作を1つ選びます`, detail: `学習指導要領ページの表示に近づけるため、「${step.title}」を行う操作をA・B・Cから選びます。`, after: "目的に合う操作を選ぶと、通信データを次の担当へ渡せます。", targetId: "mission-panel", targetLabel: "選択肢へ", state: "action" }
+        : { title: `班で担当します。全17段階の${step.index + 1}で、操作を1つ選びます`, detail: `${roleDefinition(step.actorRole).label}の担当者がいないため、班のみんなで「${step.title}」を行う操作を考えます。`, after: "班の誰かが目的に合う操作を選ぶと、全員の画面が次へ進みます。", targetId: "mission-panel", targetLabel: "選択肢へ", state: "action" };
     }
     if (phase === "REFLECTION") {
       const myReflectionIds = new Set(snapshot.reflections.filter((item) => item.participantId === snapshot.viewer.participantId).map((item) => item.promptId));
@@ -61,7 +64,7 @@ export function learningLead(
         ? { title: `振り返り ${nextPromptIndex + 1} を1文で書き、「保存」を押します`, detail: REFLECTION_PROMPTS[nextPromptIndex]!.label, after: "保存すると次の問いへ進みます。", targetId: "mission-panel", targetLabel: "記入欄へ", state: "action" }
         : { title: "3つの振り返りを保存できました", detail: "ほかの担当者の説明や活動履歴を読み、チームで気付きを共有します。", after: "先生のまとめを待ちます。", targetId: "mission-panel", targetLabel: "保存内容を見る", state: "complete" };
     }
-    return { title: "「いま取り組むこと」カードを確認します", detail: "教材ページを表示するために、いまの担当が行う仕事を確認します。操作できないときは、担当者の画面更新を待てば大丈夫です。", after: "カード内の案内に沿って、次の1操作へ進みます。", targetId: "mission-panel", targetLabel: "現在の課題へ", state: "action" };
+    return { title: "「いま取り組むこと」カードを確認します", detail: "学習指導要領ページを表示するために、いまの担当が行う仕事を確認します。操作できないときは、担当者の画面更新を待てば大丈夫です。", after: "カード内の案内に沿って、次の1操作へ進みます。", targetId: "mission-panel", targetLabel: "現在の課題へ", state: "action" };
   }
 
   if (phase === "TOPOLOGY") {
@@ -100,11 +103,11 @@ export function learningLead(
   if (phase === "PROTOCOL") {
     if (snapshot.room.protocolIndex < PROTOCOL_STEPS.length) {
       const step = PROTOCOL_STEPS[snapshot.room.protocolIndex]!;
-      return { title: `全17段階の${step.index + 1}：通信カードの青い案内を進めます`, detail: `教材ページの表示に近づけるため、今は「${roleDefinition(step.actorRole).label}」の操作を1つ選びます。`, after: "目的に合う操作を選び、理由を読むと次の段階へ進めます。", targetId: "mission-panel", targetLabel: "現在の通信段階へ", state: "action" };
+      return { title: `全17段階の${step.index + 1}：通信カードの青い案内を進めます`, detail: `学習指導要領ページの表示に近づけるため、今は「${roleDefinition(step.actorRole).label}」の操作を1つ選びます。`, after: "目的に合う操作を選び、理由を読むと次の段階へ進めます。", targetId: "mission-panel", targetLabel: "現在の通信段階へ", state: "action" };
     }
     const missing = (["ARP", "NSLOOKUP", "PING_WEB"] as PracticeMilestone[]).find((item) => !practiceCompleted.has(item));
     if (missing) {
-      return { title: `「${taskLabel(missing)}」を押します`, detail: "教材ページが表示されるまでの流れを動かせました。次はコマンド実験で、PCから同じ情報を確認する方法を体験します。", after: "3つの確認が終わったら、結果を根拠に説明します。", targetId: "practice-lab", targetLabel: "確認課題へ", state: "action" };
+      return { title: `「${taskLabel(missing)}」を押します`, detail: "学習指導要領ページが表示されるまでの流れを動かせました。次はコマンド実験で、PCから同じ情報を確認する方法を体験します。", after: "3つの確認が終わったら、結果を根拠に説明します。", targetId: "practice-lab", targetLabel: "確認課題へ", state: "action" };
     }
     if (!hasMyExplanation(snapshot)) {
       return { title: "通信結果から分かったことを1文で書きます", detail: "出口の機器番号、Webサイト名から得たIPアドレス、Webサーバからの返事のうち、確認できた結果を1つ根拠にします。", after: "「障害診断」へ進めるようになります。", targetId: "practice-lab", targetLabel: "説明欄へ", state: "action" };
@@ -114,7 +117,7 @@ export function learningLead(
 
   if (phase === "DIAGNOSIS") {
     if (!practiceCompleted.has("TRACEROUTE")) {
-      return { title: "原因調査カードの青い「次にやること」を進めます", detail: "教材ページが表示されない原因を、まず4候補から予想します。選ぶと、次の確認方法が表示されます。", after: "通過したルータを順に表示し、最後に返事があった地点を確認します。", targetId: "mission-panel", targetLabel: "原因の予想へ", state: "action" };
+      return { title: "原因調査カードの青い「次にやること」を進めます", detail: "学習指導要領ページが表示されない原因を、まず4候補から予想します。選ぶと、次の確認方法が表示されます。", after: "通過したルータを順に表示し、最後に返事があった地点を確認します。", targetId: "mission-panel", targetLabel: "原因の予想へ", state: "action" };
     }
     if (!practiceCompleted.has("HTTPS")) {
       return { title: "「教材サイトからWebの応答が返るか確かめる」を押します", detail: "通信経路を確認した次は、暗号化の準備とWebページの応答まで正常かを調べます。", after: "2つの結果を比べて、原因がありそうな地点を説明します。", targetId: "practice-lab", targetLabel: "Web応答の確認へ", state: "action" };

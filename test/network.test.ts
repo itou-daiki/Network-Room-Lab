@@ -32,7 +32,7 @@ describe("network learning model", () => {
     ];
     const lookup = simulateDiagnostic(
       "NSLOOKUP",
-      "class.yamanashi.example",
+      "www.mext.go.jp",
       faults,
       "p_1",
       "2026-07-22T00:00:00.000Z",
@@ -71,7 +71,7 @@ describe("network learning model", () => {
   it("lets ping reach a stopped web server while HTTPS still fails", () => {
     const faults: ActiveFault[] = [{ type: "WEB_DOWN", target: "web", symptom: "Web停止", injectedAt: "2026-07-22T00:00:00.000Z" }];
     const ping = simulateDiagnostic("PING", "203.0.113.80", faults, "p_1", "2026-07-22T00:00:00.000Z", "diag_ping");
-    const https = simulateDiagnostic("HTTPS", "class.yamanashi.example", faults, "p_1", "2026-07-22T00:00:00.000Z", "diag_https");
+    const https = simulateDiagnostic("HTTPS", "www.mext.go.jp", faults, "p_1", "2026-07-22T00:00:00.000Z", "diag_https");
     expect(ping.success).toBe(true);
     expect(https.success).toBe(false);
     expect(https.output.join(" ")).toContain("connection refused");

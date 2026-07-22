@@ -17,13 +17,13 @@ export interface PracticeTask {
 }
 
 export const PRACTICE_TASKS: PracticeTask[] = [
-  { id: "IPCONFIG", command: "ipconfig", label: "PCのネットワーク設定を表示する", purpose: "教材ページへデータを送る前に、PCの住所・同じネットワークの範囲・外部への出口・Webサイト名を調べるDNSサーバが正しいか確かめます。", observation: "このPCの住所（IPv4 Address）、範囲（Subnet Mask）、出口（Default Gateway）、DNSサーバ（DNS Servers）の4行を上から確認します。" },
+  { id: "IPCONFIG", command: "ipconfig", label: "PCのネットワーク設定を表示する", purpose: "学習指導要領ページへデータを送る前に、PCの住所・同じネットワークの範囲・外部への出口・Webサイト名を調べるDNSサーバが正しいか確かめます。", observation: "このPCの住所（IPv4 Address）、範囲（Subnet Mask）、出口（Default Gateway）、DNSサーバ（DNS Servers）の4行を上から確認します。" },
   { id: "ARP", command: "arp -a", label: "PCが覚えた出口の機器番号を表示する", purpose: "PCが最初の渡し先となるルータのMACアドレスを知っているか調べます。", observation: "ルータのIPアドレスとMACアドレスが同じ行に表示されるか確認します。" },
-  { id: "PING_GATEWAY", command: "ping 192.168.10.1", label: "PCから最初の出口まで届くか確かめる", purpose: "教材ページへ向かう道の最初の区間がつながっているか調べます。", observation: "返事があればPCからルータまで、返事がなければその途中に原因があると考えます。" },
-  { id: "NSLOOKUP", command: "nslookup class.yamanashi.example", label: "Webサイト名からIPアドレスを調べる", purpose: "PCが教材サイトの通信先住所をDNSサーバから受け取れるか調べます。", observation: "class.yamanashi.exampleに対して203.0.113.80が返るか確認します。" },
+  { id: "PING_GATEWAY", command: "ping 192.168.10.1", label: "PCから最初の出口まで届くか確かめる", purpose: "学習指導要領ページへ向かう道の最初の区間がつながっているか調べます。", observation: "返事があればPCからルータまで、返事がなければその途中に原因があると考えます。" },
+  { id: "NSLOOKUP", command: "nslookup www.mext.go.jp", label: "Webサイト名からIPアドレスを調べる", purpose: "PCが文部科学省サイトの通信先住所をDNSサーバから受け取れるか調べます。", observation: "学習モデル上で www.mext.go.jp に対して203.0.113.80が返るか確認します。" },
   { id: "PING_WEB", command: "ping 203.0.113.80", label: "WebサーバのIPアドレスまで届くか確かめる", purpose: "Webサイト名の変換を使わず、Webサーバまでの通信経路だけを調べます。", observation: "IPアドレスでは返事があるかを見て、DNSの問題と通信経路の問題を分けます。" },
   { id: "TRACEROUTE", command: "traceroute 203.0.113.80", label: "通った道から失敗地点を絞る", purpose: "PCからWebサーバまで、どのルータまではデータが届いたかを調べます。", observation: "最後に返事があった経由地点と、その次に返事がない地点を確認します。" },
-  { id: "HTTPS", command: "curl https://class.yamanashi.example", label: "教材サイトからWebの応答が返るか確かめる", purpose: "IPアドレスまで届いた後、暗号化とWebページの応答まで正常か調べます。", observation: "証明書の確認後に、Webサーバから200 OKが返るか確認します。" },
+  { id: "HTTPS", command: "curl https://www.mext.go.jp/a_menu/shotou/new-cs/1384661.htm", label: "文部科学省サイトからWebの応答が返るか確かめる", purpose: "IPアドレスまで届いた後、暗号化と学習指導要領ページの応答まで正常か調べます。", observation: "学習モデル上で、証明書の確認後にWebサーバから200 OKが返るか確認します。" },
 ];
 
 export const QUICK_PRACTICE_COMMANDS = PRACTICE_TASKS.map(({ command, label }) => ({ command, label }));
@@ -73,7 +73,7 @@ export function parsePracticeCommand(value: string): ParsedPracticeCommand {
   }
 
   if (["nslookup", "ping", "traceroute", "tracert"].includes(command)) {
-    if (!args[0]) return missingArgument(raw, command === "tracert" ? "traceroute" : command, `${command === "nslookup" ? "nslookup class.yamanashi.example" : `${command} 203.0.113.80`}`);
+    if (!args[0]) return missingArgument(raw, command === "tracert" ? "traceroute" : command, `${command === "nslookup" ? "nslookup www.mext.go.jp" : `${command} 203.0.113.80`}`);
     const originalTarget = args[0];
     const target = normalizeTarget(originalTarget);
     if (target !== originalTarget) {
@@ -91,9 +91,9 @@ export function parsePracticeCommand(value: string): ParsedPracticeCommand {
   }
 
   if (command === "curl") {
-    if (!args[0]) return missingArgument(raw, "curl", "curl https://class.yamanashi.example");
+    if (!args[0]) return missingArgument(raw, "curl", "curl https://www.mext.go.jp/a_menu/shotou/new-cs/1384661.htm");
     if (!/^https:\/\//i.test(args[0])) {
-      return { kind: "OUTPUT", raw, success: false, lines: ["❌ この実験ではhttps://で始まるWebサイトのURLを指定します。", `修正例: curl https://${normalizeTarget(args[0])}`], inference: "curlでHTTPSを調べると、WebサーバのIPアドレスまで届くことに加え、証明書の確認と教材ページの応答まで確かめられます。" };
+      return { kind: "OUTPUT", raw, success: false, lines: ["❌ この実験ではhttps://で始まるWebサイトのURLを指定します。", `修正例: curl https://${normalizeTarget(args[0])}`], inference: "curlでHTTPSを調べると、WebサーバのIPアドレスまで届くことに加え、証明書の確認と学習指導要領ページの応答まで確かめられます。" };
     }
     return { kind: "DIAGNOSTIC", raw, tool: "HTTPS", target: normalizeTarget(args[0]), milestone: "HTTPS" };
   }

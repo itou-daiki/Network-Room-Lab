@@ -52,7 +52,8 @@ describe("experiential practice commands", () => {
   });
 
   it("keeps the overall Web-site goal and beginner explanations visible in the learning data", () => {
-    expect(LEARNING_SCENARIO_GOAL.title).toContain("特定のWebサイト");
+    expect(LEARNING_SCENARIO_GOAL.title).toContain("文部科学省");
+    expect(LEARNING_SCENARIO_GOAL.url).toBe("https://www.mext.go.jp/a_menu/shotou/new-cs/1384661.htm");
     expect(LEARNING_SCENARIO_GOAL.detail).toContain("6つの機器");
 
     const pcPractice = rolePractice("CLIENT_PC");
@@ -82,10 +83,10 @@ describe("experiential practice commands", () => {
   });
 
   it("maps easy_Packet style commands to safe simulated diagnostics", () => {
-    expect(parsePracticeCommand("nslookup class.yamanashi.example")).toMatchObject({
+    expect(parsePracticeCommand("nslookup www.mext.go.jp")).toMatchObject({
       kind: "DIAGNOSTIC",
       tool: "NSLOOKUP",
-      target: "class.yamanashi.example",
+      target: "www.mext.go.jp",
       milestone: "NSLOOKUP",
     });
     expect(parsePracticeCommand("ping 192.168.10.1")).toMatchObject({
@@ -97,19 +98,19 @@ describe("experiential practice commands", () => {
       kind: "DIAGNOSTIC",
       tool: "TRACEROUTE",
     });
-    expect(parsePracticeCommand("curl https://class.yamanashi.example/lesson")).toMatchObject({
+    expect(parsePracticeCommand("curl https://www.mext.go.jp/a_menu/shotou/new-cs/1384661.htm")).toMatchObject({
       kind: "DIAGNOSTIC",
       tool: "HTTPS",
-      target: "class.yamanashi.example",
+      target: "www.mext.go.jp",
     });
   });
 
   it("turns a URL-form mistake into a concrete correction hint", () => {
-    const parsed = parsePracticeCommand("ping https://class.yamanashi.example/lesson");
+    const parsed = parsePracticeCommand("ping https://www.mext.go.jp/a_menu/shotou/new-cs/1384661.htm");
     expect(parsed.kind).toBe("OUTPUT");
     if (parsed.kind !== "OUTPUT") return;
     expect(parsed.success).toBe(false);
-    expect(parsed.lines.join(" ")).toContain("ping class.yamanashi.example");
+    expect(parsed.lines.join(" ")).toContain("ping www.mext.go.jp");
   });
 
   it("shows the room interface configuration through ipconfig", () => {

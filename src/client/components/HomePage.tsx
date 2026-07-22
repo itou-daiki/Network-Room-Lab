@@ -1,5 +1,11 @@
 import { FormEvent, useState } from "react";
 
+import {
+  MAX_CLASSROOM_BATCH_SIZE,
+  MAX_CLASSROOM_GROUP_SIZE,
+  MIN_CLASSROOM_GROUP_SIZE,
+  buildClassroomRoomRequests,
+} from "../../shared/classroom";
 import { LEARNING_SCENARIO_GOAL } from "../../shared/scenario";
 import { createRoom, joinRoom } from "../api";
 import type { AppSession } from "../session";
@@ -9,6 +15,35 @@ interface HomePageProps {
 }
 
 type EntryMode = "join" | "solo" | "create";
+
+interface CreatedTeacherRoom {
+  code: string;
+  teacherToken: string;
+  title: string;
+  capacity: number;
+  expiresAt: string;
+}
+
+const CREATED_ROOMS_STORAGE_KEY = "network-room-lab.teacher-rooms.v1";
+
+function readCreatedTeacherRooms(): CreatedTeacherRoom[] {
+  try {
+    const parsed: unknown = JSON.parse(window.localStorage.getItem(CREATED_ROOMS_STORAGE_KEY) ?? "[]");
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((item): item is CreatedTeacherRoom => Boolean(
+      item &&
+      typeof item === "object" &&
+      "code" in item && typeof item.code === "string" &&
+      "teacherToken" in item && typeof item.teacherToken === "string" &&
+      "title" in item && typeof item.title === "string" &&
+      "capacity" in item && typeof item.capacity === "number" &&
+      "expiresAt" in item && typeof item.expiresAt === "string",
+    )).slice(0, MAX_CLASSROOM_BATCH_SIZE);
+  } catch {
+    window.localStorage.removeItem(CREATED_ROOMS_STORAGE_KEY);
+    return [];
+  }
+}
 
 const flowNodes = [
   { id: "pc", label: "PC", sub: "URLを入力して出発", tone: "blue" },
@@ -24,6 +59,11 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
   const [roomCode, setRoomCode] = useState("");
   const [title, setTitle] = useState("情報ネットワーク演習");
   const [capacity, setCapacity] = useState(6);
+  const [roomCount, setRoomCount] = useState(10);
+  const [createdRooms, setCreatedRooms] = useState<CreatedTeacherRoom[]>(readCreatedTeacherRooms);
+  const [showCreationForm, setShowCreationForm] = useState(false);
+  const [createProgress, setCreateProgress] = useState(0);
+  const [copiedRoom, setCopiedRoom] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,8 +73,34 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
     setError(null);
     try {
       if (mode === "create") {
-        const room = await createRoom({ title, capacity, scenario: "STANDARD_WEB_ACCESS", learningMode: "CLASSROOM" });
-        onEnterRoom({ code: room.code, token: room.teacherToken, mode: "teacher" });
+        const requests = buildClassroomRoomRequests(title, roomCount, capacity);
+        const rooms: CreatedTeacherRoom[] = [];
+        setCreateProgress(0);
+        for (const [index, request] of requests.entries()) {
+          try {
+            const room = await createRoom(request);
+            rooms.push({
+              code: room.code,
+              teacherToken: room.teacherToken,
+              title: request.title,
+              capacity: request.capacity,
+              expiresAt: room.expiresAt,
+            });
+            setCreateProgress(index + 1);
+          } catch (caught) {
+            if (rooms.length > 0) {
+              setCreatedRooms(rooms);
+              window.localStorage.setItem(CREATED_ROOMS_STORAGE_KEY, JSON.stringify(rooms));
+              setShowCreationForm(false);
+              const reason = caught instanceof Error ? caught.message : "通信エラーが発生しました。";
+              throw new Error(`${rooms.length}部屋は作成できましたが、${index + 1}部屋目で停止しました。作成済みのコードは下に残しています。もう一度作る場合は「別の部屋を作る」を押してください。（${reason}）`);
+            }
+            throw caught;
+          }
+        }
+        setCreatedRooms(rooms);
+        window.localStorage.setItem(CREATED_ROOMS_STORAGE_KEY, JSON.stringify(rooms));
+        setShowCreationForm(false);
       } else if (mode === "solo") {
         const room = await createRoom({
           title: "ひとりで学ぶネットワーク",
@@ -57,6 +123,21 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
       setBusy(false);
     }
   };
+
+  const copyRoomCodes = async () => {
+    const text = createdRooms.map((room) => `${room.title}：${room.code}（定員${room.capacity}人）`).join("\n");
+    await navigator.clipboard.writeText(text);
+    setCopiedRoom("ALL");
+    window.setTimeout(() => setCopiedRoom(null), 1600);
+  };
+
+  const copyRoomCode = async (code: string) => {
+    await navigator.clipboard.writeText(code);
+    setCopiedRoom(code);
+    window.setTimeout(() => setCopiedRoom(null), 1600);
+  };
+
+  const showingCreatedRooms = mode === "create" && createdRooms.length > 0 && !showCreationForm;
 
   return (
     <main className="landing-shell bg-dodger-50 text-slate-900">
@@ -138,8 +219,8 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
             <div className="entry-heading">
               <span className="step-chip">{mode === "join" ? "参加" : mode === "solo" ? "ひとり学習" : "作成"}</span>
               <div>
-                <h2>{mode === "join" ? "授業の部屋に入る" : mode === "solo" ? "自分のペースで始める" : "新しい授業を始める"}</h2>
-                <p>{mode === "join" ? "先生から教えてもらった6文字のコードを入力します。" : mode === "solo" ? "特定のWebサイトを表示するまで、6つの機器の仕事を一人で順番に体験します。" : "授業名と人数を決めて部屋を作ります。"}</p>
+                <h2>{mode === "join" ? "授業の部屋に入る" : mode === "solo" ? "自分のペースで始める" : showingCreatedRooms ? `${createdRooms.length}部屋を作成しました` : "班ごとの部屋を一括で作る"}</h2>
+                <p>{mode === "join" ? "先生から教えてもらった6文字のコードを入力します。" : mode === "solo" ? "文部科学省の学習指導要領ページを表示するまで、6つの機器の仕事を一人で順番に体験します。" : showingCreatedRooms ? "班ごとに部屋コードを伝えます。先生は一覧から各部屋へ入れます。" : "1回の操作で1〜10部屋を作れます。各部屋は2〜6人の班で利用できます。"}</p>
               </div>
             </div>
 
@@ -197,8 +278,32 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
                   required
                 />
               </label>
+            ) : showingCreatedRooms ? (
+              <section className="created-rooms" aria-label="作成した授業部屋">
+                <div className="created-rooms-guide" role="status">
+                  <span>✓</span>
+                  <div><b>参加者には6文字の部屋コードだけを伝えます</b><p>先生用の情報は、このブラウザーだけに保存しています。下の「先生として開く」から各班の進み具合を確認できます。</p></div>
+                </div>
+                <div className="created-rooms-actions">
+                  <button type="button" className="primary-button" onClick={() => void copyRoomCodes()}>{copiedRoom === "ALL" ? "✓ コピーしました" : "全部屋のコードをまとめてコピー"}</button>
+                  <button type="button" className="secondary-button" onClick={() => setShowCreationForm(true)}>別の部屋を作る</button>
+                </div>
+                <div className="created-room-list">
+                  {createdRooms.map((room, index) => (
+                    <article key={room.code}>
+                      <span>{index + 1}班</span>
+                      <div><small>{room.title}</small><b>{room.code}</b><em>定員 {room.capacity}人</em></div>
+                      <div className="created-room-buttons">
+                        <button type="button" onClick={() => void copyRoomCode(room.code)}>{copiedRoom === room.code ? "✓ コピー済み" : "コードをコピー"}</button>
+                        <button type="button" onClick={() => onEnterRoom({ code: room.code, token: room.teacherToken, mode: "teacher" })}>先生として開く →</button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
             ) : (
               <>
+                {createdRooms.length > 0 && <button type="button" className="previous-room-list" onClick={() => setShowCreationForm(false)}>← 前回作成した{createdRooms.length}部屋の一覧へ戻る</button>}
                 <label>
                   授業名
                   <input
@@ -209,18 +314,27 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
                   />
                 </label>
                 <label>
-                  定員
-                  <select value={capacity} onChange={(event) => setCapacity(Number(event.target.value))}>
-                    {[5, 6, 7, 8].map((value) => <option key={value} value={value}>{value}名</option>)}
+                  作る部屋数
+                  <select value={roomCount} onChange={(event) => setRoomCount(Number(event.target.value))}>
+                    {Array.from({ length: MAX_CLASSROOM_BATCH_SIZE }, (_, index) => index + 1).map((value) => <option key={value} value={value}>{value}部屋</option>)}
                   </select>
+                  <small>例：10班なら10部屋を選びます。</small>
                 </label>
+                <label>
+                  1部屋の定員（1班の人数）
+                  <select value={capacity} onChange={(event) => setCapacity(Number(event.target.value))}>
+                    {Array.from({ length: MAX_CLASSROOM_GROUP_SIZE - MIN_CLASSROOM_GROUP_SIZE + 1 }, (_, index) => index + MIN_CLASSROOM_GROUP_SIZE).map((value) => <option key={value} value={value}>{value}人</option>)}
+                  </select>
+                  <small>2〜5人の班では、担当者がいない機器の操作を班全員で行います。</small>
+                </label>
+                <div className="room-batch-summary"><span>作成予定</span><b>{roomCount}部屋 × 定員{capacity}人</b><small>最大{roomCount * capacity}人が参加できます</small></div>
               </>
             )}
 
             {error && <div className="form-error" role="alert">{error}</div>}
-            <button className="primary-button entry-submit" disabled={busy}>
-              {busy ? "接続しています…" : mode === "join" ? "この部屋に参加する" : mode === "solo" ? "ひとり学習を始める" : "授業の部屋を作る"}
-            </button>
+            {!showingCreatedRooms && <button className="primary-button entry-submit" disabled={busy}>
+              {busy ? mode === "create" ? `${createProgress} / ${roomCount}部屋を作成中…` : "接続しています…" : mode === "join" ? "この部屋に参加する" : mode === "solo" ? "ひとり学習を始める" : `${roomCount}部屋を一括作成する`}
+            </button>}
             <p className="privacy-note">個人アカウントは不要です。入力した表示名は、この学習画面の中だけで使用します。</p>
           </form>
         </div>
@@ -230,7 +344,7 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
         <div className="section-kicker">みんなでつなぐ通信の道</div>
         <div className="flow-title-row">
           <div>
-            <h2 id="flow-title">教材ページを表示するために、データを次の機器へ渡します。</h2>
+            <h2 id="flow-title">学習指導要領ページを表示するために、データを次の機器へ渡します。</h2>
             <p>一人で6つの機器を順番に担当することも、仲間と分担することもできます。</p>
           </div>
           <span className="live-pill"><i /> みんなの画面が同時に更新</span>

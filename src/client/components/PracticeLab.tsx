@@ -165,7 +165,7 @@ export function PracticeLab({ snapshot, busy, act, completed, onComplete }: Prac
   return (
     <section className="panel practice-panel" id="practice-lab" aria-labelledby="practice-title">
       <div className="panel-heading practice-heading">
-        <div><p className="panel-kicker">教材ページが表示されるまでを、順番に確認</p><h2 id="practice-title">コマンド実験：通信のどこまで正常か確かめる</h2></div>
+        <div><p className="panel-kicker">学習指導要領ページが表示されるまでを、順番に確認</p><h2 id="practice-title">コマンド実験：通信のどこまで正常か確かめる</h2></div>
         <span>{completedSuggested} / {suggestedTasks.length} このステップの課題</span>
       </div>
 

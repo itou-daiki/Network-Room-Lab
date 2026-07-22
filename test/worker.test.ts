@@ -7,13 +7,13 @@ import type {
   RoomSnapshot,
 } from "../src/shared/types";
 
-async function createTestRoom() {
+async function createTestRoom(capacity = 6) {
   const response = await SELF.fetch("http://example.com/api/rooms", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       title: "統合テスト授業",
-      capacity: 6,
+      capacity,
       scenario: "STANDARD_WEB_ACCESS",
       learningMode: "CLASSROOM",
     }),
@@ -68,6 +68,82 @@ async function action(code: string, token: string, roomVersion: number, payload:
 }
 
 describe("Network Room API", () => {
+  it("accepts 2 to 6 learners per classroom room and rejects larger groups", async () => {
+    const room = await createTestRoom(2);
+    await join(room.code, "1人目");
+    await join(room.code, "2人目");
+
+    const fullResponse = await SELF.fetch(`http://example.com/api/rooms/${room.code}/join`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ displayName: "3人目" }),
+    });
+    expect(fullResponse.status).toBe(409);
+
+    const tooLargeResponse = await SELF.fetch("http://example.com/api/rooms", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: "定員超過テスト",
+        capacity: 7,
+        scenario: "STANDARD_WEB_ACCESS",
+        learningMode: "CLASSROOM",
+      }),
+    });
+    expect(tooLargeResponse.status).toBe(400);
+  });
+
+  it("lets a small group share an unassigned device role without bypassing assigned roles", async () => {
+    const room = await createTestRoom(2);
+    const pc = await join(room.code, "PC担当");
+    const accessPoint = await join(room.code, "AP担当");
+    let state = await snapshot(room.code, room.teacherToken);
+
+    let response = await action(room.code, room.teacherToken, state.room.version, {
+      type: "CHANGE_PHASE",
+      phase: "PROTOCOL",
+    });
+    expect(response.status).toBe(200);
+
+    state = await snapshot(room.code, accessPoint.participantToken);
+    response = await action(room.code, accessPoint.participantToken, state.room.version, {
+      type: "ADVANCE_PROTOCOL",
+      decision: "PC担当がいる段階を代わりに進めようとしました。",
+    });
+    expect(response.status).toBe(403);
+
+    state = await snapshot(room.code, pc.participantToken);
+    response = await action(room.code, pc.participantToken, state.room.version, {
+      type: "ADVANCE_PROTOCOL",
+      decision: "PC担当としてARPの操作を進めます。",
+    });
+    expect(response.status).toBe(200);
+
+    state = await snapshot(room.code, pc.participantToken);
+    response = await action(room.code, pc.participantToken, state.room.version, {
+      type: "ADVANCE_PROTOCOL",
+      decision: "AP担当がいる段階を代わりに進めようとしました。",
+    });
+    expect(response.status).toBe(403);
+
+    state = await snapshot(room.code, accessPoint.participantToken);
+    response = await action(room.code, accessPoint.participantToken, state.room.version, {
+      type: "ADVANCE_PROTOCOL",
+      decision: "AP担当として有線LANへ渡します。",
+    });
+    expect(response.status).toBe(200);
+
+    state = await snapshot(room.code, pc.participantToken);
+    response = await action(room.code, pc.participantToken, state.room.version, {
+      type: "ADVANCE_PROTOCOL",
+      decision: "担当者がいないL2スイッチ役を班で進めます。",
+    });
+    expect(response.status).toBe(200);
+
+    state = await snapshot(room.code, pc.participantToken);
+    expect(state.room.protocolIndex).toBe(3);
+  });
+
   it("shares a learner explanation with the other room participants", async () => {
     const room = await createTestRoom();
     const first = await join(room.code, "説明した人");

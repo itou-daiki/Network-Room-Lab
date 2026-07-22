@@ -41,11 +41,11 @@ const routes: Array<{
   {
     id: "web",
     step: "往復 2",
-    title: "分かったIPアドレスへ、教材ページを取りに行く",
-    purpose: "PCはWebサーバの場所が分かった後、安全な通信を準備して教材ページを要求します。",
-    outbound: "教材ページをください、という要求を送る",
-    returnText: "Webサーバが、成功の返事（200 OK）と教材ページを同じ道でPCへ返す",
-    destination: { id: "web", label: "Webサーバ", action: "要求された教材ページを返す" },
+    title: "分かったIPアドレスへ、学習指導要領ページを取りに行く",
+    purpose: "PCはWebサーバの場所が分かった後、安全な通信を準備して学習指導要領ページを要求します。",
+    outbound: "学習指導要領ページをください、という要求を送る",
+    returnText: "Webサーバが、成功の返事（200 OK）と学習指導要領ページを同じ道でPCへ返す",
+    destination: { id: "web", label: "Webサーバ", action: "要求された学習指導要領ページを返す" },
   },
 ];
 
@@ -55,7 +55,7 @@ export function LearningRouteMap({ activeNodeId, focus = "all", compact = false 
       <header>
         <div>
           <small>大きな目的までの道のり</small>
-          <h2 id={compact ? undefined : "learning-route-title"}>教材ページを見るまでに、データが通る経路</h2>
+          <h2 id={compact ? undefined : "learning-route-title"}>学習指導要領ページを見るまでに、データが通る経路</h2>
           <p>矢印の順に質問や要求を送り、サーバからの答えは同じ機器を逆向きに通ってPCへ戻ります。</p>
         </div>
         <div className="gateway-explanation"><b>ルータとゲートウェイは別の機器？</b><span>この実習では同じ機器です。PCから見て、外部への最初の出口として働くルータを「デフォルトゲートウェイ」と呼びます。</span></div>

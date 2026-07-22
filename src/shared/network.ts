@@ -142,7 +142,7 @@ export function simulateDiagnostic(
   } else if (hasFault(faults, "WEB_DOWN") && tool === "HTTPS") {
     success = false;
     output = ["DNS: 203.0.113.80", "network: reachable", "application: connection refused"];
-    inference = "WebサーバのIPアドレスまでは届いていますが、教材ページの応答が返りません。Webサーバ側でページを返す機能を確認します。";
+    inference = "WebサーバのIPアドレスまでは届いていますが、学習指導要領ページの応答が返りません。Webサーバ側でページを返す機能を確認します。";
   } else if (tool === "PING") {
     const replyAddress = gatewayTarget ? "192.168.10.1" : targetIsIp ? target : "203.0.113.80";
     output = [`PING ${target} (${replyAddress})`, `reply from ${replyAddress}: time=${gatewayTarget ? "1" : "18"}ms TTL=${gatewayTarget ? "64" : "61"}`, "1 packets transmitted, 1 received, 0% packet loss"];
@@ -157,7 +157,7 @@ export function simulateDiagnostic(
     inference = "1番目、2番目、3番目の経由地点から順に返事があり、Webサーバまで届いています。各行は、途中で返事をしたルータを表します。";
   } else {
     output = ["TCP 443: connected", "TLS: certificate valid", "HTTP/2 200 OK"];
-    inference = "WebサーバのIPアドレスまで届き、通信路の準備、証明書の確認、教材ページの応答まで成功しました。ページを安全に取得できる状態です。";
+    inference = "WebサーバのIPアドレスまで届き、通信路の準備、証明書の確認、学習指導要領ページの応答まで成功しました。ページを安全に取得できる状態です。";
   }
 
   return { id, tool, target, success, output, inference, createdAt: now, actorId };

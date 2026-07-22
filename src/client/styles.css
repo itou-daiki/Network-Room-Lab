@@ -277,6 +277,30 @@ input:disabled, select:disabled, textarea:disabled { @apply bg-slate-100 text-sl
 .secondary-button:not(:disabled):hover { @apply bg-dodger-50; }
 .privacy-note { @apply text-xs leading-relaxed text-slate-500; }
 .form-error { @apply rounded-xl border border-red-200 bg-red-50 text-sm text-red-700; }
+.entry-form label > small { @apply text-xs font-normal leading-relaxed text-slate-500; }
+.previous-room-list { @apply mb-4 w-fit border-0 bg-transparent p-0 text-left text-xs font-bold text-dodger-700 underline decoration-dodger-200 underline-offset-4; }
+.previous-room-list:hover { @apply text-dodger-900 decoration-dodger-500; }
+.room-batch-summary { @apply mb-5 grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1 rounded-xl border border-dodger-200 bg-dodger-50 p-4; }
+.room-batch-summary > span { @apply row-span-2 rounded-full bg-dodger-500 px-3 py-1 text-xs font-black text-white; }
+.room-batch-summary > b { @apply text-sm text-dodger-900; }
+.room-batch-summary > small { @apply text-xs text-slate-600; }
+.created-rooms { @apply flex flex-col gap-4; }
+.created-rooms-guide { @apply flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4; }
+.created-rooms-guide > span { @apply grid h-8 w-8 shrink-0 place-items-center rounded-full bg-emerald-500 text-sm font-black text-white; }
+.created-rooms-guide b { @apply text-sm text-emerald-950; }
+.created-rooms-guide p { @apply mt-1 mb-0 text-xs leading-relaxed text-emerald-900; }
+.created-rooms-actions { @apply grid grid-cols-2 gap-2; }
+.created-rooms-actions button { @apply min-w-0 px-3; }
+.created-room-list { @apply flex max-h-[430px] flex-col gap-2 overflow-y-auto pr-1; scrollbar-gutter: stable; }
+.created-room-list article { @apply grid grid-cols-[auto_1fr] items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3; }
+.created-room-list article > span { @apply grid h-10 min-w-10 place-items-center rounded-lg bg-dodger-500 px-2 text-xs font-black text-white; }
+.created-room-list article > div:first-of-type { @apply flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1; }
+.created-room-list article small { @apply w-full overflow-hidden text-ellipsis whitespace-nowrap text-xs text-slate-500; }
+.created-room-list article b { @apply font-mono text-lg tracking-[.15em] text-dodger-900; }
+.created-room-list article em { @apply text-xs not-italic text-slate-500; }
+.created-room-buttons { @apply col-span-2 grid grid-cols-2 gap-2; }
+.created-room-buttons button { @apply min-h-10 rounded-lg border border-dodger-200 bg-white px-3 py-2 text-xs font-bold text-dodger-700; }
+.created-room-buttons button:hover { @apply border-dodger-400 bg-dodger-50 text-dodger-900; }
 .flow-showcase { @apply border-dodger-100 bg-white/80; }
 .flow-title-row h2 { @apply text-slate-900; }
 .flow-title-row p { @apply text-sm text-slate-600; }
@@ -735,6 +759,7 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
   .mission-panel .inline-learning-lead { width:100%; margin-left:0; margin-right:0; }
   .reflection-item { grid-template-columns: 24px 1fr; }.reflection-item button { grid-column: 2; justify-self: end; }
   .teacher-phase-buttons { grid-template-columns: repeat(4,1fr); }.fault-controls { grid-template-columns: 1fr; }
+  .created-rooms-actions { @apply grid-cols-1; }.created-room-list { max-height:none; }.created-room-list article { @apply grid-cols-[auto_1fr]; }.created-room-buttons { @apply grid-cols-1; }.room-batch-summary { @apply grid-cols-1; }.room-batch-summary > span { @apply row-span-1 w-fit; }
 }
 
 @media (prefers-reduced-motion: reduce) {

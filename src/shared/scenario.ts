@@ -10,9 +10,9 @@ import type {
 } from "./types";
 
 export const LEARNING_SCENARIO_GOAL = {
-  title: "特定のWebサイトにある教材ページを見る",
-  url: "https://class.yamanashi.example/lesson",
-  detail: "このアプリ内だけで使う学習用URLをPCのブラウザへ入力し、教材ページが表示されるまでに、6つの機器が何を確認し、どんな操作をするかを順番に体験します。実際の外部サイトには接続しません。",
+  title: "文部科学省の学習指導要領ページを見る",
+  url: "https://www.mext.go.jp/a_menu/shotou/new-cs/1384661.htm",
+  detail: "誰でも閲覧できる文部科学省の「平成29・30・31年改訂学習指導要領（本文、解説）」ページを題材に、PCのブラウザへURLを入力してからページが表示されるまで、6つの機器が何を確認し、どんな操作をするかを順番に体験します。このアプリは学習用の通信モデルであり、実際の文部科学省サイトへは接続しません。",
 } as const;
 
 export const ROLE_DEFINITIONS: RoleDefinition[] = [
@@ -20,7 +20,7 @@ export const ROLE_DEFINITIONS: RoleDefinition[] = [
     id: "CLIENT_PC",
     label: "クライアントPC",
     shortLabel: "PC",
-    description: "Webサイトの場所を受け取り、教材ページを表示するための通信を始めます。",
+    description: "Webサイトの場所を受け取り、学習指導要領ページを表示するための通信を始めます。",
     observes: ["PCの住所と範囲", "外部への出口", "出口の機器番号", "Webページの内容"],
     accent: "#3aa6ff",
   },
@@ -60,7 +60,7 @@ export const ROLE_DEFINITIONS: RoleDefinition[] = [
     id: "WEB_SERVER",
     label: "Webサーバ",
     shortLabel: "Web",
-    description: "PCから届いた要求を読み、安全な通信で教材ページを返します。",
+    description: "PCから届いた要求を読み、安全な通信で学習指導要領ページを返します。",
     observes: ["PCとの通信路", "暗号化の状態", "してほしい操作", "求められたページ"],
     accent: "#ff7e8c",
   },
@@ -68,7 +68,7 @@ export const ROLE_DEFINITIONS: RoleDefinition[] = [
     id: "OBSERVER",
     label: "観察者",
     shortLabel: "Observer",
-    description: "教材ページが表示されるまでの道と、各担当が選んだ理由を記録します。",
+    description: "学習指導要領ページが表示されるまでの道と、各担当が選んだ理由を記録します。",
     observes: ["データが通った道", "各担当の操作", "選んだ理由", "学習の振り返り"],
     accent: "#a6b2bd",
   },
@@ -87,7 +87,7 @@ export const PHASE_DEFINITIONS: PhaseDefinition[] = [
     index: 1,
     label: "役割確認",
     shortLabel: "役割",
-    instruction: "教材ページを表示するために、6つの機器が担当する仕事を順番に確認します。",
+    instruction: "学習指導要領ページを表示するために、6つの機器が担当する仕事を順番に確認します。",
   },
   {
     id: "TOPOLOGY",
@@ -108,21 +108,21 @@ export const PHASE_DEFINITIONS: PhaseDefinition[] = [
     index: 4,
     label: "通信実験",
     shortLabel: "通信",
-    instruction: "教材ページが表示されるまで、6つの機器の判断を1つずつ動かします。",
+    instruction: "学習指導要領ページが表示されるまで、6つの機器の判断を1つずつ動かします。",
   },
   {
     id: "DIAGNOSIS",
     index: 5,
     label: "障害診断",
     shortLabel: "診断",
-    instruction: "教材ページが表示されない原因を、予想と確認コマンドで順番に絞ります。",
+    instruction: "学習指導要領ページが表示されない原因を、予想と確認コマンドで順番に絞ります。",
   },
   {
     id: "REFLECTION",
     index: 6,
     label: "振り返り",
     shortLabel: "説明",
-    instruction: "教材ページが表示されるまでに分かったことを、自分の言葉で整理します。",
+    instruction: "学習指導要領ページが表示されるまでに分かったことを、自分の言葉で整理します。",
   },
 ];
 
@@ -150,9 +150,9 @@ const allLayers = (protocol: ProtocolStep["protocol"], ttl: number): ProtocolSte
     protocol === "ARP"
       ? "ARPの問い合わせ：192.168.10.1のMACアドレスは？"
       : protocol === "DNS"
-        ? "DNSの問い合わせ：class.yamanashi.exampleのIPアドレスは？"
+        ? "DNSの問い合わせ：www.mext.go.jpのIPアドレスは？"
         : protocol === "HTTPS"
-          ? "教材ページの要求：GET /lesson（TLSで暗号化）"
+          ? "学習指導要領ページの要求：GET /a_menu/shotou/new-cs/1384661.htm（TLSで暗号化）"
           : "Webサーバとの通信路を準備";
 
   return [
@@ -224,11 +224,11 @@ export const PROTOCOL_STEPS: ProtocolStep[] = [
   step(9, "TCP", "Webサーバ側でも通信路を準備する", "PCからの通信開始の合図を受け取り、受け取ったことを示す返事（SYN/ACK）を返します。", "WEB_SERVER", "web", "CREATE_PACKET", 63),
   step(10, "TLS", "Webサーバが本物だと確認できる情報を送る", "Webサーバの名前や有効期限が書かれたサーバ証明書と、暗号化の条件をPCへ送ります。", "WEB_SERVER", "web", "CHANGE_PROTOCOL", 63),
   step(11, "TLS", "接続先が本物か確認し、暗号化を始める", "証明書のWebサイト名・有効期限・発行元を確認し、安全に通信できる状態を作ります。", "CLIENT_PC", "pc", "CHANGE_PROTOCOL", 64),
-  step(12, "HTTPS", "暗号化した状態で、教材ページを要求する", "暗号化された通信の中で、「/lessonの教材ページをください」というGET要求を送ります。", "CLIENT_PC", "pc", "CREATE_PACKET", 64),
-  step(13, "HTTPS", "要求された教材ページを返す", "GET /lessonという要求を読み、成功を表す200 OKと教材ページのHTMLを返します。", "WEB_SERVER", "web", "CREATE_PACKET", 63),
-  step(14, "HTTPS", "教材ページのデータを、校内LAN側へ戻す", "PCのIPアドレスに合う帰り道を選び、通過できる残り回数（TTL）を1減らします。", "ROUTER", "router", "FORWARD_PACKET", 62),
-  step(15, "HTTPS", "教材ページのデータを、PC側の差込口へ送る", "PCの機器番号（MACアドレス）を対応表で調べ、PCにつながる1番の差込口へ送ります。", "L2_SWITCH", "switch", "FORWARD_PACKET", 62),
-  step(16, "HTTPS", "届いたデータから教材ページを表示する", "暗号化を解除して受信データを正しい順番に戻し、ブラウザに教材ページを表示します。", "CLIENT_PC", "pc", "FORWARD_PACKET", 62),
+  step(12, "HTTPS", "暗号化した状態で、学習指導要領ページを要求する", "暗号化された通信の中で、「学習指導要領ページをください」というGET要求を送ります。", "CLIENT_PC", "pc", "CREATE_PACKET", 64),
+  step(13, "HTTPS", "要求された学習指導要領ページを返す", "GET /a_menu/shotou/new-cs/1384661.htmという要求を読み、成功を表す200 OKとページのHTMLを返します。", "WEB_SERVER", "web", "CREATE_PACKET", 63),
+  step(14, "HTTPS", "学習指導要領ページのデータを、校内LAN側へ戻す", "PCのIPアドレスに合う帰り道を選び、通過できる残り回数（TTL）を1減らします。", "ROUTER", "router", "FORWARD_PACKET", 62),
+  step(15, "HTTPS", "学習指導要領ページのデータを、PC側の差込口へ送る", "PCの機器番号（MACアドレス）を対応表で調べ、PCにつながる1番の差込口へ送ります。", "L2_SWITCH", "switch", "FORWARD_PACKET", 62),
+  step(16, "HTTPS", "届いたデータから学習指導要領ページを表示する", "暗号化を解除して受信データを正しい順番に戻し、ブラウザに学習指導要領ページを表示します。", "CLIENT_PC", "pc", "FORWARD_PACKET", 62),
 ];
 
 export const FAULT_DEFINITIONS: Array<{
@@ -244,12 +244,12 @@ export const FAULT_DEFINITIONS: Array<{
   { type: "DNS_DOWN", label: "DNSサーバが停止", target: "dns", symptom: "WebサーバのIPアドレスを指定すると届きますが、Webサイト名では届きません。", hint: "Webサイト名をIPアドレスへ変換できるかを確認します。" },
   { type: "ROUTE_MISSING", label: "ルータの道案内が不足", target: "router", symptom: "PCから出口のルータまでは届きますが、その先のWebサーバへ進めません。", hint: "WebサーバのIPアドレスに合う道が、ルータの経路表にあるか確認します。" },
   { type: "CERT_ERROR", label: "Webサイトの証明書に問題", target: "web", symptom: "Webサーバへは接続できますが、安全な通信を開始できません。", hint: "証明書のWebサイト名と有効期限を確認します。" },
-  { type: "WEB_DOWN", label: "Webサーバが停止", target: "web", symptom: "WebサーバのIPアドレスまでは届きますが、教材ページが返りません。", hint: "Webサーバが教材ページの要求へ応答しているか確認します。" },
+  { type: "WEB_DOWN", label: "Webサーバが停止", target: "web", symptom: "WebサーバのIPアドレスまでは届きますが、学習指導要領ページが返りません。", hint: "Webサーバが学習指導要領ページの要求へ応答しているか確認します。" },
 ];
 
 export const REFLECTION_PROMPTS = [
-  { id: "explain-flow", label: "特定のWebサイトにある教材ページを見るために、PCからWebサーバまでの6つの機器は何をしましたか。順番に説明してください。" },
-  { id: "diagnosis", label: "教材ページが表示されない原因を調べたとき、どの結果から「ここまでは正常」「この先に問題がある」と判断しましたか。" },
+  { id: "explain-flow", label: "文部科学省の学習指導要領ページを見るために、PCからWebサーバまでの6つの機器は何をしましたか。順番に説明してください。" },
+  { id: "diagnosis", label: "学習指導要領ページが表示されない原因を調べたとき、どの結果から「ここまでは正常」「この先に問題がある」と判断しましたか。" },
   { id: "lesson-design", label: "今回いちばん理解できた機器の仕事と、もう一度確認したいことを書いてください。" },
 ];
 

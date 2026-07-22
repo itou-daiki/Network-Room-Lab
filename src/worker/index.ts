@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { MAX_CLASSROOM_GROUP_SIZE, MIN_CLASSROOM_GROUP_SIZE } from "../shared/classroom";
 import type {
   ActionEnvelope,
   ApiErrorBody,
@@ -12,15 +13,15 @@ export { RoomDurableObject } from "./room";
 const createRoomSchema = z
   .object({
     title: z.string().trim().min(1, "授業名を入力してください。").max(80),
-    capacity: z.number().int().min(1).max(8),
+    capacity: z.number().int().min(1).max(MAX_CLASSROOM_GROUP_SIZE, `定員は最大${MAX_CLASSROOM_GROUP_SIZE}名です。`),
     scenario: z.literal("STANDARD_WEB_ACCESS"),
     learningMode: z.enum(["CLASSROOM", "SOLO"]).default("CLASSROOM"),
     displayName: z.string().trim().min(1, "表示名を入力してください。").max(32).optional(),
   })
   .strict()
   .superRefine((input, context) => {
-    if (input.learningMode === "CLASSROOM" && input.capacity < 2) {
-      context.addIssue({ code: "custom", path: ["capacity"], message: "協働学習の定員は2名以上にしてください。" });
+    if (input.learningMode === "CLASSROOM" && input.capacity < MIN_CLASSROOM_GROUP_SIZE) {
+      context.addIssue({ code: "custom", path: ["capacity"], message: `協働学習の定員は${MIN_CLASSROOM_GROUP_SIZE}名以上にしてください。` });
     }
     if (input.learningMode === "SOLO" && !input.displayName) {
       context.addIssue({ code: "custom", path: ["displayName"], message: "ひとり学習では表示名を入力してください。" });

@@ -172,7 +172,7 @@ export function RolePracticeLab({ snapshot, completed, onComplete, act, busy = f
       {currentStage === 1 && (
         <div className="role-guided-step">
           <header><span>1</span><div><small>今回あなたが担当する機器</small><h3>{role.label}</h3><p>{practice.beginnerStory}</p></div></header>
-          <div className="role-goal"><span>特定のWebサイトを見るための、{role.label}の仕事</span><p>{practice.mission}</p></div>
+          <div className="role-goal"><span>学習指導要領ページを見るための、{role.label}の仕事</span><p>{practice.mission}</p></div>
           <div className="role-analogy"><span aria-hidden="true">💡</span><p><b>身近なものに例えると</b>{practice.everydayExample}</p></div>
           <div className="role-situation"><span>いま起きたこと</span><p>{practice.situation}</p></div>
           <div className="role-safe-note"><span>✓</span><p><b>ここでは役割と目的だけ分かれば大丈夫です</b>次の段階で、判断に使う情報を1項目ずつ確認します。</p></div>
