@@ -61,6 +61,19 @@ export function PracticeLab({ snapshot, busy, act, completed, onComplete }: Prac
   const phaseExplanations = snapshot.explanations.filter((item) => item.phase === snapshot.room.phase);
   const myExplanation = phaseExplanations.find((item) => item.participantId === snapshot.viewer.participantId);
   const explanationSaved = Boolean(myExplanation && myExplanation.text === observation.trim());
+  const nextIncompleteTask = suggestedTasks.find((task) => !completed.has(task.id));
+  const predictionReady = prediction.trim().length >= 5;
+  const practiceAction = pending
+    ? { title: `「${pending.command}」の結果を待ちます`, detail: "終わると黒い画面へ結果と観察ポイントが表示されます。" }
+    : snapshot.viewer.kind === "participant" && !predictionReady
+      ? { title: "まず「実行前の予想」を5文字以上で書きます", detail: "正解でなくて大丈夫です。「届くと思う」だけでも始められます。" }
+      : nextIncompleteTask
+        ? { title: `左側の「${nextIncompleteTask.label}」を押します`, detail: `コマンドは自動入力されます。実行後、黒い画面の「観察のポイント」を読みます。` }
+        : observation.trim().length < 10
+          ? { title: "右側の説明欄へ、分かったことを1文で書きます", detail: "成功・失敗だけでなく、「どこまで正常だったか」を10文字以上で書きます。" }
+          : snapshot.viewer.kind === "participant" && !explanationSaved
+            ? { title: "「この説明をみんなに共有」を押します", detail: "ひとり学習でも、保存が完了すると次のステップへ進めるようになります。" }
+            : { title: "この実践課題は完了です", detail: "上の学習コーチに表示された次の操作へ進みます。" };
 
   useEffect(() => {
     if (!myExplanation) return;
@@ -150,7 +163,7 @@ export function PracticeLab({ snapshot, busy, act, completed, onComplete }: Prac
   };
 
   return (
-    <section className="panel practice-panel" aria-labelledby="practice-title">
+    <section className="panel practice-panel" id="practice-lab" aria-labelledby="practice-title">
       <div className="panel-heading practice-heading">
         <div><p className="panel-kicker">easy_Packetの操作体験を統合</p><h2 id="practice-title">実践ワークベンチ：自分で調べて確かめる</h2></div>
         <span>{completedSuggested} / {suggestedTasks.length} このステップの課題</span>
@@ -166,16 +179,21 @@ export function PracticeLab({ snapshot, busy, act, completed, onComplete }: Prac
         <div><span>4</span><b>説明する</b><small>根拠を言葉にする</small></div>
       </div>
 
+      <div className="inline-learning-lead practice-inline-lead" role="status">
+        <span>次にやること</span><div><b>{practiceAction.title}</b><p>{practiceAction.detail}</p></div>
+      </div>
+
       <div className="practice-layout">
         <aside className="practice-tasks" aria-label="実践課題">
           <h3>このステップで試すこと</h3>
           {suggestedTasks.map((task) => (
-            <button type="button" key={task.id} className={completed.has(task.id) ? "done" : ""} disabled={Boolean(pending) || busy} onClick={() => void execute(task.command)}>
+            <button type="button" key={task.id} className={completed.has(task.id) ? "done" : task.id === nextIncompleteTask?.id && predictionReady ? "guide-target" : ""} disabled={Boolean(pending) || busy} onClick={() => void execute(task.command)}>
               <span>{completed.has(task.id) ? "✓" : "○"}</span><div><b>{task.label}</b><code>{task.command}</code><small>{task.observation}</small></div>
             </button>
           ))}
-          <label className="practice-note-field">実行前の予想
+          <label className={`practice-note-field ${!predictionReady && snapshot.viewer.kind === "participant" ? "guide-field" : ""}`}>実行前の予想
             <textarea rows={3} value={prediction} onChange={(event) => setPredictions((current) => ({ ...current, [snapshot.room.phase]: event.target.value }))} placeholder="例：IPでは届くが、名前では失敗すると思う。" />
+            {snapshot.viewer.kind === "participant" && <small>{prediction.trim().length}文字 / まず5文字を目安に予想します（正解でなくて大丈夫）</small>}
           </label>
         </aside>
 

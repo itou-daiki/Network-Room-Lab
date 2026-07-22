@@ -10,6 +10,7 @@ import {
   roleDefinition,
 } from "../../shared/scenario";
 import { PHASE_TERM_IDS } from "../../shared/glossary";
+import { learningLead, type LearningLead } from "../../shared/learningLead";
 import { PRACTICE_TASKS, protocolDecisionChoices, protocolTermIds, type PracticeMilestone } from "../../shared/practice";
 import { CORE_ROLE_IDS, type CoreRoleId } from "../../shared/rolePractice";
 import { validateInterfaceConfig } from "../../shared/network";
@@ -71,6 +72,25 @@ function PhaseStepper({ snapshot }: { snapshot: RoomSnapshot }) {
   );
 }
 
+function LearningCoach({ lead }: { lead: LearningLead }) {
+  const moveToAction = () => {
+    if (!lead.targetId) return;
+    document.getElementById(lead.targetId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  return (
+    <section className={`learning-coach ${lead.state}`} aria-label="次にやること" aria-live="polite">
+      <span className="learning-coach-icon" aria-hidden="true">{lead.state === "complete" ? "✓" : lead.state === "waiting" ? "…" : "→"}</span>
+      <div className="learning-coach-main">
+        <small>NEXT ACTION ／ 次にやること</small>
+        <b>{lead.title}</b>
+        <p>{lead.detail}</p>
+      </div>
+      <div className="learning-coach-after"><small>終わったら</small><span>{lead.after}</span></div>
+      {lead.targetId && <button type="button" onClick={moveToAction}>{lead.targetLabel ?? "その場所へ移動"} ↓</button>}
+    </section>
+  );
+}
+
 const PHASE_PRACTICE_REQUIREMENTS: Partial<Record<RoomSnapshot["room"]["phase"], PracticeMilestone[]>> = {
   TOPOLOGY: ["PING_GATEWAY"],
   ADDRESSING: ["IPCONFIG", "PING_GATEWAY"],
@@ -110,7 +130,7 @@ function SoloProgressControls({
           : undefined;
 
   return (
-    <section className="solo-progress" aria-label="ひとり学習の進行">
+    <section className="solo-progress" id="solo-progress" aria-label="ひとり学習の進行">
       <div>
         <small>ひとり学習</small>
         <b>{next ? `説明と操作を確認したら「${next.label}」へ進みます。` : "振り返りを保存したら学習完了です。"}</b>
@@ -181,7 +201,7 @@ function TopologyPanel({ snapshot, busy, act }: SharedPanelProps) {
   const faulted = (id: string) => room.activeFaults.some((fault) => fault.target === id || fault.target.includes(id));
 
   return (
-    <section className="panel topology-panel" aria-labelledby="topology-title">
+    <section className="panel topology-panel" id="topology-panel" aria-labelledby="topology-title">
       <div className="panel-heading">
         <div>
           <p className="panel-kicker">通信が通る道</p>
@@ -226,9 +246,18 @@ function TopologyPanel({ snapshot, busy, act }: SharedPanelProps) {
 
 function AddressingMission({ snapshot, busy, act }: SharedPanelProps) {
   const [config, setConfig] = useState<InterfaceConfig>(snapshot.room.interfaceConfig);
+  const [triedBadGateway, setTriedBadGateway] = useState(false);
   useEffect(() => setConfig(snapshot.room.interfaceConfig), [snapshot.room.interfaceConfig]);
   const canEdit = snapshot.viewer.kind === "teacher" || snapshot.room.learningMode === "SOLO" || snapshot.viewer.role === "CLIENT_PC";
   const configErrors = validateInterfaceConfig(config);
+  const configSaved = snapshot.room.latestEvents.some((event) => event.type === "CONFIGURE_INTERFACE");
+  const addressAction = configSaved
+    ? { title: "設定を保存できました", detail: "次は下の実践ワークベンチで、ipconfigとpingを順に実行します。" }
+    : configErrors.length > 0
+      ? { title: "赤い理由を読み、「推奨値へ戻す」を押します", detail: "エラーは学習用です。推奨値へ戻せば、元の正しい設定になります。" }
+      : triedBadGateway
+        ? { title: "「この設定を保存してコマンドで確認」を押します", detail: "4つの値が推奨値へ戻っていることを確認してから保存します。" }
+        : { title: "まず「別ネットワークのGWを試す」を押します", detail: "わざと誤った値にして、なぜ通信できないかを赤い説明で確かめます。" };
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -241,6 +270,7 @@ function AddressingMission({ snapshot, busy, act }: SharedPanelProps) {
         <span>設定実験</span>
         <p>値を変えると判定がどう変わるか試します。「別ネットワークのGWを試す」→理由を読む→推奨値へ戻す、の順で体験しましょう。</p>
       </div>
+      <div className="inline-learning-lead" role="status"><span>次にやること</span><div><b>{addressAction.title}</b><p>{addressAction.detail}</p></div></div>
       <div className="field-grid">
         <label>PCのIPアドレス<input value={config.address} disabled={!canEdit} onChange={(event) => setConfig({ ...config, address: event.target.value })} /></label>
         <label>範囲（/ の後ろ）<input type="number" min={1} max={30} value={config.prefix} disabled={!canEdit} onChange={(event) => setConfig({ ...config, prefix: Number(event.target.value) })} /></label>
@@ -249,8 +279,8 @@ function AddressingMission({ snapshot, busy, act }: SharedPanelProps) {
       </div>
       {canEdit && (
         <div className="address-experiment-actions">
-          <button type="button" className="secondary-button" onClick={() => setConfig({ ...config, gateway: "192.168.20.1" })}>別ネットワークのGWを試す</button>
-          <button type="button" className="secondary-button" onClick={() => setConfig({ address: "192.168.10.23", prefix: 24, gateway: "192.168.10.1", dns: "198.51.100.53" })}>推奨値へ戻す</button>
+          <button type="button" className={`secondary-button ${!triedBadGateway && !configSaved ? "guide-target" : ""}`} onClick={() => { setTriedBadGateway(true); setConfig({ ...config, gateway: "192.168.20.1" }); }}>別ネットワークのGWを試す</button>
+          <button type="button" className={`secondary-button ${configErrors.length > 0 ? "guide-target" : ""}`} onClick={() => setConfig({ address: "192.168.10.23", prefix: 24, gateway: "192.168.10.1", dns: "198.51.100.53" })}>推奨値へ戻す</button>
         </div>
       )}
       <div className={`config-feedback ${configErrors.length > 0 ? "failure" : "success"}`} role="status">
@@ -263,7 +293,7 @@ function AddressingMission({ snapshot, busy, act }: SharedPanelProps) {
       </div>
       <div className="subnet-check"><span>PC network</span><b>192.168.10.0/24</b><span>GW</span><b>192.168.10.1</b></div>
       <ContextTerms ids={PHASE_TERM_IDS.ADDRESSING ?? []} />
-      {canEdit ? <button className="primary-button" disabled={busy || configErrors.length > 0}>この設定を保存してコマンドで確認</button> : <p className="waiting-note">PC担当の設定を観察しています。</p>}
+      {canEdit ? <button className={`primary-button ${triedBadGateway && configErrors.length === 0 && !configSaved ? "guide-target" : ""}`} disabled={busy || configErrors.length > 0}>この設定を保存してコマンドで確認</button> : <p className="waiting-note">PC担当の設定を観察しています。</p>}
     </form>
   );
 }
@@ -292,9 +322,17 @@ function ProtocolMission({ snapshot, busy, act }: SharedPanelProps) {
   }
 
   const activeStep = step!;
+  const protocolAction = !canAdvance
+    ? { title: `${roleDefinition(activeStep.actorRole).label}の操作を待ちます`, detail: "担当者が進めると、この画面は自動で次のSTEPへ切り替わります。" }
+    : selectedChoice?.correct
+      ? { title: "理由を読み、青い「次へ進む」を押します", detail: "正しい操作を選べています。次の機器へパケットを渡します。" }
+      : selectedChoice
+        ? { title: "表示された理由を読み、別の答えを選びます", detail: "間違えても減点されません。A・B・Cは何度でも選び直せます。" }
+        : { title: "A・B・Cから、次の操作を1つ選びます", detail: "今の担当機器が見られる情報を手がかりにします。" };
 
   return (
     <div className="protocol-mission">
+      <div className="inline-learning-lead" role="status"><span>次にやること</span><div><b>{protocolAction.title}</b><p>{protocolAction.detail}</p></div></div>
       <div className="protocol-breadcrumb">
         {(["ARP", "DNS", "TCP", "TLS", "HTTPS"] as const).map((protocol) => (
           <span key={protocol} className={activeStep.protocol === protocol ? "active" : ""}>{protocol}</span>
@@ -345,6 +383,7 @@ function DiagnosisMission({ snapshot }: SharedPanelProps) {
   return (
     <div className="diagnosis-mission">
       <div className="mission-callout warning"><span>まず予想する</span><p>症状だけを見て、問題がありそうな場所を1つ選びます。正解を当てることより、コマンド結果で仮説を修正することが目的です。</p></div>
+      <div className="inline-learning-lead" role="status"><span>次にやること</span><div><b>{hypothesis ? "下の実践ワークベンチで「失敗地点を絞る」を押します" : "4つの候補から、問題がありそうな場所を1つ選びます"}</b><p>{hypothesis ? "予想は記録できました。tracerouteの最後に応答した地点を確認します。" : "正解を当てる必要はありません。今の予想を1つ選べば進めます。"}</p></div></div>
       <div className="hypothesis-choices" role="group" aria-label="最初の仮説">
         {hypotheses.map((item) => (
           <button type="button" key={item.id} className={hypothesis === item.id ? "active" : ""} aria-pressed={hypothesis === item.id} onClick={() => setHypothesis(item.id)}><span>{hypothesis === item.id ? "●" : "○"}</span>{item.label}</button>
@@ -363,8 +402,8 @@ function DiagnosisMission({ snapshot }: SharedPanelProps) {
 
 function ReflectionMission({ snapshot, busy, act }: SharedPanelProps) {
   const existing = useMemo(
-    () => Object.fromEntries(snapshot.reflections.map((item) => [item.promptId, item.response])),
-    [snapshot.reflections],
+    () => Object.fromEntries(snapshot.reflections.filter((item) => item.participantId === snapshot.viewer.participantId).map((item) => [item.promptId, item.response])),
+    [snapshot.reflections, snapshot.viewer.participantId],
   );
   const [responses, setResponses] = useState<Record<string, string>>(existing);
   useEffect(() => setResponses(existing), [existing]);
@@ -378,8 +417,13 @@ function ReflectionMission({ snapshot, busy, act }: SharedPanelProps) {
     );
   }
 
+  const nextPromptIndex = REFLECTION_PROMPTS.findIndex((prompt) => existing[prompt.id] === undefined);
+  const nextPrompt = nextPromptIndex >= 0 ? REFLECTION_PROMPTS[nextPromptIndex] : undefined;
+  const nextDraftReady = nextPrompt ? (responses[nextPrompt.id]?.trim().length ?? 0) >= 10 : false;
+
   return (
     <div className="reflection-form">
+      <div className="inline-learning-lead" role="status"><span>次にやること</span><div><b>{nextPrompt ? nextDraftReady ? `振り返り ${nextPromptIndex + 1} の「保存」を押します` : `振り返り ${nextPromptIndex + 1} を10文字以上で書きます` : "3つの振り返りを保存できました"}</b><p>{nextPrompt ? nextDraftReady ? "必要なら文を読み直し、保存すると次の問いへ進みます。" : "正解は1つではありません。体験中に見た値や操作を1つ入れます。" : "これで学習完了です。必要なら前のフェーズへ戻って復習できます。"}</p></div></div>
       <ContextTerms ids={PHASE_TERM_IDS.REFLECTION ?? []} title="説明に使える用語" />
       {REFLECTION_PROMPTS.map((prompt, index) => (
         <div className="reflection-item" key={prompt.id}>
@@ -445,7 +489,7 @@ function MissionPanel({ snapshot, busy, act }: SharedPanelProps) {
   }
 
   return (
-    <section className="panel mission-panel" aria-labelledby="mission-title">
+    <section className="panel mission-panel" id="mission-panel" aria-labelledby="mission-title">
       <div className="panel-heading"><div><p className="panel-kicker">いま取り組むこと</p><h2 id="mission-title">{phase.label}</h2></div><span className="phase-number">{phase.id === "LOBBY" ? "準備" : `ステップ ${phase.index}`}</span></div>
       <p className="phase-instruction">{phase.instruction}</p>
       {content}
@@ -527,7 +571,7 @@ function TeacherPanel({ snapshot, busy, act, session }: SharedPanelProps & { ses
   };
 
   return (
-    <section className="panel teacher-panel" aria-labelledby="teacher-title">
+    <section className="panel teacher-panel" id="teacher-panel" aria-labelledby="teacher-title">
       <div className="panel-heading"><div><p className="panel-kicker">先生用メニュー</p><h2 id="teacher-title">授業の進行とサポート</h2></div><button className="secondary-button" disabled={exporting} onClick={() => void exportData()}>{exporting ? "出力中…" : "記録をCSVで保存"}</button></div>
       <div className="teacher-grid">
         <div>
@@ -586,24 +630,20 @@ export function RoomPage({ session, onLeave }: RoomPageProps) {
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1500);
   };
-  const currentPhase = phaseDefinition(snapshot.room.phase);
-  const viewerRole = snapshot.viewer.role ? roleDefinition(snapshot.viewer.role) : null;
   const isSolo = snapshot.room.learningMode === "SOLO";
   const focusedRolePractice = snapshot.room.phase === "ROLES" && snapshot.viewer.kind !== "teacher";
-  const nextSoloRole = isSolo ? CORE_ROLE_IDS.find((roleId) => !rolePracticeCompleted.has(roleId)) : undefined;
-  const soloActor = snapshot.room.phase === "PROTOCOL" ? PROTOCOL_STEPS[snapshot.room.protocolIndex]?.actorRole : undefined;
-  const currentRoleLabel = isSolo
-    ? soloActor
-      ? roleDefinition(soloActor).label
-      : nextSoloRole
-        ? `${CORE_ROLE_IDS.indexOf(nextSoloRole) + 1} / 6　${roleDefinition(nextSoloRole).label}`
-        : "6つの役割を完了"
-    : viewerRole?.label ?? "観察者";
-  const showPractice = currentPhase.index >= 2;
+  const focusedSoloPhase = isSolo && snapshot.room.phase !== "ROLES";
+  const showPractice = Boolean(PHASE_PRACTICE_REQUIREMENTS[snapshot.room.phase]);
+  const nextAction = learningLead(snapshot, practiceCompleted, rolePracticeCompleted);
 
   const completeRolePractice = (roleId: CoreRoleId) => setRolePracticeCompleted((current) => {
     const next = new Set(current).add(roleId);
     if (rolePracticeStorageKey) window.sessionStorage.setItem(rolePracticeStorageKey, JSON.stringify([...next]));
+    return next;
+  });
+  const completePractice = (milestone: PracticeMilestone) => setPracticeCompleted((current) => {
+    const next = new Set(current).add(milestone);
+    if (practiceStorageKey) window.sessionStorage.setItem(practiceStorageKey, JSON.stringify([...next]));
     return next;
   });
 
@@ -617,18 +657,11 @@ export function RoomPage({ session, onLeave }: RoomPageProps) {
 
       {(!focusedRolePractice || !isSolo) && <div className="teacher-message-banner"><span>{isSolo ? "学習ガイド" : "先生からの案内"}</span><p>{snapshot.room.teacherMessage}</p></div>}
       <PhaseStepper snapshot={snapshot} />
-      {!focusedRolePractice && <section className="beginner-guide" aria-label="現在の学習ガイド">
-          <span className="guide-number" aria-hidden="true">{currentPhase.id === "LOBBY" ? "準備" : currentPhase.index}</span>
-          <div className="guide-task"><small>いまやること</small><b>{currentPhase.instruction}</b></div>
-          <div className="guide-role">
-            <small>{snapshot.viewer.kind === "teacher" ? "利用モード" : isSolo ? "いまの役割" : "あなたの担当"}</small>
-            <b>{snapshot.viewer.kind === "teacher" ? "先生として進行" : currentRoleLabel}</b>
-          </div>
-        </section>}
+      <LearningCoach lead={nextAction} />
       {isSolo && snapshot.room.phase !== "ROLES" && <SoloProgressControls snapshot={snapshot} busy={busy} act={act} practiceCompleted={practiceCompleted} rolePracticeCompleted={rolePracticeCompleted} />}
       {error && <div className="room-error" role="alert"><span>!</span>{error}<button onClick={dismissError}>閉じる</button></div>}
 
-      <main className={`room-grid ${focusedRolePractice ? "focused-learning" : ""}`}>
+      <main className={`room-grid ${focusedRolePractice ? "focused-learning" : focusedSoloPhase ? "guided-learning" : ""}`}>
         {focusedRolePractice ? (
           <>
             <RolePracticeLab
@@ -648,6 +681,21 @@ export function RoomPage({ session, onLeave }: RoomPageProps) {
               </div>
             </details>
           </>
+        ) : focusedSoloPhase ? (
+          <>
+            <MissionPanel snapshot={snapshot} busy={busy} act={act} />
+            {snapshot.room.phase === "TOPOLOGY" && <TopologyPanel snapshot={snapshot} busy={busy} act={act} />}
+            {showPractice && <PracticeLab snapshot={snapshot} busy={busy} act={act} completed={practiceCompleted} onComplete={completePractice} />}
+            <details className="learning-support-drawer">
+              <summary><span>＋</span><div><b>補助資料を見る</b><small>全体図・パケット・活動履歴・用語集は、必要になったときだけ開きます</small></div></summary>
+              <div className="room-support-grid">
+                {snapshot.room.phase !== "TOPOLOGY" && <TopologyPanel snapshot={snapshot} busy={busy} act={act} />}
+                <PacketInspector snapshot={snapshot} />
+                <EventPanel snapshot={snapshot} />
+                <GlossaryPanel />
+              </div>
+            </details>
+          </>
         ) : (
           <>
             <TopologyPanel snapshot={snapshot} busy={busy} act={act} />
@@ -659,11 +707,7 @@ export function RoomPage({ session, onLeave }: RoomPageProps) {
               busy={busy}
               act={act}
               completed={practiceCompleted}
-              onComplete={(milestone) => setPracticeCompleted((current) => {
-                const next = new Set(current).add(milestone);
-                if (practiceStorageKey) window.sessionStorage.setItem(practiceStorageKey, JSON.stringify([...next]));
-                return next;
-              })}
+              onComplete={completePractice}
             />}
             <ParticipantsPanel snapshot={snapshot} />
             <EventPanel snapshot={snapshot} />

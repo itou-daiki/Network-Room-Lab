@@ -449,7 +449,33 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
 
 /* Beginner focus mode: reveal one action at a time */
 .room-grid.focused-learning { max-width: 1080px; grid-template-columns: minmax(0,1fr); gap:16px; padding-top:16px; }
+.room-grid.guided-learning { max-width:1080px; grid-template-columns:minmax(0,1fr); gap:16px; padding-top:16px; }
+.guided-learning > .mission-panel,.guided-learning > .topology-panel,.guided-learning > .practice-panel,.guided-learning > .learning-support-drawer { grid-column:1; grid-row:auto; }
 .focused-learning > .role-practice-panel, .focused-learning > .learning-support-drawer { grid-column:1; }
+[id="mission-panel"],[id="topology-panel"],[id="practice-lab"],[id="role-practice-lab"],[id="role-practice-current"],[id="solo-progress"],[id="teacher-panel"] { scroll-margin-top:190px; }
+.learning-coach { position:sticky; top:72px; z-index:35; max-width:1550px; margin:12px auto 0; display:grid; grid-template-columns:44px minmax(0,1fr) minmax(190px,.55fr) auto; align-items:center; gap:14px; padding:13px 16px; border:2px solid #74baff; border-radius:16px; background:rgba(239,248,255,.97); box-shadow:0 12px 30px rgba(30,144,255,.16); backdrop-filter:blur(12px); }
+.learning-coach-icon { @apply grid h-11 w-11 place-items-center rounded-full bg-dodger-500 text-lg font-black text-white; }
+.learning-coach-main { @apply flex min-w-0 flex-col; }
+.learning-coach-main small { @apply text-[10px] font-black tracking-wide text-dodger-600; }
+.learning-coach-main b { @apply text-base leading-snug text-slate-900; }
+.learning-coach-main p { @apply m-0 mt-1 text-xs leading-relaxed text-slate-600; }
+.learning-coach-after { @apply flex flex-col border-l border-dodger-200 pl-4; }
+.learning-coach-after small { @apply text-[10px] font-black text-slate-500; }
+.learning-coach-after span { @apply mt-0.5 text-xs leading-relaxed text-slate-700; }
+.learning-coach > button { @apply min-h-10 whitespace-nowrap rounded-xl border border-dodger-300 bg-white px-4 py-2 text-xs font-black text-dodger-700 shadow-sm; }
+.learning-coach.waiting { @apply border-amber-300 bg-amber-50/95; }.learning-coach.waiting .learning-coach-icon { @apply bg-amber-500; }.learning-coach.waiting > button { @apply border-amber-300 text-amber-800; }
+.learning-coach.complete { @apply border-emerald-300 bg-emerald-50/95; }.learning-coach.complete .learning-coach-icon { @apply bg-emerald-500; }.learning-coach.complete > button { @apply border-emerald-300 text-emerald-800; }
+
+.inline-learning-lead { @apply mx-auto mt-4 flex w-[calc(100%_-_40px)] max-w-3xl items-start gap-3 rounded-xl border-2 border-dodger-300 bg-dodger-50 p-4; }
+.inline-learning-lead > span { @apply shrink-0 rounded-full bg-dodger-500 px-3 py-1.5 text-[10px] font-black text-white; }
+.inline-learning-lead > div { @apply flex min-w-0 flex-col; }
+.inline-learning-lead b { @apply text-sm leading-relaxed text-slate-900; }
+.inline-learning-lead p { @apply m-0 mt-1 text-xs leading-relaxed text-slate-600; }
+.mission-panel .inline-learning-lead { width:100%; margin:0 0 16px; }
+.practice-inline-lead { @apply mt-4; }
+.guide-target { border-color:#1e90ff!important; box-shadow:0 0 0 4px rgba(30,144,255,.13)!important; }
+.guide-field textarea { border-color:#1e90ff; box-shadow:0 0 0 4px rgba(30,144,255,.10); }
+.practice-note-field > small { @apply text-[10px] font-normal text-slate-500; }
 .learning-support-drawer { @apply overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm; }
 .learning-support-drawer > summary { @apply flex cursor-pointer list-none items-center gap-3 px-5 py-4; }
 .learning-support-drawer > summary::-webkit-details-marker { display:none; }
@@ -461,6 +487,7 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
 .room-support-grid { @apply grid gap-3 border-t border-slate-200 bg-slate-50 p-3; grid-template-columns:minmax(0,1fr) 330px; }
 .room-support-grid > .topology-panel { grid-column:1; }
 .room-support-grid > .packet-panel { grid-column:2; grid-row:1; }
+.room-support-grid > .events-panel { grid-column:1 / -1; grid-row:auto; }
 .room-support-grid > .glossary-panel { grid-column:1 / -1; }
 
 .role-practice-panel { @apply overflow-hidden rounded-2xl bg-white; }
@@ -606,6 +633,7 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
   .teacher-grid { grid-template-columns: 1fr; }.teacher-grid > div { border-right: 0; border-bottom: 1px solid var(--line); }.teacher-grid > div:last-child { grid-column: auto; }
   .room-heading h1 { max-width: 180px; overflow: hidden; text-overflow: ellipsis; }.room-heading > div { display: none; }
   .room-support-grid { grid-template-columns:1fr; }.room-support-grid > .topology-panel,.room-support-grid > .packet-panel,.room-support-grid > .glossary-panel { grid-column:1; grid-row:auto; }
+  .learning-coach { margin-left:10px; margin-right:10px; grid-template-columns:40px minmax(0,1fr) auto; }.learning-coach-after { display:none; }
 }
 
 @media (max-width: 620px) {
@@ -633,6 +661,9 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
   .beginner-result-list code { @apply text-xs; }.beginner-explanation { @apply p-4; }.beginner-explanation > h3 { @apply text-base; }
   .role-support-details { @apply mt-3; }.role-support-details summary small { @apply text-[11px]; }
   .learning-support-drawer > summary { @apply px-4; }
+  .learning-coach { top:72px; grid-template-columns:34px minmax(0,1fr); gap:10px; margin-top:8px; padding:10px 12px; border-radius:13px; }.learning-coach-icon { @apply h-8 w-8 text-sm; }.learning-coach-main small { @apply text-[9px]; }.learning-coach-main b { @apply text-sm; }.learning-coach-main p { display:none; }.learning-coach > button { @apply col-span-2 min-h-9 w-full px-3 py-1.5; }
+  .inline-learning-lead { width:calc(100% - 20px); margin-left:10px; margin-right:10px; padding:12px; }.inline-learning-lead > span { @apply px-2.5 py-1 text-[9px]; }.inline-learning-lead b { @apply text-xs; }.inline-learning-lead p { @apply text-[11px]; }
+  .mission-panel .inline-learning-lead { width:100%; margin-left:0; margin-right:0; }
   .reflection-item { grid-template-columns: 24px 1fr; }.reflection-item button { grid-column: 2; justify-self: end; }
   .teacher-phase-buttons { grid-template-columns: repeat(4,1fr); }.fault-controls { grid-template-columns: 1fr; }
 }

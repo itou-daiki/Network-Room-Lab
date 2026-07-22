@@ -45,6 +45,17 @@ export function RolePracticeLab({ snapshot, completed, onComplete, act, busy = f
   const roleExplanations = snapshot.explanations.filter((item) => item.phase === "ROLES");
   const hasObserved = Boolean(observed[practice.role]) || isComplete;
   const currentStage = !hasObserved ? 1 : selected?.correct || isComplete ? 3 : 2;
+  const currentAction = isComplete
+    ? { title: "この役割は完了しています", detail: allComplete ? "上の緑色のボタンから機器構成へ進みます。" : "上の役割一覧で「いまここ」と表示された次の役割へ進みます。" }
+    : currentStage === 1
+    ? { title: "4つの値と、その下のやさしい意味を読みます", detail: "読み終えたら、青い「4つの意味を確認した」ボタンを押します。" }
+    : currentStage === 2
+      ? selected && !selected.correct
+        ? { title: "表示された理由またはヒントを読み、別の答えを選びます", detail: "間違いは減点されません。A・B・Cは何度でも選び直せます。" }
+        : { title: "A・B・Cから、次の操作を1つ選びます", detail: "迷ったときは「ヒントを見る」を押してから選んでも構いません。" }
+      : explanationReady
+        ? { title: "青い完了ボタンを押します", detail: "自分の説明が書けています。完了すると次の役割へ自動で移ります。" }
+        : { title: "結果の「つまり」を読み、自分の説明を1文作ります", detail: "書き出しと使える言葉を押してから、続きを書いても構いません。" };
 
   const nextIncompleteRole = useMemo(
     () => CORE_ROLE_IDS.find((roleId) => roleId !== practice.role && !completed.has(roleId)),
@@ -74,7 +85,7 @@ export function RolePracticeLab({ snapshot, completed, onComplete, act, busy = f
   };
 
   return (
-    <section className="panel role-practice-panel" aria-labelledby="role-practice-title">
+    <section className="panel role-practice-panel" id="role-practice-lab" aria-labelledby="role-practice-title">
       <div className="panel-heading role-practice-heading">
         <div><p className="panel-kicker">画面の案内どおりに1つずつ</p><h2 id="role-practice-title">機器になって、通信を動かそう</h2></div>
         <span>{isSolo || canBrowseRoles ? `${completedCount} / ${CORE_ROLE_IDS.length} 役割完了` : isComplete ? "担当役割を完了" : "担当役割を学習中"}</span>
@@ -120,6 +131,10 @@ export function RolePracticeLab({ snapshot, completed, onComplete, act, busy = f
             <span>{currentStage > Number(stage) || isComplete ? "✓" : stage}</span><p><b>{label}</b><small>{note}</small></p>
           </div>
         ))}
+      </div>
+
+      <div className="inline-learning-lead" id="role-practice-current" role="status">
+        <span>次にやること</span><div><b>{currentAction.title}</b><p>{currentAction.detail}</p></div>
       </div>
 
       {currentStage === 1 && (
