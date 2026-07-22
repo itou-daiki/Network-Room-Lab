@@ -84,8 +84,9 @@ describe("experiential practice commands", () => {
     expect(pcPractice?.situation).toContain("DNSへの問い合わせが終わり");
     expect(pcPractice?.successMeanings.join(" ")).toContain("このページをください");
     expect(pcPractice?.successOutput[0]).toContain("最初の渡し先をデフォルトゲートウェイ");
-    expect(pcPractice?.successOutput[1]).toContain("PCがARPを使って送る問い合わせ");
-    expect(pcPractice?.successOutput[2]).toContain("ルータからのARP応答");
+    expect(pcPractice?.observations.find((item) => item.label === "ARPが動く場所")?.value).toContain("PCの中");
+    expect(pcPractice?.successOutput[1]).toContain("PC内のARP機能が送る問い合わせ");
+    expect(pcPractice?.successOutput[2]).toContain("ルータ内のARP機能が返す応答");
     expect(pcPractice?.successMeanings.join(" ")).toContain("IPパケットの最終宛先はWebサーバのまま");
     expect(pcPractice?.observations.find((item) => item.value === "192.168.10.1")?.meaning).toContain("ルータのLAN側IPアドレス");
     expect(ROLE_STAGE_TERM_IDS.CLIENT_PC[1]).toContain("dns");
@@ -157,8 +158,13 @@ describe("experiential practice commands", () => {
     const arp = NETWORK_GLOSSARY.find((term) => term.id === "arp");
     expect(arp?.detail).toContain("Addressは");
     expect(arp?.detail).toContain("デフォルトゲートウェイ");
-    expect(arp?.detail).toContain("質問に答えるサーバ名ではなく");
+    expect(arp?.detail).toContain("ARP専用の機器やARPサーバがあるのではありません");
+    expect(arp?.detail).toContain("PCやルータ本体の中にあるネットワーク機能");
+    expect(arp?.detail).toContain("ブラウザやアプリではなく、OSのネットワーク機能");
     expect(arp?.detail).toContain("コマンドではなく");
+
+    const arpCache = NETWORK_GLOSSARY.find((term) => term.id === "arp-cache");
+    expect(arpCache?.detail).toContain("PCやルータがそれぞれ自分のメモリ内に持つ表");
   });
 
   it("maps easy_Packet style commands to safe simulated diagnostics", () => {
@@ -212,6 +218,7 @@ describe("experiential practice commands", () => {
       expect(new Set(choices.map((choice) => choice.label)).size).toBe(3);
     }
     expect(PROTOCOL_STEPS[0]?.description).toContain("ルータのLAN側IPアドレス");
+    expect(PROTOCOL_STEPS[0]?.description).toContain("PCのOSに組み込まれたARP機能");
     expect(PROTOCOL_STEPS[0]?.layers.find((layer) => layer.id === "network")?.value).toContain("デフォルトゲートウェイ");
     expect(PROTOCOL_STEPS[0]?.layers.find((layer) => layer.id === "network")?.value).not.toContain("IPv4 192.168.10.23 →");
     expect(PROTOCOL_STEPS[0]?.layers.find((layer) => layer.id === "link")?.value).toContain("FF-FF-FF-FF-FF-FF");

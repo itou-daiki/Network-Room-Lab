@@ -102,6 +102,34 @@ export function LearningRouteMap({ activeNodeId, focus = "all", compact = false,
         <li><i aria-hidden="true">→</i><span>✓</span><div><b>大きなゴール</b><small>PCのブラウザにページを表示</small></div></li>
       </ol>
 
+      <section className="arp-location" aria-labelledby={compact ? undefined : "arp-location-title"}>
+        <div className="arp-location-heading">
+          <small>通信を始める前の確認</small>
+          <h3 id={compact ? undefined : "arp-location-title"}>ARPは、どこにあるの？</h3>
+          <p>ARPという機器やサーバがあるのではありません。ARPは、PCやルータ本体の中で動くネットワーク機能です。PCでは、ブラウザではなくOSのネットワーク機能の一部として動きます。</p>
+        </div>
+        <div className="arp-location-flow" aria-label="PCとルータの中にあるARP機能が、同じLANを使って通信する図">
+          <div className="arp-host">
+            <span>PCの中</span>
+            <b>ARP機能（OSの一部）</b>
+            <small>192.168.10.1に対応するMACアドレスを問い合わせる</small>
+            <em>結果をPC内のARPキャッシュへ保存</em>
+          </div>
+          <div className="arp-lan">
+            <b>同じLANの中を流れる</b>
+            <span>PC → ルータ：ARP問い合わせ</span>
+            <span>ルータ → PC：ARP応答</span>
+          </div>
+          <div className="arp-host">
+            <span>ルータの中</span>
+            <b>ARP機能（ルータ内部）</b>
+            <small>自分のLAN側IPが192.168.10.1なので、自分のMACアドレスを答える</small>
+            <em>ルータにもARPキャッシュがある</em>
+          </div>
+        </div>
+        <p className="arp-location-note"><b>つまり：</b> ARPの機能はPCとルータの中にあり、ARPの問い合わせと応答だけがWi-Fi・無線AP・L2スイッチを通って同じLAN内を流れます。</p>
+      </section>
+
       <div className="route-lanes">
         {targetRoutes.map((route) => {
           const nodes = [...commonRoute(route.id).map((node) => ({ ...node, action: materializeTargetText(node.action, target) })), route.destination];

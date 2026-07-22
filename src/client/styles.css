@@ -540,6 +540,20 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
 .route-overview li b { @apply text-xs font-black text-slate-900; }
 .route-overview li small { @apply mt-1 text-[10px] leading-relaxed text-slate-500; }
 .route-overview li > i { @apply absolute -left-3 z-10 grid h-6 w-6 place-items-center rounded-full bg-white text-sm font-black not-italic text-dodger-500; }
+.arp-location { @apply border-b border-dodger-100 bg-white p-4; }
+.arp-location-heading small { @apply text-[10px] font-black tracking-wide text-dodger-600; }
+.arp-location-heading h3 { @apply m-0 mt-1 text-base font-black text-slate-900; }
+.arp-location-heading p { @apply m-0 mt-1 text-xs leading-relaxed text-slate-600; }
+.arp-location-flow { @apply mt-3 grid items-stretch gap-3; grid-template-columns:minmax(0,1fr) minmax(170px,220px) minmax(0,1fr); }
+.arp-host { @apply flex min-w-0 flex-col rounded-xl border-2 border-dodger-200 bg-dodger-50 p-3; }
+.arp-host > span { @apply text-[10px] font-black text-dodger-600; }
+.arp-host > b { @apply mt-1 text-sm font-black text-slate-900; }
+.arp-host > small { @apply mt-1 text-[11px] leading-relaxed text-slate-700; }
+.arp-host > em { @apply mt-auto pt-2 text-[10px] font-bold not-italic text-dodger-700; }
+.arp-lan { @apply flex flex-col items-center justify-center rounded-xl border border-dashed border-amber-300 bg-amber-50 p-3 text-center; }
+.arp-lan b { @apply text-[10px] font-black text-amber-900; }
+.arp-lan span { @apply mt-1 text-[10px] font-bold text-amber-800; }
+.arp-location-note { @apply m-0 mt-3 rounded-lg bg-slate-100 px-3 py-2 text-[11px] leading-relaxed text-slate-700; }
 .route-lanes { @apply grid gap-4 p-4; }
 .route-lane { @apply overflow-hidden rounded-2xl border-2 bg-white transition-opacity; }
 .route-lane.route-dns { @apply border-cyan-200; }
@@ -823,7 +837,7 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
   .learning-support-drawer > summary { @apply px-4; }
   .learning-coach { top:72px; grid-template-columns:34px minmax(0,1fr); gap:10px; margin-top:8px; padding:10px 12px; border-radius:13px; }.learning-coach-icon { @apply h-8 w-8 text-sm; }.learning-coach-main small { @apply text-[9px]; }.learning-coach-main b { @apply text-sm; }.learning-coach-main p { display:none; }.learning-coach > button { @apply col-span-2 min-h-9 w-full px-3 py-1.5; }
   .learning-target-summary { @apply mt-2 w-[calc(100%_-_20px)] rounded-xl; }.learning-target-goal,.learning-target-dns { @apply p-3; }.learning-target-dns p { @apply grid-cols-1; }.learning-target-dns p i { @apply rotate-90 justify-self-start; }.learning-target-goal code { @apply whitespace-normal break-all; }
-  .learning-route-map { margin-left:10px; margin-right:10px; border-radius:14px; }.learning-route-map.compact { margin-left:10px; margin-right:10px; }.learning-route-map > header { @apply gap-3 p-4; }.learning-route-map > header h2 { @apply text-base; }.learning-route-map > header p { @apply text-xs; }.gateway-explanation { @apply p-3; }.route-overview { @apply grid-cols-1 gap-0 p-3; }.route-overview li { @apply border-r-0 border-b px-2 py-3 last:border-b-0; }.route-overview li > i { @apply -top-3 left-5 rotate-90; }.route-lanes { @apply gap-3 p-2; }.route-lane-heading { @apply p-3; }.route-lane-heading h3 { @apply text-sm; }.route-round-summary { @apply grid-cols-1 gap-2 p-3; }.route-round-summary > i { @apply rotate-90 justify-self-center; }.route-scroll { @apply p-3; scroll-snap-type:x proximity; }.route-scroll-hint { width:calc(100vw - 72px); @apply mb-2 block rounded-lg border border-dodger-200 bg-white px-3 py-2 text-center text-[10px] font-bold leading-relaxed text-dodger-700; }.route-outbound,.route-return,.route-track,.route-return-track,.route-after-return { min-width:780px; }.route-track > li { scroll-snap-align:start; }.route-node { min-height:140px; }.route-after-return { @apply grid-cols-[auto_1fr]; }.learning-route-map > footer { @apply items-start px-4 text-[10px]; }
+  .learning-route-map { margin-left:10px; margin-right:10px; border-radius:14px; }.learning-route-map.compact { margin-left:10px; margin-right:10px; }.learning-route-map > header { @apply gap-3 p-4; }.learning-route-map > header h2 { @apply text-base; }.learning-route-map > header p { @apply text-xs; }.gateway-explanation { @apply p-3; }.route-overview { @apply grid-cols-1 gap-0 p-3; }.route-overview li { @apply border-r-0 border-b px-2 py-3 last:border-b-0; }.route-overview li > i { @apply -top-3 left-5 rotate-90; }.arp-location { @apply p-3; }.arp-location-flow { @apply grid-cols-1; }.arp-lan { @apply py-2; }.arp-lan span { @apply block; }.route-lanes { @apply gap-3 p-2; }.route-lane-heading { @apply p-3; }.route-lane-heading h3 { @apply text-sm; }.route-round-summary { @apply grid-cols-1 gap-2 p-3; }.route-round-summary > i { @apply rotate-90 justify-self-center; }.route-scroll { @apply p-3; scroll-snap-type:x proximity; }.route-scroll-hint { width:calc(100vw - 72px); @apply mb-2 block rounded-lg border border-dodger-200 bg-white px-3 py-2 text-center text-[10px] font-bold leading-relaxed text-dodger-700; }.route-outbound,.route-return,.route-track,.route-return-track,.route-after-return { min-width:780px; }.route-track > li { scroll-snap-align:start; }.route-node { min-height:140px; }.route-after-return { @apply grid-cols-[auto_1fr]; }.learning-route-map > footer { @apply items-start px-4 text-[10px]; }
   .inline-learning-lead { width:calc(100% - 20px); margin-left:10px; margin-right:10px; padding:12px; }.inline-learning-lead > span { @apply px-2.5 py-1 text-[9px]; }.inline-learning-lead b { @apply text-xs; }.inline-learning-lead p { @apply text-[11px]; }
   .mission-panel .inline-learning-lead { width:100%; margin-left:0; margin-right:0; }
   .reflection-item { grid-template-columns: 24px 1fr; }.reflection-item button { grid-column: 2; justify-self: end; }
