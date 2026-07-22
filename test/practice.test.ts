@@ -6,8 +6,35 @@ import {
   protocolDecisionChoices,
 } from "../src/shared/practice";
 import { PROTOCOL_STEPS } from "../src/shared/scenario";
+import { NETWORK_GLOSSARY } from "../src/shared/glossary";
+import { CORE_ROLE_IDS, ROLE_PRACTICES, ROLE_READING_GUIDES, rolePractice } from "../src/shared/rolePractice";
 
 describe("experiential practice commands", () => {
+  it("provides one hands-on exercise with a single correct action for every core role", () => {
+    expect(ROLE_PRACTICES.map((practice) => practice.role)).toEqual(CORE_ROLE_IDS);
+    expect(new Set(ROLE_PRACTICES.map((practice) => practice.choices.findIndex((choice) => choice.correct))).size).toBe(3);
+
+    for (const practice of ROLE_PRACTICES) {
+      expect(practice.observations.length).toBeGreaterThanOrEqual(4);
+      expect(practice.choices).toHaveLength(3);
+      expect(practice.choices.filter((choice) => choice.correct)).toHaveLength(1);
+      expect(new Set(practice.choices.map((choice) => choice.id)).size).toBe(3);
+      expect(practice.successOutput.length).toBeGreaterThanOrEqual(3);
+      expect(practice.explainPrompt.length).toBeGreaterThan(10);
+      expect(practice.termIds.length).toBeGreaterThanOrEqual(3);
+      expect(ROLE_READING_GUIDES[practice.role]).toHaveLength(3);
+      for (const guide of ROLE_READING_GUIDES[practice.role]) {
+        expect(guide.target.length).toBeGreaterThan(3);
+        expect(guide.reading.length).toBeGreaterThan(20);
+        expect(guide.check.length).toBeGreaterThan(15);
+      }
+      for (const termId of practice.termIds) {
+        expect(NETWORK_GLOSSARY.some((term) => term.id === termId), `${practice.role}: ${termId}`).toBe(true);
+      }
+    }
+    expect(rolePractice("OBSERVER")).toBeUndefined();
+  });
+
   it("maps easy_Packet style commands to safe simulated diagnostics", () => {
     expect(parsePracticeCommand("nslookup class.yamanashi.example")).toMatchObject({
       kind: "DIAGNOSTIC",

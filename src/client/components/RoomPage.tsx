@@ -11,6 +11,7 @@ import {
 } from "../../shared/scenario";
 import { PHASE_TERM_IDS } from "../../shared/glossary";
 import { PRACTICE_TASKS, protocolDecisionChoices, protocolTermIds, type PracticeMilestone } from "../../shared/practice";
+import { CORE_ROLE_IDS, type CoreRoleId } from "../../shared/rolePractice";
 import { validateInterfaceConfig } from "../../shared/network";
 import type {
   ClientAction,
@@ -24,6 +25,7 @@ import type { AppSession } from "../session";
 import { useRoom } from "../useRoom";
 import { ContextTerms, GlossaryPanel } from "./Glossary";
 import { PracticeLab } from "./PracticeLab";
+import { RolePracticeLab } from "./RolePracticeLab";
 
 interface RoomPageProps {
   session: AppSession;
@@ -81,18 +83,23 @@ function SoloProgressControls({
   busy,
   act,
   practiceCompleted,
-}: SharedPanelProps & { practiceCompleted: ReadonlySet<PracticeMilestone> }) {
+  rolePracticeCompleted,
+}: SharedPanelProps & { practiceCompleted: ReadonlySet<PracticeMilestone>; rolePracticeCompleted: ReadonlySet<CoreRoleId> }) {
   const current = phaseDefinition(snapshot.room.phase);
   const previous = PHASE_DEFINITIONS.find((phase) => phase.index === current.index - 1 && phase.id !== "LOBBY");
   const next = PHASE_DEFINITIONS.find((phase) => phase.index === current.index + 1);
   const protocolIncomplete = snapshot.room.phase === "PROTOCOL" && snapshot.room.protocolIndex < PROTOCOL_STEPS.length;
   const topologyIncomplete = snapshot.room.phase === "TOPOLOGY" && snapshot.room.links.some((link) => !link.up);
+  const missingRoles = snapshot.room.phase === "ROLES" ? CORE_ROLE_IDS.filter((roleId) => !rolePracticeCompleted.has(roleId)) : [];
+  const rolePracticeIncomplete = missingRoles.length > 0;
   const requiredPractice = PHASE_PRACTICE_REQUIREMENTS[snapshot.room.phase] ?? [];
   const missingPractice = requiredPractice.filter((milestone) => !practiceCompleted.has(milestone));
   const practiceIncomplete = missingPractice.length > 0;
   const explanationIncomplete = requiredPractice.length > 0 && !snapshot.explanations.some((item) => item.participantId === snapshot.viewer.participantId && item.phase === snapshot.room.phase);
-  const nextDisabled = protocolIncomplete || topologyIncomplete || practiceIncomplete || explanationIncomplete;
-  const progressHint = protocolIncomplete
+  const nextDisabled = rolePracticeIncomplete || protocolIncomplete || topologyIncomplete || practiceIncomplete || explanationIncomplete;
+  const progressHint = rolePracticeIncomplete
+    ? `下の役割実践ラボで、あと${missingRoles.length}役を「観察・判断・実行・説明」します。`
+    : protocolIncomplete
     ? "通信実験は17ステップを最後まで進めると、次へ移動できます。"
     : topologyIncomplete
       ? "切断を試した後は、すべての接続を元に戻してから進みます。"
@@ -406,7 +413,7 @@ function MissionPanel({ snapshot, busy, act }: SharedPanelProps) {
   } else if (snapshot.room.phase === "ROLES") {
     content = snapshot.room.learningMode === "SOLO" ? (
       <div className="solo-role-overview">
-        <div className="mission-callout"><span>ひとり学習の進め方</span><p>通信の場所に合わせて役割が自動で切り替わります。それぞれの機器が「何を見て、どう判断するか」を確認しましょう。</p></div>
+        <div className="mission-callout"><span>ひとり学習の進め方</span><p>下の「6つの機器役割 実践ラボ」で、各機器が受け取る情報を読み、操作を選び、結果を自分の言葉で説明します。</p></div>
         <div className="solo-role-grid">
           {ROLE_DEFINITIONS.filter((definition) => definition.id !== "OBSERVER").map((definition, index) => (
             <article key={definition.id} style={{ "--role-accent": definition.accent } as React.CSSProperties}>
@@ -421,6 +428,7 @@ function MissionPanel({ snapshot, busy, act }: SharedPanelProps) {
         <span className="role-id">あなたの担当 / {role.shortLabel.toUpperCase()}</span>
         <h3>{role.label}</h3><p>{role.description}</p>
         <h4>この担当で確認できる情報</h4><div className="tag-list">{role.observes.map((item) => <span key={item}>{item}</span>)}</div>
+        <div className="mission-callout"><span>次に実践</span><p>下の役割実践ラボで、この情報を使って担当機器を操作します。</p></div>
         <ContextTerms ids={PHASE_TERM_IDS.ROLES ?? []} />
       </div>
     ) : <p>教員モードです。参加者へ役割を割り当ててください。</p>;
@@ -545,7 +553,9 @@ export function RoomPage({ session, onLeave }: RoomPageProps) {
   const { snapshot, connectionStatus, error, busy, act, dismissError } = useRoom(session);
   const [copied, setCopied] = useState(false);
   const [practiceCompleted, setPracticeCompleted] = useState<Set<PracticeMilestone>>(() => new Set());
+  const [rolePracticeCompleted, setRolePracticeCompleted] = useState<Set<CoreRoleId>>(() => new Set());
   const practiceStorageKey = snapshot?.viewer.participantId ? `network-room-lab:practice:${snapshot.room.code}:${snapshot.viewer.participantId}` : undefined;
+  const rolePracticeStorageKey = snapshot?.viewer.participantId ? `network-room-lab:role-practice:${snapshot.room.code}:${snapshot.viewer.participantId}` : undefined;
 
   useEffect(() => {
     if (!practiceStorageKey) return;
@@ -556,6 +566,16 @@ export function RoomPage({ session, onLeave }: RoomPageProps) {
       setPracticeCompleted(new Set());
     }
   }, [practiceStorageKey]);
+
+  useEffect(() => {
+    if (!rolePracticeStorageKey) return;
+    try {
+      const saved = JSON.parse(window.sessionStorage.getItem(rolePracticeStorageKey) ?? "[]") as CoreRoleId[];
+      setRolePracticeCompleted(new Set(saved.filter((roleId) => CORE_ROLE_IDS.includes(roleId))));
+    } catch {
+      setRolePracticeCompleted(new Set());
+    }
+  }, [rolePracticeStorageKey]);
 
   if (!snapshot) {
     return <div className="loading-screen"><Brand /><div className="loader"><i /><i /><i /></div><p>{error ?? "実験ルームへ接続しています…"}</p>{error && <button className="secondary-button" onClick={onLeave}>トップへ戻る</button>}</div>;
@@ -598,13 +618,22 @@ export function RoomPage({ session, onLeave }: RoomPageProps) {
           <b>{snapshot.viewer.kind === "teacher" ? "先生として進行" : currentRoleLabel}</b>
         </div>
       </section>
-      {isSolo && <SoloProgressControls snapshot={snapshot} busy={busy} act={act} practiceCompleted={practiceCompleted} />}
+      {isSolo && <SoloProgressControls snapshot={snapshot} busy={busy} act={act} practiceCompleted={practiceCompleted} rolePracticeCompleted={rolePracticeCompleted} />}
       {error && <div className="room-error" role="alert"><span>!</span>{error}<button onClick={dismissError}>閉じる</button></div>}
 
       <main className="room-grid">
         <TopologyPanel snapshot={snapshot} busy={busy} act={act} />
         <MissionPanel snapshot={snapshot} busy={busy} act={act} />
         <PacketInspector snapshot={snapshot} />
+        {snapshot.room.phase === "ROLES" && <RolePracticeLab
+          snapshot={snapshot}
+          completed={rolePracticeCompleted}
+          onComplete={(roleId) => setRolePracticeCompleted((current) => {
+            const next = new Set(current).add(roleId);
+            if (rolePracticeStorageKey) window.sessionStorage.setItem(rolePracticeStorageKey, JSON.stringify([...next]));
+            return next;
+          })}
+        />}
         {showPractice && <PracticeLab
           snapshot={snapshot}
           busy={busy}
