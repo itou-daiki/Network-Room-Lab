@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  PRACTICE_TASKS,
   localPracticeOutput,
   parsePracticeCommand,
   protocolDecisionChoices,
 } from "../src/shared/practice";
-import { PROTOCOL_STEPS } from "../src/shared/scenario";
+import { LEARNING_SCENARIO_GOAL, PROTOCOL_STEPS } from "../src/shared/scenario";
 import { NETWORK_GLOSSARY } from "../src/shared/glossary";
 import { CORE_ROLE_IDS, ROLE_PRACTICES, ROLE_READING_GUIDES, rolePractice } from "../src/shared/rolePractice";
 
@@ -18,11 +19,14 @@ describe("experiential practice commands", () => {
       expect(practice.observations.length).toBeGreaterThanOrEqual(4);
       expect(practice.beginnerStory.length).toBeGreaterThan(20);
       expect(practice.everydayExample.length).toBeGreaterThan(20);
+      expect(practice.observationPurpose.length).toBeGreaterThan(20);
+      expect(practice.question).toContain("ために");
       expect(practice.decisionHint.length).toBeGreaterThan(20);
       expect(practice.choices).toHaveLength(3);
       expect(practice.choices.filter((choice) => choice.correct)).toHaveLength(1);
       expect(new Set(practice.choices.map((choice) => choice.id)).size).toBe(3);
       expect(practice.successOutput.length).toBeGreaterThanOrEqual(3);
+      expect(practice.successOutput.join(" ")).not.toMatch(/who has/i);
       expect(practice.successMeanings).toHaveLength(practice.successOutput.length);
       expect(practice.explainPrompt.length).toBeGreaterThan(10);
       expect(practice.sentenceStarter.length).toBeGreaterThan(15);
@@ -45,6 +49,36 @@ describe("experiential practice commands", () => {
       }
     }
     expect(rolePractice("OBSERVER")).toBeUndefined();
+  });
+
+  it("keeps the overall Web-site goal and beginner explanations visible in the learning data", () => {
+    expect(LEARNING_SCENARIO_GOAL.title).toContain("特定のWebサイト");
+    expect(LEARNING_SCENARIO_GOAL.detail).toContain("6つの機器");
+
+    const pcPractice = rolePractice("CLIENT_PC");
+    expect(pcPractice?.everydayExample).toContain("郵便局");
+    expect(pcPractice?.observationTitle).toBe("PCのネットワーク設定");
+
+    for (const task of PRACTICE_TASKS) {
+      expect(task.purpose.length, task.id).toBeGreaterThan(20);
+      expect(task.observation.length, task.id).toBeGreaterThan(15);
+    }
+
+    const frame = NETWORK_GLOSSARY.find((term) => term.id === "frame");
+    expect(frame?.short).toContain("入れ物");
+    expect(frame?.detail).toContain("PC");
+    expect(frame?.detail).toContain("Wi-Fi");
+    expect(frame?.detail).toContain("Ethernet");
+
+    const learnerText = JSON.stringify({
+      goal: LEARNING_SCENARIO_GOAL,
+      practices: ROLE_PRACTICES,
+      tasks: PRACTICE_TASKS,
+      protocol: PROTOCOL_STEPS,
+    });
+    expect(learnerText).not.toContain("4つの値");
+    expect(learnerText).not.toContain("結果の「つまり」");
+    expect(learnerText).not.toMatch(/ARP who has/i);
   });
 
   it("maps easy_Packet style commands to safe simulated diagnostics", () => {

@@ -64,7 +64,7 @@ describe("beginner learning lead", () => {
       links: DEFAULT_LINKS.map((link, index) => index === 0 ? { ...link, up: false } : link),
       latestEvents: [{ id: 1, roomVersion: 2, type: "TOGGLE_LINK", actor: "学習者", summary: "切断", payload: {}, createdAt: now }],
     });
-    expect(learningLead(cut, practices(), roles()).title).toContain("最初の出口まで試す");
+    expect(learningLead(cut, practices(), roles()).title).toContain("最初の出口まで届くか確かめる");
     expect(learningLead(cut, practices(), roles()).targetId).toBe("practice-lab");
     expect(learningLead(cut, practices("PING_GATEWAY"), roles()).title).toContain("元に戻します");
 
@@ -77,13 +77,13 @@ describe("beginner learning lead", () => {
       phase: "ADDRESSING",
       latestEvents: [{ id: 1, roomVersion: 2, type: "CONFIGURE_INTERFACE", actor: "学習者", summary: "保存", payload: {}, createdAt: now }],
     });
-    expect(learningLead(configured, practices(), roles()).title).toContain("自分の設定を見る");
-    expect(learningLead(configured, practices("IPCONFIG"), roles()).title).toContain("最初の出口まで試す");
+    expect(learningLead(configured, practices(), roles()).title).toContain("PCのネットワーク設定を表示する");
+    expect(learningLead(configured, practices("IPCONFIG"), roles()).title).toContain("最初の出口まで届くか確かめる");
   });
 
   it("identifies the active protocol step and advances reflection prompts", () => {
     const protocol = makeSnapshot({ phase: "PROTOCOL", protocolIndex: 7 });
-    expect(learningLead(protocol, practices(), roles()).title).toContain("STEP 8");
+    expect(learningLead(protocol, practices(), roles()).title).toContain("全17段階の8");
     expect(learningLead(protocol, practices(), roles()).title).toContain("通信カード");
     expect(learningLead(protocol, practices(), roles()).detail).toContain("クライアントPC");
 
@@ -105,8 +105,8 @@ describe("beginner learning lead", () => {
   it("keeps diagnosis guidance valid before and after choosing a local hypothesis", () => {
     const diagnosis = makeSnapshot({ phase: "DIAGNOSIS" });
     const lead = learningLead(diagnosis, practices(), roles());
-    expect(lead.title).toContain("障害診断カード");
-    expect(lead.detail).toContain("選んだ直後");
+    expect(lead.title).toContain("原因調査カード");
+    expect(lead.detail).toContain("4候補");
     expect(lead.targetId).toBe("mission-panel");
   });
 });

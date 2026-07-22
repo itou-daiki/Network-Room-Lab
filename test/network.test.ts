@@ -26,7 +26,7 @@ describe("network learning model", () => {
       {
         type: "DNS_DOWN",
         target: "dns",
-        symptom: "IP直指定なら開きますがURLでは開きません。",
+        symptom: "WebサーバのIPアドレスを指定すると届きますが、Webサイト名では届きません。",
         injectedAt: "2026-07-22T00:00:00.000Z",
       },
     ];

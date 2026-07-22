@@ -225,7 +225,7 @@ describe("Network Room API", () => {
 
     const learnerState = await snapshot(room.code, participant.participantToken);
     expect(learnerState.room.activeFaults).toEqual([]);
-    expect(learnerState.room.observedSymptoms).toContain("IP直指定なら開きますがURLでは開きません。");
+    expect(learnerState.room.observedSymptoms).toContain("WebサーバのIPアドレスを指定すると届きますが、Webサイト名では届きません。");
   });
 
   it("rejects invalid bearer tokens", async () => {

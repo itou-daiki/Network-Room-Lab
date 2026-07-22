@@ -1,5 +1,6 @@
 import { FormEvent, useState } from "react";
 
+import { LEARNING_SCENARIO_GOAL } from "../../shared/scenario";
 import { createRoom, joinRoom } from "../api";
 import type { AppSession } from "../session";
 
@@ -10,11 +11,11 @@ interface HomePageProps {
 type EntryMode = "join" | "solo" | "create";
 
 const flowNodes = [
-  { id: "pc", label: "PC", sub: "URL・IP", tone: "blue" },
-  { id: "ap", label: "無線AP", sub: "Wi-Fi ↔ LAN", tone: "mint" },
-  { id: "l2", label: "L2", sub: "MAC", tone: "violet" },
-  { id: "router", label: "Router", sub: "IP・TTL", tone: "amber" },
-  { id: "server", label: "DNS / Web", sub: "名前解決・HTTPS", tone: "rose" },
+  { id: "pc", label: "PC", sub: "URLを入力して出発", tone: "blue" },
+  { id: "ap", label: "無線AP", sub: "Wi-Fiから有線LANへ", tone: "mint" },
+  { id: "l2", label: "L2スイッチ", sub: "次の差込口を選ぶ", tone: "violet" },
+  { id: "router", label: "ルータ", sub: "PCの出口（ゲートウェイ）", tone: "amber" },
+  { id: "server", label: "DNS・Webサーバ", sub: "IPを答え、ページを返す", tone: "rose" },
 ];
 
 export function HomePage({ onEnterRoom }: HomePageProps) {
@@ -88,8 +89,8 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
             <span>ひとりでも、チームでも。</span>
           </h1>
           <p className="hero-lead">
-            むずかしい設定を暗記する必要はありません。ひとりで全機器を順番に体験するか、
-            仲間と役割分担して、Webページが届くまでを少しずつ確かめます。
+            今回のゴールは「{LEARNING_SCENARIO_GOAL.title}」ことです。
+            むずかしい設定を暗記せず、ページが表示されるまでの6つの機器の仕事を順番に確かめます。
           </p>
           <div className="beginner-promise" role="note" aria-label="初めて利用する方へ">
             <span aria-hidden="true">✓</span>
@@ -138,7 +139,7 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
               <span className="step-chip">{mode === "join" ? "参加" : mode === "solo" ? "ひとり学習" : "作成"}</span>
               <div>
                 <h2>{mode === "join" ? "授業の部屋に入る" : mode === "solo" ? "自分のペースで始める" : "新しい授業を始める"}</h2>
-                <p>{mode === "join" ? "先生から教えてもらった6文字のコードを入力します。" : mode === "solo" ? "6つの機器の役割を一人で順番に体験します。" : "授業名と人数を決めて部屋を作ります。"}</p>
+                <p>{mode === "join" ? "先生から教えてもらった6文字のコードを入力します。" : mode === "solo" ? "特定のWebサイトを表示するまで、6つの機器の仕事を一人で順番に体験します。" : "授業名と人数を決めて部屋を作ります。"}</p>
               </div>
             </div>
 
@@ -229,8 +230,8 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
         <div className="section-kicker">みんなでつなぐ通信の道</div>
         <div className="flow-title-row">
           <div>
-            <h2 id="flow-title">パケットを、チームでバトンリレー。</h2>
-            <p>一人で役割を切り替えることも、仲間と分担することもできます。</p>
+            <h2 id="flow-title">教材ページを表示するために、データを次の機器へ渡します。</h2>
+            <p>一人で6つの機器を順番に担当することも、仲間と分担することもできます。</p>
           </div>
           <span className="live-pill"><i /> みんなの画面が同時に更新</span>
         </div>
@@ -270,7 +271,7 @@ export function HomePage({ onEnterRoom }: HomePageProps) {
 
       <footer className="landing-footer">
         <span>Network Room Lab / NRL-SD-001</span>
-        <span>Educational network simulation — 実ネットワークへの通信・スキャンは行いません</span>
+        <span>学習用のネットワークシミュレーションです。実際の外部ネットワークへの通信や調査は行いません。</span>
       </footer>
     </main>
   );

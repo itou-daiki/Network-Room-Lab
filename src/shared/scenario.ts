@@ -9,61 +9,67 @@ import type {
   TopologyLink,
 } from "./types";
 
+export const LEARNING_SCENARIO_GOAL = {
+  title: "特定のWebサイトにある教材ページを見る",
+  url: "https://class.yamanashi.example/lesson",
+  detail: "このアプリ内だけで使う学習用URLをPCのブラウザへ入力し、教材ページが表示されるまでに、6つの機器が何を確認し、どんな操作をするかを順番に体験します。実際の外部サイトには接続しません。",
+} as const;
+
 export const ROLE_DEFINITIONS: RoleDefinition[] = [
   {
     id: "CLIENT_PC",
     label: "クライアントPC",
     shortLabel: "PC",
-    description: "通信を始め、URLからWebページが届くまでを組み立てます。",
-    observes: ["IP設定", "ARPキャッシュ", "ポート", "アプリデータ"],
+    description: "Webサイトの場所を受け取り、教材ページを表示するための通信を始めます。",
+    observes: ["PCの住所と範囲", "外部への出口", "出口の機器番号", "Webページの内容"],
     accent: "#3aa6ff",
   },
   {
     id: "ACCESS_POINT",
     label: "無線アクセスポイント",
     shortLabel: "無線AP",
-    description: "Wi-FiとEthernetのフレームを橋渡しします。",
-    observes: ["SSID", "接続端末", "Wi-Fiフレーム", "Ethernetフレーム"],
+    description: "PCからWi-Fiで届いたデータを、次の有線LANへ渡します。",
+    observes: ["Wi-Fiの名前", "接続中のPC", "PCから届いたデータ", "次の有線接続"],
     accent: "#41d5b0",
   },
   {
     id: "L2_SWITCH",
     label: "L2スイッチ",
     shortLabel: "L2",
-    description: "MACアドレスを学習し、適切なポートへフレームを送ります。",
-    observes: ["送信元MAC", "宛先MAC", "MACアドレス表", "ポート"],
+    description: "機器番号と差込口の対応表を見て、届け先につながるケーブルを選びます。",
+    observes: ["入ってきた差込口", "送った機器番号", "届け先の機器番号", "番号と差込口の表"],
     accent: "#8f9cff",
   },
   {
     id: "ROUTER",
     label: "ルータ",
-    shortLabel: "Router",
-    description: "IP経路表を参照し、TTLを更新して次のネットワークへ送ります。",
-    observes: ["宛先IP", "TTL", "経路表", "次ホップ"],
+    shortLabel: "ルータ",
+    description: "最終目的地のIPアドレスと道案内の表を比べ、次に進むネットワークを選びます。",
+    observes: ["最終目的地の住所", "通過できる残り回数", "道案内の表", "次の渡し先"],
     accent: "#ffbf5f",
   },
   {
     id: "DNS_SERVER",
     label: "DNSサーバ",
     shortLabel: "DNS",
-    description: "ドメイン名をIPアドレスへ変換します。",
-    observes: ["問い合わせ名", "レコード", "TTL", "応答コード"],
+    description: "PCが入力したWebサイト名に対応するIPアドレスを答えます。",
+    observes: ["質問された名前", "質問の種類", "登録された答え", "答えの保存時間"],
     accent: "#72d7ed",
   },
   {
     id: "WEB_SERVER",
     label: "Webサーバ",
     shortLabel: "Web",
-    description: "TCP・TLS・HTTPの要求を受け取り、教材ページを返します。",
-    observes: ["TCP状態", "証明書", "HTTPメソッド", "パス"],
+    description: "PCから届いた要求を読み、安全な通信で教材ページを返します。",
+    observes: ["PCとの通信路", "暗号化の状態", "してほしい操作", "求められたページ"],
     accent: "#ff7e8c",
   },
   {
     id: "OBSERVER",
     label: "観察者",
     shortLabel: "Observer",
-    description: "チーム全体の経路と判断を観察し、説明を支援します。",
-    observes: ["通信経路", "イベント", "判断理由", "振り返り"],
+    description: "教材ページが表示されるまでの道と、各担当が選んだ理由を記録します。",
+    observes: ["データが通った道", "各担当の操作", "選んだ理由", "学習の振り返り"],
     accent: "#a6b2bd",
   },
 ];
@@ -81,42 +87,42 @@ export const PHASE_DEFINITIONS: PhaseDefinition[] = [
     index: 1,
     label: "役割確認",
     shortLabel: "役割",
-    instruction: "自分の機器が見られる情報と、判断する内容を確認します。",
+    instruction: "教材ページを表示するために、6つの機器が担当する仕事を順番に確認します。",
   },
   {
     id: "TOPOLOGY",
     index: 2,
     label: "機器構成",
     shortLabel: "構成",
-    instruction: "ポートと媒体を確認し、通信経路を構成します。",
+    instruction: "PCからWebサーバまで、どの機器と接続を通るのかを確かめます。",
   },
   {
     id: "ADDRESSING",
     index: 3,
     label: "IP設定",
     shortLabel: "IP",
-    instruction: "IPアドレス、プレフィックス、GW、DNSを設定します。",
+    instruction: "PCがWebサイトへデータを送れるように、住所・範囲・出口・名前を調べる相手を設定します。",
   },
   {
     id: "PROTOCOL",
     index: 4,
     label: "通信実験",
     shortLabel: "通信",
-    instruction: "ARPからHTTPSまで、担当機器ごとに判断して転送します。",
+    instruction: "教材ページが表示されるまで、6つの機器の判断を1つずつ動かします。",
   },
   {
     id: "DIAGNOSIS",
     index: 5,
     label: "障害診断",
     shortLabel: "診断",
-    instruction: "症状から仮説を立て、安全な診断ツールで失敗地点を絞ります。",
+    instruction: "教材ページが表示されない原因を、予想と確認コマンドで順番に絞ります。",
   },
   {
     id: "REFLECTION",
     index: 6,
     label: "振り返り",
     shortLabel: "説明",
-    instruction: "通信を説明し、高校生へ伝える問いと授業アイデアに変換します。",
+    instruction: "教材ページが表示されるまでに分かったことを、自分の言葉で整理します。",
   },
 ];
 
@@ -142,42 +148,42 @@ export const DEFAULT_LINKS: TopologyLink[] = [
 const allLayers = (protocol: ProtocolStep["protocol"], ttl: number): ProtocolStep["layers"] => {
   const application =
     protocol === "ARP"
-      ? "ARP: who has 192.168.10.1?"
+      ? "ARPの問い合わせ：192.168.10.1のMACアドレスは？"
       : protocol === "DNS"
-        ? "DNS: class.yamanashi.example"
+        ? "DNSの問い合わせ：class.yamanashi.exampleのIPアドレスは？"
         : protocol === "HTTPS"
-          ? "HTTP GET /lesson over TLS"
-          : "教材Webアクセス";
+          ? "教材ページの要求：GET /lesson（TLSで暗号化）"
+          : "Webサーバとの通信路を準備";
 
   return [
     {
       id: "application",
-      label: "Application",
+      label: "Web・名前確認の内容",
       value: application,
       visibleTo: ["CLIENT_PC", "DNS_SERVER", "WEB_SERVER", "OBSERVER"],
     },
     {
       id: "security",
-      label: "Security",
-      value: protocol === "TLS" || protocol === "HTTPS" ? "TLS 1.3 / certificate" : "まだ暗号化されていません",
+      label: "暗号化の状態",
+      value: protocol === "TLS" || protocol === "HTTPS" ? "TLS 1.3で暗号化 / サーバ証明書を確認" : "まだ暗号化していません",
       visibleTo: ["CLIENT_PC", "WEB_SERVER", "OBSERVER"],
     },
     {
       id: "transport",
-      label: "Transport",
-      value: protocol === "DNS" ? "UDP 53144 → 53" : "TCP 53144 → 443",
+      label: "機器内の受付番号",
+      value: protocol === "DNS" ? "DNSの受付：PC側53144番 → DNS側53番" : "Webの受付：PC側53144番 → Web側443番",
       visibleTo: ["CLIENT_PC", "WEB_SERVER", "DNS_SERVER", "OBSERVER"],
     },
     {
       id: "network",
-      label: "Internet",
+      label: "送信元と最終宛先のIP",
       value: `IPv4 192.168.10.23 → ${protocol === "DNS" ? "198.51.100.53" : "203.0.113.80"} / TTL ${ttl}`,
       visibleTo: ["CLIENT_PC", "ROUTER", "OBSERVER"],
     },
     {
       id: "link",
-      label: "Link",
-      value: "Ethernet / Wi-Fi frame",
+      label: "次の機器までの運び方",
+      value: "Wi-FiまたはEthernet用のフレーム",
       visibleTo: ["CLIENT_PC", "ACCESS_POINT", "L2_SWITCH", "OBSERVER"],
     },
   ];
@@ -206,23 +212,23 @@ const step = (
 });
 
 export const PROTOCOL_STEPS: ProtocolStep[] = [
-  step(0, "ARP", "ゲートウェイのMACを問い合わせる", "外部ネットワークへ送る前に、デフォルトゲートウェイのMACアドレスを確認します。", "CLIENT_PC", "pc", "CREATE_PACKET", 64),
-  step(1, "ARP", "Wi-Fiフレームを有線へ橋渡し", "上位層を変更せず、無線からEthernetへフレームを渡します。", "ACCESS_POINT", "ap", "FORWARD_PACKET", 64),
-  step(2, "ARP", "宛先MACから出力ポートを選ぶ", "MACアドレス表を参照し、ルータ側ポートへ転送します。", "L2_SWITCH", "switch", "FORWARD_PACKET", 64),
-  step(3, "DNS", "DNS問い合わせを外部へ中継", "宛先ネットワークを経路表で照合し、TTLを1減らします。", "ROUTER", "router", "FORWARD_PACKET", 63),
-  step(4, "DNS", "ドメイン名を解決", "Aレコードを参照し、WebサーバのIPアドレスを応答します。", "DNS_SERVER", "dns", "CREATE_PACKET", 63),
-  step(5, "DNS", "DNS応答をLANへ戻す", "復路の経路を選び、リンク層ヘッダを付け替えます。", "ROUTER", "router", "FORWARD_PACKET", 62),
-  step(6, "DNS", "DNS応答をPCへ届ける", "学習済みMACアドレスを使い、PC側ポートへ転送します。", "L2_SWITCH", "switch", "FORWARD_PACKET", 62),
-  step(7, "TCP", "TCP接続を開始", "Webサーバの443番ポートへSYNを送信します。", "CLIENT_PC", "pc", "CHANGE_PROTOCOL", 64),
-  step(8, "TCP", "Webサーバへの経路を選ぶ", "最長一致する経路を使い、TTLを1減らします。", "ROUTER", "router", "FORWARD_PACKET", 63),
-  step(9, "TCP", "TCP接続を確立", "SYNを受け取り、SYN/ACKを返します。", "WEB_SERVER", "web", "CREATE_PACKET", 63),
-  step(10, "TLS", "証明書を提示", "サーバ証明書と暗号化条件をクライアントへ送ります。", "WEB_SERVER", "web", "CHANGE_PROTOCOL", 63),
-  step(11, "TLS", "証明書を検証", "名前・有効期限・信頼の連鎖を確認し、安全な通信を開始します。", "CLIENT_PC", "pc", "CHANGE_PROTOCOL", 64),
-  step(12, "HTTPS", "暗号化されたGET要求を送る", "TLSの内側で教材ページを要求します。", "CLIENT_PC", "pc", "CREATE_PACKET", 64),
-  step(13, "HTTPS", "HTTP要求を処理", "GET /lesson を受け取り、200 OKとHTMLを返します。", "WEB_SERVER", "web", "CREATE_PACKET", 63),
-  step(14, "HTTPS", "応答をLANへ転送", "宛先IPを見て戻りの経路を選び、TTLを更新します。", "ROUTER", "router", "FORWARD_PACKET", 62),
-  step(15, "HTTPS", "フレームをPC側へ転送", "宛先MACに対応するポートを選びます。", "L2_SWITCH", "switch", "FORWARD_PACKET", 62),
-  step(16, "HTTPS", "教材ページを再構成", "受信したデータを復号・再構成し、ブラウザへ表示します。", "CLIENT_PC", "pc", "FORWARD_PACKET", 62),
+  step(0, "ARP", "最初の出口へ渡すため、ルータの機器番号を調べる", "ARPを使い、出口のルータ192.168.10.1に対応するMACアドレスを調べます。", "CLIENT_PC", "pc", "CREATE_PACKET", 64),
+  step(1, "ARP", "Wi-Fiで届いたデータを、有線LANへ渡す", "中のIPアドレスを変えず、Wi-Fi用フレームからEthernet用フレームへ入れ替えて送ります。", "ACCESS_POINT", "ap", "FORWARD_PACKET", 64),
+  step(2, "ARP", "ルータにつながる差込口を選ぶ", "次に届ける機器の番号（宛先MACアドレス）を対応表で調べ、ルータ側の2番の差込口だけへ送ります。", "L2_SWITCH", "switch", "FORWARD_PACKET", 64),
+  step(3, "DNS", "Webサイト名の質問を、DNSサーバ側へ送る", "DNSサーバのIPアドレスを経路表と比べ、外部側の道を選んで送ります。", "ROUTER", "router", "FORWARD_PACKET", 63),
+  step(4, "DNS", "Webサイト名に対応するIPアドレスを答える", "登録されたAレコードを調べ、WebサーバのIPアドレス203.0.113.80をPCへ返します。", "DNS_SERVER", "dns", "CREATE_PACKET", 63),
+  step(5, "DNS", "DNSサーバの答えを、校内LAN側へ戻す", "PCのIPアドレスに合う帰り道を選び、次のLAN区間で使うフレームに入れ替えます。", "ROUTER", "router", "FORWARD_PACKET", 62),
+  step(6, "DNS", "DNSサーバの答えを、PCにつながる差込口へ送る", "PCの機器番号（MACアドレス）と対応表を比べ、PC側の1番の差込口へ送ります。", "L2_SWITCH", "switch", "FORWARD_PACKET", 62),
+  step(7, "TCP", "Webサーバとの通信路を作り始める", "Webサーバの443番窓口へ、通信開始の合図（SYN）を送ります。", "CLIENT_PC", "pc", "CHANGE_PROTOCOL", 64),
+  step(8, "TCP", "通信開始の合図を、Webサーバ側へ送る", "WebサーバのIPアドレスに合う道を経路表から選び、通過できる残り回数（TTL）を1減らします。", "ROUTER", "router", "FORWARD_PACKET", 63),
+  step(9, "TCP", "Webサーバ側でも通信路を準備する", "PCからの通信開始の合図を受け取り、受け取ったことを示す返事（SYN/ACK）を返します。", "WEB_SERVER", "web", "CREATE_PACKET", 63),
+  step(10, "TLS", "Webサーバが本物だと確認できる情報を送る", "Webサーバの名前や有効期限が書かれたサーバ証明書と、暗号化の条件をPCへ送ります。", "WEB_SERVER", "web", "CHANGE_PROTOCOL", 63),
+  step(11, "TLS", "接続先が本物か確認し、暗号化を始める", "証明書のWebサイト名・有効期限・発行元を確認し、安全に通信できる状態を作ります。", "CLIENT_PC", "pc", "CHANGE_PROTOCOL", 64),
+  step(12, "HTTPS", "暗号化した状態で、教材ページを要求する", "暗号化された通信の中で、「/lessonの教材ページをください」というGET要求を送ります。", "CLIENT_PC", "pc", "CREATE_PACKET", 64),
+  step(13, "HTTPS", "要求された教材ページを返す", "GET /lessonという要求を読み、成功を表す200 OKと教材ページのHTMLを返します。", "WEB_SERVER", "web", "CREATE_PACKET", 63),
+  step(14, "HTTPS", "教材ページのデータを、校内LAN側へ戻す", "PCのIPアドレスに合う帰り道を選び、通過できる残り回数（TTL）を1減らします。", "ROUTER", "router", "FORWARD_PACKET", 62),
+  step(15, "HTTPS", "教材ページのデータを、PC側の差込口へ送る", "PCの機器番号（MACアドレス）を対応表で調べ、PCにつながる1番の差込口へ送ります。", "L2_SWITCH", "switch", "FORWARD_PACKET", 62),
+  step(16, "HTTPS", "届いたデータから教材ページを表示する", "暗号化を解除して受信データを正しい順番に戻し、ブラウザに教材ページを表示します。", "CLIENT_PC", "pc", "FORWARD_PACKET", 62),
 ];
 
 export const FAULT_DEFINITIONS: Array<{
@@ -232,19 +238,19 @@ export const FAULT_DEFINITIONS: Array<{
   symptom: string;
   hint: string;
 }> = [
-  { type: "AP_DOWN", label: "無線AP停止", target: "ap", symptom: "接続直後から通信できません。", hint: "リンク状態と接続端末を確認します。" },
-  { type: "CABLE_CUT", label: "上位ケーブル断", target: "switch-router", symptom: "教室内から外部へ到達できません。", hint: "共通する最後の正常地点を探します。" },
-  { type: "BAD_GATEWAY", label: "GW誤設定", target: "pc", symptom: "同じLANには届きますが外部IPへ届きません。", hint: "サブネット判定とデフォルトGWを確認します。" },
-  { type: "DNS_DOWN", label: "DNS停止", target: "dns", symptom: "IP直指定なら開きますがURLでは開きません。", hint: "名前解決とIP到達性を分けて試します。" },
-  { type: "ROUTE_MISSING", label: "経路表欠落", target: "router", symptom: "校内LANは正常ですが外部へ出られません。", hint: "宛先ネットワークに一致する経路を探します。" },
-  { type: "CERT_ERROR", label: "証明書エラー", target: "web", symptom: "接続はできますが安全な通信を開始できません。", hint: "証明書の名前と有効期限を確認します。" },
-  { type: "WEB_DOWN", label: "Web停止", target: "web", symptom: "DNSと他の到達性は正常ですが対象だけ開きません。", hint: "アプリケーション層まで切り分けます。" },
+  { type: "AP_DOWN", label: "無線APが停止", target: "ap", symptom: "PCがWi-Fiへ接続できず、最初の機器へデータを渡せません。", hint: "PCと無線アクセスポイントの接続状態を確認します。" },
+  { type: "CABLE_CUT", label: "ルータへ続くケーブルが切断", target: "switch-router", symptom: "PCから校内の機器へは届きますが、校外のWebサイトへ進めません。", hint: "返事があった最後の機器と、その次の接続を確認します。" },
+  { type: "BAD_GATEWAY", label: "PCの出口が誤設定", target: "pc", symptom: "同じ校内LANの機器へは届きますが、外部のWebサーバへ送れません。", hint: "PCのIPアドレスと、外部への出口のIPアドレスを確認します。" },
+  { type: "DNS_DOWN", label: "DNSサーバが停止", target: "dns", symptom: "WebサーバのIPアドレスを指定すると届きますが、Webサイト名では届きません。", hint: "Webサイト名をIPアドレスへ変換できるかを確認します。" },
+  { type: "ROUTE_MISSING", label: "ルータの道案内が不足", target: "router", symptom: "PCから出口のルータまでは届きますが、その先のWebサーバへ進めません。", hint: "WebサーバのIPアドレスに合う道が、ルータの経路表にあるか確認します。" },
+  { type: "CERT_ERROR", label: "Webサイトの証明書に問題", target: "web", symptom: "Webサーバへは接続できますが、安全な通信を開始できません。", hint: "証明書のWebサイト名と有効期限を確認します。" },
+  { type: "WEB_DOWN", label: "Webサーバが停止", target: "web", symptom: "WebサーバのIPアドレスまでは届きますが、教材ページが返りません。", hint: "Webサーバが教材ページの要求へ応答しているか確認します。" },
 ];
 
 export const REFLECTION_PROMPTS = [
-  { id: "explain-flow", label: "URLを入力してから表示されるまでを、機器とプロトコルの順に説明してください。" },
-  { id: "diagnosis", label: "障害診断で、最初の正常地点と最初の失敗地点をどう特定しましたか。" },
-  { id: "lesson-design", label: "高校生へ教えるなら、どの問い・活動・比喩を使いますか。" },
+  { id: "explain-flow", label: "特定のWebサイトにある教材ページを見るために、PCからWebサーバまでの6つの機器は何をしましたか。順番に説明してください。" },
+  { id: "diagnosis", label: "教材ページが表示されない原因を調べたとき、どの結果から「ここまでは正常」「この先に問題がある」と判断しましたか。" },
+  { id: "lesson-design", label: "今回いちばん理解できた機器の仕事と、もう一度確認したいことを書いてください。" },
 ];
 
 export const PHASE_INDEX = Object.fromEntries(

@@ -535,7 +535,7 @@ export class RoomDurableObject extends DurableObject<Env> {
           }];
         }
         eventType = "CHANGE_PHASE";
-        summary = `フェーズを「${action.phase}」へ変更しました`;
+        summary = `学習段階を「${phaseDefinition(action.phase).label}」へ進めました`;
         payload = { phase: action.phase };
         break;
       }
@@ -556,7 +556,7 @@ export class RoomDurableObject extends DurableObject<Env> {
         if (!link) throw new Error("NOT_FOUND: 接続が見つかりません。");
         link.up = !link.up;
         eventType = "CONNECT_PORT";
-        summary = `${link.from}–${link.to}を${link.up ? "接続" : "切断"}しました`;
+        summary = `${DEVICES.find((device) => device.id === link.from)?.label ?? link.from}と${DEVICES.find((device) => device.id === link.to)?.label ?? link.to}の接続を${link.up ? "元に戻しました" : "学習のため切断しました"}`;
         payload = { linkId: link.id, fromPort: link.from, toPort: link.to, medium: link.medium, up: link.up };
         break;
       }
@@ -576,7 +576,7 @@ export class RoomDurableObject extends DurableObject<Env> {
       }
       case "ADVANCE_PROTOCOL": {
         const current = PROTOCOL_STEPS[nextRoom.protocolIndex];
-        if (!current) throw new Error("CONFLICT: 通信シーケンスは完了しています。");
+        if (!current) throw new Error("CONFLICT: 教材ページが表示されるまでの17段階は完了しています。");
         nextRoom.protocolIndex += 1;
         eventType = current.eventType;
         summary = `${current.protocol}: ${current.title}`;
@@ -586,7 +586,7 @@ export class RoomDurableObject extends DurableObject<Env> {
       case "RESET_PROTOCOL": {
         nextRoom.protocolIndex = 0;
         eventType = "CREATE_PACKET";
-        summary = "通信シーケンスを最初から再実行します";
+        summary = "教材ページが表示されるまでの17段階を、最初からやり直しました";
         payload = { protocol: "ARP", reset: true };
         break;
       }
@@ -600,7 +600,7 @@ export class RoomDurableObject extends DurableObject<Env> {
           injectedAt: nowIso(),
         });
         eventType = "INJECT_FAULT";
-        summary = `障害「${definition.label}」を注入しました`;
+        summary = `原因調査のため「${definition.label}」の状態にしました`;
         payload = { faultType: action.faultType, target: definition.target, visibility: "teacher" };
         break;
       }
@@ -745,7 +745,7 @@ export class RoomDurableObject extends DurableObject<Env> {
       default:
         break;
     }
-    throw new Error("FORBIDDEN: 現在のフェーズまたは担当役割では、この操作を実行できません。");
+    throw new Error("FORBIDDEN: 現在の学習段階または担当役割では、この操作を実行できません。");
   }
 
   private commitEvent(

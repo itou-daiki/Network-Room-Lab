@@ -213,7 +213,7 @@ textarea { resize: vertical; line-height: 1.7; }
 .role-mission { --role-accent: var(--cyan); position: relative; padding-left: 28px!important; }.role-mission::before { content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--role-accent); }.role-id { color:var(--role-accent);font:600 8px var(--mono);letter-spacing:.14em}.role-mission h3{font-size:24px;margin:8px 0}.role-mission p{color:#9ab0bc;font-size:11px}.role-mission h4{font-size:10px;margin:18px 0 9px;color:#809aa7}.tag-list{display:flex;flex-wrap:wrap;gap:6px}.tag-list span{border:1px solid var(--line-strong);padding:5px 8px;font-size:9px;color:#b7ccd5}
 .topology-mission ul { list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:7px }.topology-mission li{display:grid;grid-template-columns:auto 1fr;column-gap:8px;padding:9px 10px;border:1px solid var(--line);background:rgba(0,0,0,.1)}.topology-mission li span{grid-row:1/span 2;font:600 7px var(--mono);color:var(--green)}.topology-mission li span.ng{color:var(--danger)}.topology-mission li b{font:500 9px var(--mono)}.topology-mission li small{color:#617c8a;font-size:8px}
 .field-grid { display:grid;grid-template-columns:1fr .45fr 1fr 1fr;gap:10px}.field-grid label{margin:0}.field-grid input{font:500 11px var(--mono)}.subnet-check{display:flex;align-items:center;gap:9px;padding:9px 11px;background:rgba(0,0,0,.16);margin:14px 0;color:#718c99;font-size:8px}.subnet-check b{color:#b8d2dc;font:500 9px var(--mono)}
-.protocol-breadcrumb{display:flex;gap:4px;margin-bottom:16px}.protocol-breadcrumb span{flex:1;text-align:center;padding:6px 4px;border:1px solid var(--line);color:#5e7987;font:600 8px var(--mono)}.protocol-breadcrumb span.active{border-color:var(--cyan);background:rgba(64,200,255,.08);color:var(--cyan)}.step-counter{display:flex;align-items:center;gap:12px}.step-counter span{color:var(--cyan);font:600 9px var(--mono)}.step-counter b{font-size:16px}.protocol-mission>p{color:#91a8b4;font-size:10px;line-height:1.8}.actor-line{display:flex;align-items:center;gap:7px;padding:9px 11px;border:1px solid var(--line);font-size:9px;color:#7993a0;margin:13px 0}.actor-line>span{width:7px;height:7px;border-radius:50%}.actor-line b{color:#d5e8ee}.actor-line em{margin-left:auto;color:var(--green);font-style:normal;font-weight:700}.decision-field{margin:0 0 12px!important}.decision-field textarea{font-size:10px}.packet-action{width:100%}.packet-action span{font-size:16px;margin-left:8px}.waiting-note{display:flex;align-items:center;justify-content:center;gap:8px;color:#718c99;font-size:10px;padding:10px;border:1px dashed var(--line-strong)}.waiting-note i{width:6px;height:6px;border-radius:50%;background:var(--amber);animation:pulse 1.4s infinite}@keyframes pulse{50%{opacity:.25}}
+.protocol-breadcrumb{display:flex;gap:4px;margin-bottom:16px}.protocol-breadcrumb span{flex:1;text-align:center;padding:6px 4px;border:1px solid var(--line);color:#5e7987;font:600 8px var(--mono)}.protocol-breadcrumb span small{display:block;margin-top:3px;font:600 9px/1.4 var(--sans)}.protocol-breadcrumb span.active{border-color:var(--cyan);background:rgba(64,200,255,.08);color:var(--cyan)}.step-counter{display:flex;align-items:center;gap:12px}.step-counter span{color:var(--cyan);font:600 9px var(--mono)}.step-counter b{font-size:16px}.protocol-mission>p{color:#91a8b4;font-size:10px;line-height:1.8}.actor-line{display:flex;align-items:center;gap:7px;padding:9px 11px;border:1px solid var(--line);font-size:9px;color:#7993a0;margin:13px 0}.actor-line>span{width:7px;height:7px;border-radius:50%}.actor-line b{color:#d5e8ee}.actor-line em{margin-left:auto;color:var(--green);font-style:normal;font-weight:700}.decision-field{margin:0 0 12px!important}.decision-field textarea{font-size:10px}.packet-action{width:100%}.packet-action span{font-size:16px;margin-left:8px}.waiting-note{display:flex;align-items:center;justify-content:center;gap:8px;color:#718c99;font-size:10px;padding:10px;border:1px dashed var(--line-strong)}.waiting-note i{width:6px;height:6px;border-radius:50%;background:var(--amber);animation:pulse 1.4s infinite}@keyframes pulse{50%{opacity:.25}}
 .mission-complete>span{display:grid;place-items:center;margin:auto;width:42px;height:42px;border-radius:50%;background:rgba(66,215,176,.12);border:1px solid rgba(66,215,176,.4);color:var(--green);font-size:20px}.mission-complete .secondary-button{margin-top:10px}
 .diagnostic-tools{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px}.diagnostic-tools button{border:1px solid var(--line);background:rgba(0,0,0,.12);padding:8px 4px;color:#75909e;font:500 8px var(--mono);cursor:pointer}.diagnostic-tools button.active{border-color:var(--cyan);color:var(--cyan);background:rgba(64,200,255,.07)}.diagnosis-mission label{margin-bottom:10px}.terminal-card{margin-top:15px;background:#041016;border:1px solid var(--line);font:400 9px var(--mono)}.terminal-card>div{display:flex;gap:5px;align-items:center;padding:7px 10px;border-bottom:1px solid var(--line)}.terminal-card>div span{font-size:7px;color:#3a5968}.terminal-card>div span:first-child{color:var(--danger)}.terminal-card>div span:nth-child(2){color:var(--amber)}.terminal-card>div span:nth-child(3){color:var(--green)}.terminal-card>div b{margin-left:auto;color:#7393a1;font-size:7px}.terminal-card pre{white-space:pre-wrap;color:#8fdbbd;margin:0;padding:12px;line-height:1.8}.terminal-card.failure pre{color:#ffb2bc}.terminal-card p{border-top:1px solid var(--line);margin:0;padding:10px 12px;color:#8da5b1;font-family:inherit;line-height:1.6}
 .reflection-form{display:flex;flex-direction:column;gap:12px}.reflection-item{display:grid;grid-template-columns:28px 1fr auto;gap:10px;padding:12px;border:1px solid var(--line)}.reflection-item>span{color:var(--cyan);font:600 9px var(--mono)}.reflection-item label{font-size:10px;line-height:1.7;color:#bdd0d7}.reflection-item textarea{margin-top:8px;font-size:10px}.reflection-item button{align-self:end;margin-bottom:1px}.teacher-reflection-summary{display:grid;grid-template-columns:1fr auto;gap:15px}.teacher-reflection-summary .mission-callout{margin:0}.reflection-count{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 24px;border:1px solid var(--line)}.reflection-count b{font:600 28px var(--mono);color:var(--cyan)}.reflection-count span{font-size:8px;color:var(--muted)}
@@ -466,6 +466,56 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
 .learning-coach.waiting { @apply border-amber-300 bg-amber-50/95; }.learning-coach.waiting .learning-coach-icon { @apply bg-amber-500; }.learning-coach.waiting > button { @apply border-amber-300 text-amber-800; }
 .learning-coach.complete { @apply border-emerald-300 bg-emerald-50/95; }.learning-coach.complete .learning-coach-icon { @apply bg-emerald-500; }.learning-coach.complete > button { @apply border-emerald-300 text-emerald-800; }
 
+/* The complete learner journey: DNS lookup first, Web page retrieval second */
+.learning-route-map { max-width:1550px; margin:14px auto 0; overflow:hidden; border:1px solid #b8ddff; border-radius:18px; background:#fff; box-shadow:0 8px 28px rgba(15,69,112,.08); }
+.learning-route-map > header { @apply grid items-start gap-5 border-b border-dodger-100 bg-dodger-50 p-5; grid-template-columns:minmax(0,1fr) minmax(320px,430px); }
+.learning-route-map > header small { @apply text-[10px] font-black tracking-wide text-dodger-600; }
+.learning-route-map > header h2 { @apply m-0 mt-1 text-xl font-black text-slate-900; }
+.learning-route-map > header p { @apply m-0 mt-2 text-sm leading-relaxed text-slate-600; }
+.gateway-explanation { @apply flex flex-col rounded-xl border border-amber-200 bg-amber-50 p-3; }
+.gateway-explanation b { @apply text-xs font-black text-amber-900; }
+.gateway-explanation span { @apply mt-1 text-xs leading-relaxed text-amber-900; }
+.route-lanes { @apply grid gap-4 p-4; }
+.route-lane { @apply overflow-hidden rounded-2xl border-2 bg-white transition-opacity; }
+.route-lane.route-dns { @apply border-cyan-200; }
+.route-lane.route-web { @apply border-dodger-200; }
+.route-lane.muted { opacity:.52; }
+.route-lane-heading { @apply grid grid-cols-[auto_1fr] items-start gap-3 border-b p-4; }
+.route-dns .route-lane-heading { @apply border-cyan-100 bg-cyan-50; }
+.route-web .route-lane-heading { @apply border-dodger-100 bg-dodger-50; }
+.route-lane-heading > span { @apply rounded-full px-3 py-1 text-[10px] font-black text-white; }
+.route-dns .route-lane-heading > span { @apply bg-cyan-600; }
+.route-web .route-lane-heading > span { @apply bg-dodger-600; }
+.route-lane-heading h3 { @apply m-0 text-base font-black text-slate-900; }
+.route-lane-heading p { @apply m-0 mt-1 text-xs leading-relaxed text-slate-600; }
+.route-scroll { @apply overflow-x-auto p-4 outline-none; scrollbar-color:#8ecbff #eff8ff; scrollbar-width:thin; }
+.route-scroll:focus-visible { @apply ring-4 ring-inset ring-dodger-100; }
+.route-scroll-hint { display:none; }
+.route-outbound,.route-return { min-width:920px; @apply flex items-center gap-2 rounded-lg px-3 py-2 text-[11px] font-bold; }
+.route-outbound { @apply mb-2 bg-dodger-50 text-dodger-900; }
+.route-return { @apply mt-2 bg-emerald-50 text-emerald-900; }
+.route-outbound > span,.route-return > span { @apply rounded-full px-2 py-0.5 text-[9px] font-black text-white; }
+.route-outbound > span { @apply bg-dodger-600; }
+.route-return > span { @apply bg-emerald-600; }
+.route-outbound > b { @apply ml-auto text-lg text-dodger-500; }
+.route-return > b { @apply text-lg text-emerald-600; }
+.route-track { min-width:920px; @apply m-0 flex list-none items-stretch p-0; }
+.route-track > li { @apply flex min-w-0 flex-1 items-center; }
+.route-node { min-height:132px; @apply relative flex min-w-0 flex-1 flex-col rounded-xl border-2 border-slate-200 bg-slate-50 p-3; }
+.route-node > span { @apply grid h-6 w-6 place-items-center rounded-full bg-slate-200 text-[10px] font-black text-slate-600; }
+.route-node > b { @apply mt-2 text-sm font-black text-slate-900; }
+.route-node > em { @apply mt-1 text-[9px] font-bold not-italic leading-snug text-amber-700; }
+.route-node > small { @apply mt-1 text-[10px] leading-relaxed text-slate-500; }
+.route-track > li.active .route-node { @apply border-dodger-500 bg-dodger-50 ring-4 ring-dodger-100; }
+.route-track > li.active .route-node > span { @apply bg-dodger-600 text-white; }
+.route-node > strong { @apply absolute top-2 right-2 rounded-full bg-dodger-600 px-2 py-0.5 text-[9px] font-black text-white; }
+.route-arrow { width:28px; @apply shrink-0 text-center text-xl font-black not-italic text-dodger-400; }
+.learning-route-map > footer { @apply flex items-center gap-2 border-t border-slate-100 bg-slate-50 px-5 py-3 text-[11px] text-slate-600; }
+.route-current-key { @apply h-3 w-3 rounded border-2 border-dodger-500 bg-dodger-50; }
+.learning-route-map.compact { max-width:none; @apply mx-5 mt-0 border-dodger-200 shadow-none; }
+.learning-route-map.compact > header h2 { @apply text-lg; }
+.learning-route-map.compact .route-node { min-height:124px; }
+
 .inline-learning-lead { @apply mx-auto mt-4 flex w-[calc(100%_-_40px)] max-w-3xl items-start gap-3 rounded-xl border-2 border-dodger-300 bg-dodger-50 p-4; }
 .inline-learning-lead > span { @apply shrink-0 rounded-full bg-dodger-500 px-3 py-1.5 text-[10px] font-black text-white; }
 .inline-learning-lead > div { @apply flex min-w-0 flex-col; }
@@ -476,6 +526,12 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
 .guide-target { border-color:#1e90ff!important; box-shadow:0 0 0 4px rgba(30,144,255,.13)!important; }
 .guide-field textarea { border-color:#1e90ff; box-shadow:0 0 0 4px rgba(30,144,255,.10); }
 .practice-note-field > small { @apply text-[10px] font-normal text-slate-500; }
+.practice-tasks > button code { @apply flex flex-col items-start gap-1 whitespace-normal text-left; }
+.practice-tasks > button code em { @apply font-sans text-[9px] font-black not-italic text-slate-400; }
+.practice-tasks > button small strong { @apply text-slate-700; }
+.terminal-reading-guide { @apply flex flex-col border-x border-slate-800 bg-slate-800 px-4 py-3 text-slate-200; }
+.terminal-reading-guide b { @apply text-xs font-black text-cyan-300; }
+.terminal-reading-guide span { @apply mt-1 text-[10px] leading-relaxed text-slate-300; }
 .learning-support-drawer { @apply overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm; }
 .learning-support-drawer > summary { @apply flex cursor-pointer list-none items-center gap-3 px-5 py-4; }
 .learning-support-drawer > summary::-webkit-details-marker { display:none; }
@@ -502,6 +558,11 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
 .role-all-complete small { @apply text-xs font-bold text-emerald-700; }
 .role-all-complete h3 { @apply m-0 mt-1 text-lg font-black text-slate-900; }
 .role-all-complete p { @apply m-0 mt-1 text-sm text-slate-600; }
+.role-overall-goal { @apply m-5 grid grid-cols-[auto_1fr] gap-4 rounded-2xl border-2 border-dodger-300 bg-dodger-50 p-5; }
+.role-overall-goal > span { @apply h-fit rounded-full bg-dodger-600 px-3 py-1.5 text-xs font-black text-white; }
+.role-overall-goal h3 { @apply m-0 text-lg font-black text-slate-900; }
+.role-overall-goal code { @apply mt-2 inline-block rounded-lg bg-white px-3 py-2 text-xs font-bold text-dodger-700; }
+.role-overall-goal p { @apply m-0 mt-2 text-sm leading-relaxed text-slate-600; }
 
 .role-practice-tabs { @apply mt-5 border-y; }
 .role-practice-tabs button { min-height:68px; }
@@ -512,7 +573,7 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
 .role-practice-tabs button b { @apply text-sm; }
 .role-practice-tabs button small { @apply text-[11px]; }
 
-.role-practice-stage { @apply mx-auto mt-6 grid w-full max-w-3xl grid-cols-3 px-5; }
+.role-practice-stage { @apply mx-auto mt-6 grid w-full max-w-3xl grid-cols-5 px-5; }
 .role-practice-stage > div { @apply relative flex items-center gap-3 border-t-4 border-slate-200 pt-4; }
 .role-practice-stage > div:not(:last-child)::after { content:""; @apply absolute -top-1 left-1/2 h-1 w-full bg-slate-200; }
 .role-practice-stage > div.done, .role-practice-stage > div.current { @apply border-dodger-500; }
@@ -541,6 +602,9 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
 .role-guided-step > header h3 { @apply m-0 mt-1 text-xl font-black leading-snug text-slate-900; }
 .role-guided-step > header p { @apply m-0 mt-2 text-sm leading-relaxed text-slate-600; }
 .role-guided-step > .role-analogy { width:100%; margin-left:0; margin-right:0; }
+.role-goal { @apply mt-4 rounded-xl border-2 border-dodger-300 bg-dodger-50 p-4; }
+.role-goal span { @apply text-xs font-black text-dodger-700; }
+.role-goal p { @apply m-0 mt-1 text-base font-bold leading-relaxed text-slate-900; }
 .role-situation { @apply mt-3 flex gap-3 rounded-xl bg-slate-100 p-3; }
 .role-situation > span { @apply shrink-0 text-xs font-black text-slate-600; }
 .role-situation p { @apply m-0 text-sm leading-relaxed text-slate-700; }
@@ -574,6 +638,7 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
 
 .beginner-result-list { @apply mt-5 grid gap-3; }
 .beginner-result-list article { @apply overflow-hidden rounded-xl border border-emerald-200 bg-emerald-50; }
+.beginner-result-list article > small { @apply block bg-slate-800 px-4 pt-2 text-[10px] font-black text-slate-300; }
 .beginner-result-list code { @apply block break-words bg-slate-950 px-4 py-3 font-mono text-sm text-emerald-300; }
 .beginner-result-list p { @apply m-0 flex items-start gap-3 px-4 py-3 text-sm leading-relaxed text-slate-700; }
 .beginner-result-list p span { @apply shrink-0 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-black text-white; }
@@ -620,6 +685,8 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
   .glossary-grid { grid-template-columns: repeat(3,1fr); }
   .teacher-grid { grid-template-columns: 1fr 1fr; }.teacher-grid > div:last-child { grid-column: 1 / -1; border-top: 1px solid var(--line); }
   .field-grid { grid-template-columns: 1fr 1fr; }
+  .learning-route-map { margin-left:12px; margin-right:12px; }
+  .learning-route-map > header { grid-template-columns:1fr; }
 }
 
 @media (max-width: 900px) {
@@ -651,6 +718,7 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
   .role-practice-heading, .practice-heading, .glossary-heading { align-items: flex-start; flex-direction: column; gap: 10px; }.role-practice-tabs { grid-template-columns: repeat(3,1fr); }.role-practice-intro { grid-template-columns: 36px 1fr; margin:10px 10px 0; }.role-practice-intro em { display:none; }.role-practice-intro h3 { @apply text-lg; }.role-practice-cycle { grid-template-columns:1fr 1fr; margin:10px; }.role-practice-cycle i { display:none; }.role-reading-guide { margin:10px; }.role-reading-guide > summary em { display:none; }.role-practice-layout { grid-template-columns:1fr; padding:10px; }.role-result { grid-column:auto; }.role-explanation-area { grid-template-columns:1fr; margin:0 10px 10px; }.role-explanation-area > button { @apply w-full; }.practice-cycle { grid-template-columns: 1fr; }.practice-layout { padding: 10px; }.terminal-output { min-height: 270px; }.context-term-list, .hypothesis-choices, .glossary-grid { grid-template-columns: 1fr; }.context-terms-heading small { display: none; }.glossary-heading label { max-width: none; }
   .role-next-action { @apply mx-3 mt-3 grid-cols-[42px_1fr] p-3; }.role-next-action > span { @apply h-10 w-10; }.role-next-action b { @apply text-base; }.role-next-action p { @apply text-xs; }
   .role-all-complete { @apply m-3 grid-cols-[44px_1fr] p-4; }.role-all-complete > span { @apply h-11 w-11; }.role-all-complete > button { @apply col-span-2 w-full; }
+  .role-overall-goal { @apply m-3 grid-cols-1 gap-3 p-4; }.role-overall-goal > span { @apply w-fit; }.role-overall-goal h3 { @apply text-base; }.role-overall-goal code { @apply break-all; }
   .role-practice-tabs { @apply mt-3; }.role-practice-tabs button { @apply grid-cols-[24px_1fr] gap-x-1 px-2 py-2; min-height:60px; }.role-practice-tabs button > span { @apply h-6 w-6; }.role-practice-tabs button b { @apply text-xs; }.role-practice-tabs button small { @apply text-[9px]; }
   .role-practice-stage { @apply mt-5 px-4; }.role-practice-stage > div { @apply gap-2 pt-3; }.role-practice-stage > div > span { @apply h-7 w-7; }.role-practice-stage b { @apply text-xs; }.role-practice-stage small { display:none; }
   .role-practice-intro,.role-guided-step,.role-support-details { width:calc(100% - 20px); margin-left:10px; margin-right:10px; }
@@ -662,6 +730,7 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
   .role-support-details { @apply mt-3; }.role-support-details summary small { @apply text-[11px]; }
   .learning-support-drawer > summary { @apply px-4; }
   .learning-coach { top:72px; grid-template-columns:34px minmax(0,1fr); gap:10px; margin-top:8px; padding:10px 12px; border-radius:13px; }.learning-coach-icon { @apply h-8 w-8 text-sm; }.learning-coach-main small { @apply text-[9px]; }.learning-coach-main b { @apply text-sm; }.learning-coach-main p { display:none; }.learning-coach > button { @apply col-span-2 min-h-9 w-full px-3 py-1.5; }
+  .learning-route-map { margin-left:10px; margin-right:10px; border-radius:14px; }.learning-route-map.compact { margin-left:10px; margin-right:10px; }.learning-route-map > header { @apply gap-3 p-4; }.learning-route-map > header h2 { @apply text-base; }.learning-route-map > header p { @apply text-xs; }.gateway-explanation { @apply p-3; }.route-lanes { @apply gap-3 p-2; }.route-lane-heading { @apply p-3; }.route-lane-heading h3 { @apply text-sm; }.route-scroll { @apply p-3; scroll-snap-type:x proximity; }.route-scroll-hint { width:calc(100vw - 72px); @apply mb-2 block rounded-lg border border-dodger-200 bg-white px-3 py-2 text-center text-[10px] font-bold leading-relaxed text-dodger-700; }.route-outbound,.route-return,.route-track { min-width:780px; }.route-track > li { scroll-snap-align:start; }.route-node { min-height:128px; }.learning-route-map > footer { @apply items-start px-4 text-[10px]; }
   .inline-learning-lead { width:calc(100% - 20px); margin-left:10px; margin-right:10px; padding:12px; }.inline-learning-lead > span { @apply px-2.5 py-1 text-[9px]; }.inline-learning-lead b { @apply text-xs; }.inline-learning-lead p { @apply text-[11px]; }
   .mission-panel .inline-learning-lead { width:100%; margin-left:0; margin-right:0; }
   .reflection-item { grid-template-columns: 24px 1fr; }.reflection-item button { grid-column: 2; justify-self: end; }

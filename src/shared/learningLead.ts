@@ -40,7 +40,7 @@ export function learningLead(
     if (snapshot.viewer.kind === "teacher") {
       return { title: "参加者へ役割を割り当てます", detail: "先生用パネルで担当を確認し、準備ができたら次のフェーズへ進めます。", after: "各担当が同じ構成図を見られます。", targetId: "teacher-panel", targetLabel: "先生用パネルへ", state: "action" };
     }
-    return { title: "青く表示された「次にやること」だけを進めます", detail: isSolo ? `残り${remaining}役です。見る・選ぶ・確かめるを、上から1つずつ進めます。` : "担当役割の「見る・選ぶ・確かめる」を、上から1つずつ進めます。", after: "完了すると次の役割または機器構成へ進めます。", targetId: "role-practice-current", targetLabel: "現在の課題へ", state: "action" };
+    return { title: "青く表示された「次にやること」だけを進めます", detail: isSolo ? `残り${remaining}役です。役割・情報・操作・結果・説明の5段階を、上から1つずつ進めます。` : "担当機器の目的を確認してから、情報・操作・結果・説明の順に進めます。", after: "完了すると次の役割または機器構成へ進めます。", targetId: "role-practice-current", targetLabel: "現在の課題へ", state: "action" };
   }
 
   if (!isSolo) {
@@ -50,9 +50,9 @@ export function learningLead(
     if (phase === "PROTOCOL" && snapshot.room.protocolIndex < PROTOCOL_STEPS.length) {
       const step = PROTOCOL_STEPS[snapshot.room.protocolIndex]!;
       if (snapshot.viewer.role !== step.actorRole) {
-        return { title: `${roleDefinition(step.actorRole).label}の操作を待ちます`, detail: "担当者が進めると画面は自動で更新されます。その間、全体図でパケットの現在地を見ます。", after: "自分の担当になったら選択肢が押せるようになります。", targetId: "topology-panel", targetLabel: "現在地を見る", state: "waiting" };
+        return { title: `${roleDefinition(step.actorRole).label}の操作を待ちます`, detail: "担当者が進めると画面は自動で更新されます。その間、経路図で通信データの現在地を見ます。", after: "自分の担当になったら選択肢が押せるようになります。", targetId: "topology-panel", targetLabel: "現在地を見る", state: "waiting" };
       }
-      return { title: `あなたの番です。STEP ${step.index + 1}の操作を1つ選びます`, detail: "A・B・Cから選ぶと、その場で理由が表示されます。", after: "正解すると次の担当へパケットを渡せます。", targetId: "mission-panel", targetLabel: "選択肢へ", state: "action" };
+      return { title: `あなたの番です。全17段階の${step.index + 1}で、操作を1つ選びます`, detail: `教材ページの表示に近づけるため、「${step.title}」を行う操作をA・B・Cから選びます。`, after: "目的に合う操作を選ぶと、通信データを次の担当へ渡せます。", targetId: "mission-panel", targetLabel: "選択肢へ", state: "action" };
     }
     if (phase === "REFLECTION") {
       const myReflectionIds = new Set(snapshot.reflections.filter((item) => item.participantId === snapshot.viewer.participantId).map((item) => item.promptId));
@@ -61,14 +61,14 @@ export function learningLead(
         ? { title: `振り返り ${nextPromptIndex + 1} を1文で書き、「保存」を押します`, detail: REFLECTION_PROMPTS[nextPromptIndex]!.label, after: "保存すると次の問いへ進みます。", targetId: "mission-panel", targetLabel: "記入欄へ", state: "action" }
         : { title: "3つの振り返りを保存できました", detail: "ほかの担当者の説明や活動履歴を読み、チームで気付きを共有します。", after: "先生のまとめを待ちます。", targetId: "mission-panel", targetLabel: "保存内容を見る", state: "complete" };
     }
-    return { title: "「いま取り組むこと」カードを確認します", detail: "自分が操作できるボタンだけが有効です。操作できないときは、担当者の画面更新を待てば大丈夫です。", after: "先生の指示に沿って実践ワークベンチへ進みます。", targetId: "mission-panel", targetLabel: "現在の課題へ", state: "action" };
+    return { title: "「いま取り組むこと」カードを確認します", detail: "教材ページを表示するために、いまの担当が行う仕事を確認します。操作できないときは、担当者の画面更新を待てば大丈夫です。", after: "カード内の案内に沿って、次の1操作へ進みます。", targetId: "mission-panel", targetLabel: "現在の課題へ", state: "action" };
   }
 
   if (phase === "TOPOLOGY") {
     const downLink = snapshot.room.links.find((link) => !link.up);
     const pingDone = practiceCompleted.has("PING_GATEWAY");
     if (downLink && !pingDone) {
-      return { title: "「最初の出口まで試す」を押します", detail: `現在「${downLink.medium}」が切れています。実践ワークベンチでpingの失敗結果を見ます。`, after: "失敗地点を確認したら、接続線を戻します。", targetId: "practice-lab", targetLabel: "ping課題へ", state: "action" };
+      return { title: "「PCから最初の出口まで届くか確かめる」を押します", detail: `現在「${downLink.medium}」の接続が切れています。コマンド実験で、PCから出口のルータへ返事が来ないことを確かめます。`, after: "結果を確認したら、切断した接続線を元に戻します。", targetId: "practice-lab", targetLabel: "確認課題へ", state: "action" };
     }
     if (downLink) {
       return { title: "切断した接続線をもう一度押して、元に戻します", detail: "赤い破線になっている同じ接続線を押します。すべての線が接続中になれば完了です。", after: "実行結果を1文で説明します。", targetId: "topology-panel", targetLabel: "切れた線へ", state: "action" };
@@ -77,7 +77,7 @@ export function learningLead(
       return { title: "全体図の接続線を1本押して、切断します", detail: "Wi-FiまたはEthernetの線を1本だけ選びます。失敗しても、同じ線をもう一度押せば戻せます。", after: "切れた状態でpingを試します。", targetId: "topology-panel", targetLabel: "接続線へ", state: "action" };
     }
     if (!hasMyExplanation(snapshot)) {
-      return { title: "pingの結果から分かったことを1文で書きます", detail: "実践ワークベンチ右側の説明欄へ、「どこまで届いたか」を10文字以上で書き、共有します。", after: "「IP設定」へ進めるようになります。", targetId: "practice-lab", targetLabel: "説明欄へ", state: "action" };
+      return { title: "確認結果から分かったことを1文で書きます", detail: "コマンド実験の右側へ、「PCからどの機器までは届いたか」を10文字以上で書き、保存します。", after: "「IP設定」へ進めるようになります。", targetId: "practice-lab", targetLabel: "説明欄へ", state: "action" };
     }
     return { title: "「次のステップへ」を押します", detail: "接続実験・ping・説明がすべて完了しました。", after: "PCのIP設定を体験します。", targetId: "solo-progress", targetLabel: "次へ進む", state: "complete" };
   }
@@ -89,10 +89,10 @@ export function learningLead(
     }
     const missing = (["IPCONFIG", "PING_GATEWAY"] as PracticeMilestone[]).find((item) => !practiceCompleted.has(item));
     if (missing) {
-      return { title: `「${taskLabel(missing)}」を押します`, detail: "実践ワークベンチの左側にある未完了の課題を押すだけで実行できます。", after: "黒い画面の結果と「観察のポイント」を読みます。", targetId: "practice-lab", targetLabel: "未完了の課題へ", state: "action" };
+      return { title: `「${taskLabel(missing)}」を押します`, detail: "コマンド実験の左側にある課題ボタンです。目的を読んでから押すと、確認コマンドが自動で実行されます。", after: "中央に表示される結果と「この結果から分かること」を読みます。", targetId: "practice-lab", targetLabel: "未完了の課題へ", state: "action" };
     }
     if (!hasMyExplanation(snapshot)) {
-      return { title: "確認結果から分かったことを1文で書きます", detail: "IP・出口・DNSのうち、確認できた値を1つ根拠にして10文字以上で書きます。", after: "「通信実験」へ進めるようになります。", targetId: "practice-lab", targetLabel: "説明欄へ", state: "action" };
+      return { title: "確認結果から分かったことを1文で書きます", detail: "PCの住所・外部への出口・DNSサーバのうち、画面で確認できた情報を1つ根拠にして10文字以上で書きます。", after: "「通信実験」へ進めるようになります。", targetId: "practice-lab", targetLabel: "説明欄へ", state: "action" };
     }
     return { title: "「次のステップへ」を押します", detail: "IP設定・2つの確認コマンド・説明が完了しました。", after: "通信を17段階で動かします。", targetId: "solo-progress", targetLabel: "次へ進む", state: "complete" };
   }
@@ -100,29 +100,29 @@ export function learningLead(
   if (phase === "PROTOCOL") {
     if (snapshot.room.protocolIndex < PROTOCOL_STEPS.length) {
       const step = PROTOCOL_STEPS[snapshot.room.protocolIndex]!;
-      return { title: `STEP ${step.index + 1}：通信カードの青い「次にやること」を進めます`, detail: `今は「${roleDefinition(step.actorRole).label}」として考えます。選択後も、カード内の案内が次の1操作へ切り替わります。`, after: "正しい操作を選び、理由を読むと次のSTEPへ進めます。", targetId: "mission-panel", targetLabel: "現在の通信STEPへ", state: "action" };
+      return { title: `全17段階の${step.index + 1}：通信カードの青い案内を進めます`, detail: `教材ページの表示に近づけるため、今は「${roleDefinition(step.actorRole).label}」の操作を1つ選びます。`, after: "目的に合う操作を選び、理由を読むと次の段階へ進めます。", targetId: "mission-panel", targetLabel: "現在の通信段階へ", state: "action" };
     }
     const missing = (["ARP", "NSLOOKUP", "PING_WEB"] as PracticeMilestone[]).find((item) => !practiceCompleted.has(item));
     if (missing) {
-      return { title: `「${taskLabel(missing)}」を押します`, detail: "通信を最後まで動かせました。次は実践ワークベンチで実際の確認方法と結びつけます。", after: "3つの確認が終わったら結果を説明します。", targetId: "practice-lab", targetLabel: "確認課題へ", state: "action" };
+      return { title: `「${taskLabel(missing)}」を押します`, detail: "教材ページが表示されるまでの流れを動かせました。次はコマンド実験で、PCから同じ情報を確認する方法を体験します。", after: "3つの確認が終わったら、結果を根拠に説明します。", targetId: "practice-lab", targetLabel: "確認課題へ", state: "action" };
     }
     if (!hasMyExplanation(snapshot)) {
-      return { title: "通信結果から分かったことを1文で書きます", detail: "ARP・DNS・Web到達性のうち、確認した結果を1つ根拠にします。", after: "「障害診断」へ進めるようになります。", targetId: "practice-lab", targetLabel: "説明欄へ", state: "action" };
+      return { title: "通信結果から分かったことを1文で書きます", detail: "出口の機器番号、Webサイト名から得たIPアドレス、Webサーバからの返事のうち、確認できた結果を1つ根拠にします。", after: "「障害診断」へ進めるようになります。", targetId: "practice-lab", targetLabel: "説明欄へ", state: "action" };
     }
     return { title: "「次のステップへ」を押します", detail: "17段階の通信・確認コマンド・説明が完了しました。", after: "わざと起きた障害の場所を調べます。", targetId: "solo-progress", targetLabel: "次へ進む", state: "complete" };
   }
 
   if (phase === "DIAGNOSIS") {
     if (!practiceCompleted.has("TRACEROUTE")) {
-      return { title: "障害診断カードの青い「次にやること」を進めます", detail: "まず4候補から予想を1つ選びます。選んだ直後、カード内の案内がtracerouteへ切り替わります。", after: "最後に応答した地点と、その次を確認します。", targetId: "mission-panel", targetLabel: "障害診断カードへ", state: "action" };
+      return { title: "原因調査カードの青い「次にやること」を進めます", detail: "教材ページが表示されない原因を、まず4候補から予想します。選ぶと、次の確認方法が表示されます。", after: "通過したルータを順に表示し、最後に返事があった地点を確認します。", targetId: "mission-panel", targetLabel: "原因の予想へ", state: "action" };
     }
     if (!practiceCompleted.has("HTTPS")) {
-      return { title: "「Webサービスまで試す」を押します", detail: "tracerouteの次は、TLS・HTTPまで正常かをcurlで確認します。", after: "2つの結果を比べて、障害地点を説明します。", targetId: "practice-lab", targetLabel: "curl課題へ", state: "action" };
+      return { title: "「教材サイトからWebの応答が返るか確かめる」を押します", detail: "通信経路を確認した次は、暗号化の準備とWebページの応答まで正常かを調べます。", after: "2つの結果を比べて、原因がありそうな地点を説明します。", targetId: "practice-lab", targetLabel: "Web応答の確認へ", state: "action" };
     }
     if (!hasMyExplanation(snapshot)) {
-      return { title: "最後に成功した地点と、最初の失敗地点を書きます", detail: "実践ワークベンチ右側へ、コマンド結果を根拠に10文字以上で説明します。", after: "「振り返り」へ進めるようになります。", targetId: "practice-lab", targetLabel: "説明欄へ", state: "action" };
+      return { title: "最後に返事があった地点と、その次の返事がない地点を書きます", detail: "コマンド実験の右側へ、画面に表示された結果を根拠に10文字以上で説明します。", after: "「振り返り」へ進めるようになります。", targetId: "practice-lab", targetLabel: "説明欄へ", state: "action" };
     }
-    return { title: "「次のステップへ」を押します", detail: "仮説・診断コマンド・説明が完了しました。", after: "学んだことを3つの問いで振り返ります。", targetId: "solo-progress", targetLabel: "次へ進む", state: "complete" };
+    return { title: "「次のステップへ」を押します", detail: "最初の予想・2つの確認コマンド・説明が完了しました。", after: "学んだことを3つの問いで振り返ります。", targetId: "solo-progress", targetLabel: "次へ進む", state: "complete" };
   }
 
   const myReflectionIds = new Set(snapshot.reflections.filter((item) => item.participantId === snapshot.viewer.participantId).map((item) => item.promptId));

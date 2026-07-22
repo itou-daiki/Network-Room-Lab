@@ -12,17 +12,18 @@ export interface PracticeTask {
   id: PracticeMilestone;
   command: string;
   label: string;
+  purpose: string;
   observation: string;
 }
 
 export const PRACTICE_TASKS: PracticeTask[] = [
-  { id: "IPCONFIG", command: "ipconfig", label: "自分の設定を見る", observation: "IP・範囲・出口・DNSの4項目を確認します。" },
-  { id: "ARP", command: "arp -a", label: "LAN内の宛先を調べる", observation: "ゲートウェイのIPとMACの対応を確認します。" },
-  { id: "PING_GATEWAY", command: "ping 192.168.10.1", label: "最初の出口まで試す", observation: "失敗したら、PCからルータまでの区間を調べます。" },
-  { id: "NSLOOKUP", command: "nslookup class.yamanashi.example", label: "名前解決だけを試す", observation: "名前がIPアドレスへ変換されるかを確認します。" },
-  { id: "PING_WEB", command: "ping 203.0.113.80", label: "IP直指定で比較する", observation: "名前解決を使わず、Webサーバまでの到達性を比べます。" },
-  { id: "TRACEROUTE", command: "traceroute 203.0.113.80", label: "失敗地点を絞る", observation: "最後に応答したホップと、その次を確認します。" },
-  { id: "HTTPS", command: "curl https://class.yamanashi.example", label: "Webサービスまで試す", observation: "IP到達後のTLS・HTTPまで正常かを確認します。" },
+  { id: "IPCONFIG", command: "ipconfig", label: "PCのネットワーク設定を表示する", purpose: "教材ページへデータを送る前に、PCの住所・同じネットワークの範囲・外部への出口・Webサイト名を調べるDNSサーバが正しいか確かめます。", observation: "このPCの住所（IPv4 Address）、範囲（Subnet Mask）、出口（Default Gateway）、DNSサーバ（DNS Servers）の4行を上から確認します。" },
+  { id: "ARP", command: "arp -a", label: "PCが覚えた出口の機器番号を表示する", purpose: "PCが最初の渡し先となるルータのMACアドレスを知っているか調べます。", observation: "ルータのIPアドレスとMACアドレスが同じ行に表示されるか確認します。" },
+  { id: "PING_GATEWAY", command: "ping 192.168.10.1", label: "PCから最初の出口まで届くか確かめる", purpose: "教材ページへ向かう道の最初の区間がつながっているか調べます。", observation: "返事があればPCからルータまで、返事がなければその途中に原因があると考えます。" },
+  { id: "NSLOOKUP", command: "nslookup class.yamanashi.example", label: "Webサイト名からIPアドレスを調べる", purpose: "PCが教材サイトの通信先住所をDNSサーバから受け取れるか調べます。", observation: "class.yamanashi.exampleに対して203.0.113.80が返るか確認します。" },
+  { id: "PING_WEB", command: "ping 203.0.113.80", label: "WebサーバのIPアドレスまで届くか確かめる", purpose: "Webサイト名の変換を使わず、Webサーバまでの通信経路だけを調べます。", observation: "IPアドレスでは返事があるかを見て、DNSの問題と通信経路の問題を分けます。" },
+  { id: "TRACEROUTE", command: "traceroute 203.0.113.80", label: "通った道から失敗地点を絞る", purpose: "PCからWebサーバまで、どのルータまではデータが届いたかを調べます。", observation: "最後に返事があった経由地点と、その次に返事がない地点を確認します。" },
+  { id: "HTTPS", command: "curl https://class.yamanashi.example", label: "教材サイトからWebの応答が返るか確かめる", purpose: "IPアドレスまで届いた後、暗号化とWebページの応答まで正常か調べます。", observation: "証明書の確認後に、Webサーバから200 OKが返るか確認します。" },
 ];
 
 export const QUICK_PRACTICE_COMMANDS = PRACTICE_TASKS.map(({ command, label }) => ({ command, label }));
@@ -92,7 +93,7 @@ export function parsePracticeCommand(value: string): ParsedPracticeCommand {
   if (command === "curl") {
     if (!args[0]) return missingArgument(raw, "curl", "curl https://class.yamanashi.example");
     if (!/^https:\/\//i.test(args[0])) {
-      return { kind: "OUTPUT", raw, success: false, lines: ["❌ この実験ではHTTPSのURLを指定します。", `修正例: curl https://${normalizeTarget(args[0])}`], inference: "HTTPSまで調べると、IP到達性だけでなく証明書とWebサービスも確認できます。" };
+      return { kind: "OUTPUT", raw, success: false, lines: ["❌ この実験ではhttps://で始まるWebサイトのURLを指定します。", `修正例: curl https://${normalizeTarget(args[0])}`], inference: "curlでHTTPSを調べると、WebサーバのIPアドレスまで届くことに加え、証明書の確認と教材ページの応答まで確かめられます。" };
     }
     return { kind: "DIAGNOSTIC", raw, tool: "HTTPS", target: normalizeTarget(args[0]), milestone: "HTTPS" };
   }
@@ -132,11 +133,11 @@ export function localPracticeOutput(command: "IPCONFIG" | "ARP", config: Interfa
 }
 
 const distractorPool = [
-  "通信内容を確認せず、受け取ったデータをすべての方向へ複製する。",
-  "送信元と宛先のIPアドレスを入れ替えて、新しい通信として送り直す。",
-  "暗号化を解除し、アプリケーションの内容を書き換えてから転送する。",
-  "宛先を確認せず、パケットをその場で破棄して最初からやり直す。",
-  "別の機器の役割を代わりに実行し、現在の層の情報を削除する。",
+  "届け先を確認せず、すべての差込口へ同じデータを送る。",
+  "送るPCと受け取るWebサーバのIPアドレスを入れ替える。",
+  "暗号化を勝手に解除し、Webページの内容を書き換えて送る。",
+  "届け先を確認せず、受け取ったデータを削除する。",
+  "今の機器では確認できない情報を使い、別の機器の仕事を行う。",
 ];
 
 export interface ProtocolDecisionChoice {
