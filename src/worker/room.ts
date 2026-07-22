@@ -287,7 +287,7 @@ export class RoomDurableObject extends DurableObject<Env> {
       teacherTokenHash,
       teacherMessage:
         input.learningMode === "SOLO"
-          ? "6つの役割を順番に体験します。説明を読んだら「次のステップへ」を押しましょう。"
+          ? "青い案内を上から順に進めます。今は表示されている1つだけを見れば大丈夫です。"
           : "まずは自分の担当機器が見られる情報を確認しましょう。",
       links: structuredClone(DEFAULT_LINKS),
       interfaceConfig: {

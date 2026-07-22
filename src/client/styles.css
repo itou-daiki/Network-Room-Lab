@@ -447,6 +447,141 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
 .glossary-grid { @apply grid grid-cols-4 gap-3 p-4; }.glossary-card { @apply overflow-hidden rounded-xl border border-slate-200 bg-white; }.glossary-card summary { @apply flex cursor-pointer list-none flex-col gap-1 bg-slate-50 p-3; }.glossary-card summary::-webkit-details-marker { display: none; }.glossary-card summary > span { @apply text-[9px] font-bold text-dodger-600; }.glossary-card summary > b { @apply text-sm text-slate-900; }.glossary-card summary > small { @apply text-[10px] text-slate-500; }.glossary-card > div { @apply border-t border-slate-100 p-3; }.glossary-card > div > b { @apply text-xs text-dodger-900; }.glossary-card p { @apply my-2 text-xs leading-relaxed text-slate-600; }.glossary-card > div > small { @apply block rounded-lg bg-amber-50 p-2 text-[11px] leading-relaxed text-amber-900; }
 .loading-screen { @apply bg-dodger-50; background: radial-gradient(circle, rgba(30,144,255,.12), transparent 24rem), #eff8ff; }
 
+/* Beginner focus mode: reveal one action at a time */
+.room-grid.focused-learning { max-width: 1080px; grid-template-columns: minmax(0,1fr); gap:16px; padding-top:16px; }
+.focused-learning > .role-practice-panel, .focused-learning > .learning-support-drawer { grid-column:1; }
+.learning-support-drawer { @apply overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm; }
+.learning-support-drawer > summary { @apply flex cursor-pointer list-none items-center gap-3 px-5 py-4; }
+.learning-support-drawer > summary::-webkit-details-marker { display:none; }
+.learning-support-drawer > summary > span { @apply grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-100 text-sm font-black text-slate-500; }
+.learning-support-drawer[open] > summary > span { @apply bg-dodger-500 text-white; transform:rotate(45deg); }
+.learning-support-drawer > summary > div { @apply flex flex-col; }
+.learning-support-drawer > summary b { @apply text-sm text-slate-800; }
+.learning-support-drawer > summary small { @apply mt-1 text-xs text-slate-500; }
+.room-support-grid { @apply grid gap-3 border-t border-slate-200 bg-slate-50 p-3; grid-template-columns:minmax(0,1fr) 330px; }
+.room-support-grid > .topology-panel { grid-column:1; }
+.room-support-grid > .packet-panel { grid-column:2; grid-row:1; }
+.room-support-grid > .glossary-panel { grid-column:1 / -1; }
+
+.role-practice-panel { @apply overflow-hidden rounded-2xl bg-white; }
+.role-next-action { @apply mx-5 mt-5 grid grid-cols-[48px_1fr] items-center gap-4 rounded-2xl border-2 border-dodger-300 bg-dodger-50 p-4; }
+.role-next-action > span { @apply grid h-12 w-12 place-items-center rounded-full bg-dodger-500 text-lg font-black text-white shadow-md; }
+.role-next-action > div { @apply flex min-w-0 flex-col; }
+.role-next-action small { @apply text-[11px] font-bold text-dodger-700; }
+.role-next-action b { @apply text-lg text-slate-900; }
+.role-next-action p { @apply m-0 mt-1 text-sm leading-relaxed text-slate-600; }
+.role-all-complete { @apply m-5 grid grid-cols-[52px_1fr_auto] items-center gap-4 rounded-2xl border-2 border-emerald-300 bg-emerald-50 p-5; }
+.role-all-complete > span { @apply grid h-13 w-13 place-items-center rounded-full bg-emerald-500 text-xl font-black text-white; }
+.role-all-complete small { @apply text-xs font-bold text-emerald-700; }
+.role-all-complete h3 { @apply m-0 mt-1 text-lg font-black text-slate-900; }
+.role-all-complete p { @apply m-0 mt-1 text-sm text-slate-600; }
+
+.role-practice-tabs { @apply mt-5 border-y; }
+.role-practice-tabs button { min-height:68px; }
+.role-practice-tabs button:disabled { cursor:not-allowed; opacity:1; }
+.role-practice-tabs button.locked { @apply bg-slate-50; }
+.role-practice-tabs button.locked > span { @apply bg-slate-200 text-slate-400; }
+.role-practice-tabs button.locked b, .role-practice-tabs button.locked small { @apply text-slate-400; }
+.role-practice-tabs button b { @apply text-sm; }
+.role-practice-tabs button small { @apply text-[11px]; }
+
+.role-practice-stage { @apply mx-auto mt-6 grid w-full max-w-3xl grid-cols-3 px-5; }
+.role-practice-stage > div { @apply relative flex items-center gap-3 border-t-4 border-slate-200 pt-4; }
+.role-practice-stage > div:not(:last-child)::after { content:""; @apply absolute -top-1 left-1/2 h-1 w-full bg-slate-200; }
+.role-practice-stage > div.done, .role-practice-stage > div.current { @apply border-dodger-500; }
+.role-practice-stage > div.done:not(:last-child)::after { @apply bg-dodger-500; }
+.role-practice-stage > div > span { @apply relative z-10 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-200 text-xs font-black text-slate-500; }
+.role-practice-stage > div.current > span { @apply bg-dodger-500 text-white ring-4 ring-dodger-100; }
+.role-practice-stage > div.done > span { @apply bg-emerald-500 text-white; }
+.role-practice-stage p { @apply m-0 flex flex-col; }
+.role-practice-stage b { @apply text-sm text-slate-800; }
+.role-practice-stage small { @apply text-[11px] text-slate-500; }
+
+.role-practice-intro { @apply mx-auto mt-6 mb-0 w-[calc(100%_-_40px)] max-w-3xl p-5; }
+.role-practice-intro small { @apply text-xs; }
+.role-practice-intro h3 { @apply text-2xl; }
+.role-practice-intro p { @apply mt-1 text-sm leading-relaxed; }
+.role-analogy { @apply mx-auto mt-3 flex w-[calc(100%_-_40px)] max-w-3xl gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4; }
+.role-analogy > span { @apply text-lg; }
+.role-analogy p { @apply m-0 flex flex-col text-sm leading-relaxed text-amber-950; }
+.role-analogy b { @apply mb-1 text-xs text-amber-700; }
+
+.role-guided-step { @apply mx-auto mt-5 w-[calc(100%_-_40px)] max-w-3xl rounded-2xl border-2 border-dodger-200 bg-white p-5 shadow-lg shadow-dodger-100/60; }
+.role-guided-step > header { @apply grid grid-cols-[44px_1fr] gap-4 border-b border-slate-200 pb-4; }
+.role-guided-step > header > span { @apply grid h-11 w-11 place-items-center rounded-full bg-dodger-500 text-lg font-black text-white; }
+.role-guided-step > header.success > span { @apply bg-emerald-500; }
+.role-guided-step > header small { @apply text-xs font-bold text-dodger-700; }
+.role-guided-step > header h3 { @apply m-0 mt-1 text-xl font-black leading-snug text-slate-900; }
+.role-guided-step > header p { @apply m-0 mt-2 text-sm leading-relaxed text-slate-600; }
+.role-guided-step > .role-analogy { width:100%; margin-left:0; margin-right:0; }
+.role-situation { @apply mt-3 flex gap-3 rounded-xl bg-slate-100 p-3; }
+.role-situation > span { @apply shrink-0 text-xs font-black text-slate-600; }
+.role-situation p { @apply m-0 text-sm leading-relaxed text-slate-700; }
+.observation-heading { @apply mt-5 mb-0 text-sm font-black text-slate-800; }
+
+.beginner-observation-list { @apply mt-5 grid grid-cols-2 gap-3; }
+.beginner-observation-list article { @apply grid grid-cols-[32px_1fr] gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4; }
+.beginner-observation-list article > span { @apply grid h-8 w-8 place-items-center rounded-full bg-dodger-100 text-xs font-black text-dodger-700; }
+.beginner-observation-list article > div { @apply flex min-w-0 flex-col; }
+.beginner-observation-list small { @apply text-xs font-bold text-slate-600; }
+.beginner-observation-list code { @apply mt-1 break-words rounded-lg bg-slate-900 px-3 py-2 font-mono text-sm font-bold text-cyan-300; }
+.beginner-observation-list p { @apply m-0 mt-2 text-sm leading-relaxed text-slate-600; }
+.role-safe-note { @apply mt-4 flex gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4; }
+.role-safe-note > span { @apply grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-500 text-xs font-black text-white; }
+.role-safe-note p { @apply m-0 flex flex-col text-sm leading-relaxed text-slate-600; }
+.role-safe-note b { @apply text-slate-800; }
+.role-main-action { @apply mt-5 w-full justify-center text-base; min-height:54px; }
+
+.beginner-choice-list { @apply mt-5 gap-3; }
+.beginner-choice-list button { @apply grid-cols-[40px_1fr] p-4; min-height:64px; }
+.beginner-choice-list button > span { @apply h-10 w-10 text-sm; }
+.beginner-choice-list button b { @apply pt-2 text-sm; }
+.role-decision-actions { @apply mt-4 flex items-center justify-between gap-3; }
+.text-button { @apply border-0 bg-transparent px-2 py-2 text-sm font-bold text-dodger-700 underline decoration-dodger-200 underline-offset-4; }
+.role-decision-actions .secondary-button { @apply min-h-10 px-4 py-2 text-sm; }
+.role-hint { @apply mt-3 flex gap-3 rounded-xl border-2 border-dodger-300 bg-dodger-50 p-4; }
+.role-hint > span { @apply h-fit shrink-0 rounded-full bg-dodger-500 px-3 py-1 text-xs font-black text-white; }
+.role-hint p { @apply m-0 text-sm leading-relaxed text-slate-700; }
+.role-choice-feedback p { @apply text-sm; }
+.role-choice-feedback p b { @apply text-sm; }
+
+.beginner-result-list { @apply mt-5 grid gap-3; }
+.beginner-result-list article { @apply overflow-hidden rounded-xl border border-emerald-200 bg-emerald-50; }
+.beginner-result-list code { @apply block break-words bg-slate-950 px-4 py-3 font-mono text-sm text-emerald-300; }
+.beginner-result-list p { @apply m-0 flex items-start gap-3 px-4 py-3 text-sm leading-relaxed text-slate-700; }
+.beginner-result-list p span { @apply shrink-0 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-black text-white; }
+.beginner-explanation { @apply mt-5 rounded-2xl border border-dodger-200 bg-dodger-50 p-5; }
+.beginner-explanation > small { @apply text-xs font-black text-dodger-700; }
+.beginner-explanation > h3 { @apply m-0 mt-1 text-lg font-black leading-relaxed text-slate-900; }
+.beginner-explanation > p { @apply mt-1 mb-4 text-sm text-slate-600; }
+.sentence-starter { @apply flex w-full flex-col rounded-xl border border-dodger-300 bg-white p-3 text-left text-sm leading-relaxed text-slate-700; }
+.sentence-starter > span { @apply mb-1 text-[10px] font-black text-dodger-600; }
+.keyword-helper { @apply mt-3 flex flex-wrap items-center gap-2; }
+.keyword-helper > span { @apply mr-1 text-xs font-bold text-slate-600; }
+.keyword-helper button { @apply rounded-full border border-dodger-200 bg-white px-3 py-1.5 text-xs font-bold text-dodger-700; }
+.beginner-explanation label { @apply mt-4 flex flex-col gap-2 text-sm font-bold text-slate-700; }
+.beginner-explanation textarea { @apply bg-white text-base font-normal leading-relaxed; }
+.beginner-explanation label > small { @apply text-right text-xs font-normal text-slate-500; }
+.beginner-explanation label > small.ready { @apply font-bold text-emerald-700; }
+.role-finish-actions { @apply mt-5 flex items-center justify-between gap-4; }
+.role-finish-actions .primary-button { @apply ml-auto text-base; min-height:52px; }
+.role-shared-explanations { @apply mt-5; }
+.role-shared-explanations .shared-explanations-heading h4 { @apply text-sm; }
+.role-shared-explanations .shared-explanations-guide { @apply text-xs; }
+
+.role-support-details { @apply mx-auto mt-5 w-[calc(100%_-_40px)] max-w-3xl overflow-hidden rounded-xl border border-slate-200 bg-white; }
+.term-support-details { @apply mb-6 mt-3; }
+.role-support-details > summary { @apply flex cursor-pointer list-none items-center gap-3 bg-slate-50 px-4 py-3; }
+.role-support-details > summary::-webkit-details-marker { display:none; }
+.role-support-details > summary > span { @apply grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-200 text-xs font-black text-slate-600; }
+.role-support-details > summary > div { @apply flex flex-col; }
+.role-support-details > summary b { @apply text-sm text-slate-800; }
+.role-support-details > summary small { @apply mt-0.5 text-xs text-slate-500; }
+.role-support-details > summary em { @apply ml-auto text-lg font-bold not-italic text-slate-400; }
+.role-support-details[open] > summary em { transform:rotate(45deg); }
+.role-support-details .role-reading-guide-grid { @apply border-t border-slate-200; }
+.role-support-details .context-terms { @apply m-0 rounded-none border-0 border-t border-slate-200; }
+
 @media (max-width: 1150px) {
   .hero-section { grid-template-columns: 1fr 420px; gap: 48px; }
   .hero-copy h1 { font-size: 56px; }
@@ -470,6 +605,7 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
   .participant-list { grid-template-columns: 1fr 1fr; }
   .teacher-grid { grid-template-columns: 1fr; }.teacher-grid > div { border-right: 0; border-bottom: 1px solid var(--line); }.teacher-grid > div:last-child { grid-column: auto; }
   .room-heading h1 { max-width: 180px; overflow: hidden; text-overflow: ellipsis; }.room-heading > div { display: none; }
+  .room-support-grid { grid-template-columns:1fr; }.room-support-grid > .topology-panel,.room-support-grid > .packet-panel,.room-support-grid > .glossary-panel { grid-column:1; grid-row:auto; }
 }
 
 @media (max-width: 620px) {
@@ -485,6 +621,18 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
   .topology-canvas { padding-left: 14px; }.participant-list { grid-template-columns: 1fr; }
   .field-grid { grid-template-columns: 1fr; }.topology-mission ul { grid-template-columns: 1fr 1fr; }.diagnostic-tools { grid-template-columns: 1fr 1fr; }
   .role-practice-heading, .practice-heading, .glossary-heading { align-items: flex-start; flex-direction: column; gap: 10px; }.role-practice-tabs { grid-template-columns: repeat(3,1fr); }.role-practice-intro { grid-template-columns: 36px 1fr; margin:10px 10px 0; }.role-practice-intro em { display:none; }.role-practice-intro h3 { @apply text-lg; }.role-practice-cycle { grid-template-columns:1fr 1fr; margin:10px; }.role-practice-cycle i { display:none; }.role-reading-guide { margin:10px; }.role-reading-guide > summary em { display:none; }.role-practice-layout { grid-template-columns:1fr; padding:10px; }.role-result { grid-column:auto; }.role-explanation-area { grid-template-columns:1fr; margin:0 10px 10px; }.role-explanation-area > button { @apply w-full; }.practice-cycle { grid-template-columns: 1fr; }.practice-layout { padding: 10px; }.terminal-output { min-height: 270px; }.context-term-list, .hypothesis-choices, .glossary-grid { grid-template-columns: 1fr; }.context-terms-heading small { display: none; }.glossary-heading label { max-width: none; }
+  .role-next-action { @apply mx-3 mt-3 grid-cols-[42px_1fr] p-3; }.role-next-action > span { @apply h-10 w-10; }.role-next-action b { @apply text-base; }.role-next-action p { @apply text-xs; }
+  .role-all-complete { @apply m-3 grid-cols-[44px_1fr] p-4; }.role-all-complete > span { @apply h-11 w-11; }.role-all-complete > button { @apply col-span-2 w-full; }
+  .role-practice-tabs { @apply mt-3; }.role-practice-tabs button { @apply grid-cols-[24px_1fr] gap-x-1 px-2 py-2; min-height:60px; }.role-practice-tabs button > span { @apply h-6 w-6; }.role-practice-tabs button b { @apply text-xs; }.role-practice-tabs button small { @apply text-[9px]; }
+  .role-practice-stage { @apply mt-5 px-4; }.role-practice-stage > div { @apply gap-2 pt-3; }.role-practice-stage > div > span { @apply h-7 w-7; }.role-practice-stage b { @apply text-xs; }.role-practice-stage small { display:none; }
+  .role-practice-intro,.role-guided-step,.role-support-details { width:calc(100% - 20px); margin-left:10px; margin-right:10px; }
+  .role-practice-intro { @apply mt-5 p-4; }.role-practice-intro p { @apply text-sm; }.role-analogy { @apply mt-3 p-3; }
+  .role-guided-step { @apply mt-4 p-4; }.role-guided-step > header { @apply grid-cols-[38px_1fr] gap-3; }.role-guided-step > header > span { @apply h-9 w-9 text-base; }.role-guided-step > header h3 { @apply text-lg; }
+  .beginner-observation-list { @apply grid-cols-1; }.beginner-observation-list article { @apply p-3; }.beginner-observation-list code { @apply text-xs; }
+  .role-decision-actions,.role-finish-actions { @apply flex-col items-stretch; }.role-decision-actions .text-button,.role-finish-actions .text-button { order:2; }.role-finish-actions .primary-button { @apply ml-0 w-full; }
+  .beginner-result-list code { @apply text-xs; }.beginner-explanation { @apply p-4; }.beginner-explanation > h3 { @apply text-base; }
+  .role-support-details { @apply mt-3; }.role-support-details summary small { @apply text-[11px]; }
+  .learning-support-drawer > summary { @apply px-4; }
   .reflection-item { grid-template-columns: 24px 1fr; }.reflection-item button { grid-column: 2; justify-self: end; }
   .teacher-phase-buttons { grid-template-columns: repeat(4,1fr); }.fault-controls { grid-template-columns: 1fr; }
 }

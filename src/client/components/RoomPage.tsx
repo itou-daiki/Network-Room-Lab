@@ -446,7 +446,7 @@ function MissionPanel({ snapshot, busy, act }: SharedPanelProps) {
 
   return (
     <section className="panel mission-panel" aria-labelledby="mission-title">
-      <div className="panel-heading"><div><p className="panel-kicker">いま取り組むこと</p><h2 id="mission-title">{phase.label}</h2></div><span className="phase-number">ステップ {phase.index + 1}</span></div>
+      <div className="panel-heading"><div><p className="panel-kicker">いま取り組むこと</p><h2 id="mission-title">{phase.label}</h2></div><span className="phase-number">{phase.id === "LOBBY" ? "準備" : `ステップ ${phase.index}`}</span></div>
       <p className="phase-instruction">{phase.instruction}</p>
       {content}
     </section>
@@ -589,13 +589,23 @@ export function RoomPage({ session, onLeave }: RoomPageProps) {
   const currentPhase = phaseDefinition(snapshot.room.phase);
   const viewerRole = snapshot.viewer.role ? roleDefinition(snapshot.viewer.role) : null;
   const isSolo = snapshot.room.learningMode === "SOLO";
+  const focusedRolePractice = snapshot.room.phase === "ROLES" && snapshot.viewer.kind !== "teacher";
+  const nextSoloRole = isSolo ? CORE_ROLE_IDS.find((roleId) => !rolePracticeCompleted.has(roleId)) : undefined;
   const soloActor = snapshot.room.phase === "PROTOCOL" ? PROTOCOL_STEPS[snapshot.room.protocolIndex]?.actorRole : undefined;
   const currentRoleLabel = isSolo
     ? soloActor
       ? roleDefinition(soloActor).label
-      : "6つの役割を順番に担当"
+      : nextSoloRole
+        ? `${CORE_ROLE_IDS.indexOf(nextSoloRole) + 1} / 6　${roleDefinition(nextSoloRole).label}`
+        : "6つの役割を完了"
     : viewerRole?.label ?? "観察者";
   const showPractice = currentPhase.index >= 2;
+
+  const completeRolePractice = (roleId: CoreRoleId) => setRolePracticeCompleted((current) => {
+    const next = new Set(current).add(roleId);
+    if (rolePracticeStorageKey) window.sessionStorage.setItem(rolePracticeStorageKey, JSON.stringify([...next]));
+    return next;
+  });
 
   return (
     <div className="room-shell">
@@ -605,50 +615,62 @@ export function RoomPage({ session, onLeave }: RoomPageProps) {
         <div className="room-user"><span className={`connection-badge ${connectionStatus}`}><i />{connectionStatus === "online" ? "同期中" : connectionStatus === "connecting" ? "接続中" : "再接続中"}</span><div><b>{snapshot.viewer.displayName}</b><small>{snapshot.viewer.kind === "teacher" ? "担当教員" : isSolo ? "ひとり学習者" : roleDefinition(snapshot.viewer.role ?? "OBSERVER").label}</small></div><button onClick={onLeave} aria-label="部屋から退出">退出</button></div>
       </header>
 
-      <div className="teacher-message-banner"><span>{isSolo ? "学習ガイド" : "先生からの案内"}</span><p>{snapshot.room.teacherMessage}</p></div>
+      {(!focusedRolePractice || !isSolo) && <div className="teacher-message-banner"><span>{isSolo ? "学習ガイド" : "先生からの案内"}</span><p>{snapshot.room.teacherMessage}</p></div>}
       <PhaseStepper snapshot={snapshot} />
-      <section className="beginner-guide" aria-label="現在の学習ガイド">
-        <span className="guide-number" aria-hidden="true">{currentPhase.index + 1}</span>
-        <div className="guide-task">
-          <small>いまやること</small>
-          <b>{currentPhase.instruction}</b>
-        </div>
-        <div className="guide-role">
-          <small>{snapshot.viewer.kind === "teacher" ? "利用モード" : isSolo ? "いまの役割" : "あなたの担当"}</small>
-          <b>{snapshot.viewer.kind === "teacher" ? "先生として進行" : currentRoleLabel}</b>
-        </div>
-      </section>
-      {isSolo && <SoloProgressControls snapshot={snapshot} busy={busy} act={act} practiceCompleted={practiceCompleted} rolePracticeCompleted={rolePracticeCompleted} />}
+      {!focusedRolePractice && <section className="beginner-guide" aria-label="現在の学習ガイド">
+          <span className="guide-number" aria-hidden="true">{currentPhase.id === "LOBBY" ? "準備" : currentPhase.index}</span>
+          <div className="guide-task"><small>いまやること</small><b>{currentPhase.instruction}</b></div>
+          <div className="guide-role">
+            <small>{snapshot.viewer.kind === "teacher" ? "利用モード" : isSolo ? "いまの役割" : "あなたの担当"}</small>
+            <b>{snapshot.viewer.kind === "teacher" ? "先生として進行" : currentRoleLabel}</b>
+          </div>
+        </section>}
+      {isSolo && snapshot.room.phase !== "ROLES" && <SoloProgressControls snapshot={snapshot} busy={busy} act={act} practiceCompleted={practiceCompleted} rolePracticeCompleted={rolePracticeCompleted} />}
       {error && <div className="room-error" role="alert"><span>!</span>{error}<button onClick={dismissError}>閉じる</button></div>}
 
-      <main className="room-grid">
-        <TopologyPanel snapshot={snapshot} busy={busy} act={act} />
-        <MissionPanel snapshot={snapshot} busy={busy} act={act} />
-        <PacketInspector snapshot={snapshot} />
-        {snapshot.room.phase === "ROLES" && <RolePracticeLab
-          snapshot={snapshot}
-          completed={rolePracticeCompleted}
-          onComplete={(roleId) => setRolePracticeCompleted((current) => {
-            const next = new Set(current).add(roleId);
-            if (rolePracticeStorageKey) window.sessionStorage.setItem(rolePracticeStorageKey, JSON.stringify([...next]));
-            return next;
-          })}
-        />}
-        {showPractice && <PracticeLab
-          snapshot={snapshot}
-          busy={busy}
-          act={act}
-          completed={practiceCompleted}
-          onComplete={(milestone) => setPracticeCompleted((current) => {
-            const next = new Set(current).add(milestone);
-            if (practiceStorageKey) window.sessionStorage.setItem(practiceStorageKey, JSON.stringify([...next]));
-            return next;
-          })}
-        />}
-        <ParticipantsPanel snapshot={snapshot} />
-        <EventPanel snapshot={snapshot} />
-        <GlossaryPanel />
-        {snapshot.viewer.kind === "teacher" && <TeacherPanel snapshot={snapshot} busy={busy} act={act} session={session} />}
+      <main className={`room-grid ${focusedRolePractice ? "focused-learning" : ""}`}>
+        {focusedRolePractice ? (
+          <>
+            <RolePracticeLab
+              snapshot={snapshot}
+              completed={rolePracticeCompleted}
+              onComplete={completeRolePractice}
+              act={act}
+              busy={busy}
+              onContinue={isSolo ? () => void act({ type: "CHANGE_PHASE", phase: "TOPOLOGY" }) : undefined}
+            />
+            <details className="learning-support-drawer">
+              <summary><span>＋</span><div><b>全体図・パケット・用語集を見る</b><small>今の問題を考えるだけなら、開かなくても大丈夫です</small></div></summary>
+              <div className="room-support-grid">
+                <TopologyPanel snapshot={snapshot} busy={busy} act={act} />
+                <PacketInspector snapshot={snapshot} />
+                <GlossaryPanel />
+              </div>
+            </details>
+          </>
+        ) : (
+          <>
+            <TopologyPanel snapshot={snapshot} busy={busy} act={act} />
+            <MissionPanel snapshot={snapshot} busy={busy} act={act} />
+            <PacketInspector snapshot={snapshot} />
+            {snapshot.room.phase === "ROLES" && <RolePracticeLab snapshot={snapshot} completed={rolePracticeCompleted} onComplete={completeRolePractice} act={act} busy={busy} />}
+            {showPractice && <PracticeLab
+              snapshot={snapshot}
+              busy={busy}
+              act={act}
+              completed={practiceCompleted}
+              onComplete={(milestone) => setPracticeCompleted((current) => {
+                const next = new Set(current).add(milestone);
+                if (practiceStorageKey) window.sessionStorage.setItem(practiceStorageKey, JSON.stringify([...next]));
+                return next;
+              })}
+            />}
+            <ParticipantsPanel snapshot={snapshot} />
+            <EventPanel snapshot={snapshot} />
+            <GlossaryPanel />
+            {snapshot.viewer.kind === "teacher" && <TeacherPanel snapshot={snapshot} busy={busy} act={act} session={session} />}
+          </>
+        )}
       </main>
 
       <footer className="room-footer"><span>Network Room Lab · Created by Dit-Lab,（Daiki ITO）</span><span>学習用ネットワークシミュレーション <i className={connectionStatus} /></span></footer>

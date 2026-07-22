@@ -16,12 +16,24 @@ describe("experiential practice commands", () => {
 
     for (const practice of ROLE_PRACTICES) {
       expect(practice.observations.length).toBeGreaterThanOrEqual(4);
+      expect(practice.beginnerStory.length).toBeGreaterThan(20);
+      expect(practice.everydayExample.length).toBeGreaterThan(20);
+      expect(practice.decisionHint.length).toBeGreaterThan(20);
       expect(practice.choices).toHaveLength(3);
       expect(practice.choices.filter((choice) => choice.correct)).toHaveLength(1);
       expect(new Set(practice.choices.map((choice) => choice.id)).size).toBe(3);
       expect(practice.successOutput.length).toBeGreaterThanOrEqual(3);
+      expect(practice.successMeanings).toHaveLength(practice.successOutput.length);
       expect(practice.explainPrompt.length).toBeGreaterThan(10);
+      expect(practice.sentenceStarter.length).toBeGreaterThan(15);
+      expect(practice.explainKeywords).toHaveLength(3);
       expect(practice.termIds.length).toBeGreaterThanOrEqual(3);
+      for (const observation of practice.observations) {
+        expect(observation.meaning.length).toBeGreaterThan(15);
+      }
+      for (const meaning of practice.successMeanings) {
+        expect(meaning.length).toBeGreaterThan(10);
+      }
       expect(ROLE_READING_GUIDES[practice.role]).toHaveLength(3);
       for (const guide of ROLE_READING_GUIDES[practice.role]) {
         expect(guide.target.length).toBeGreaterThan(3);
