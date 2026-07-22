@@ -59,6 +59,11 @@ describe("experiential practice commands", () => {
     const pcPractice = rolePractice("CLIENT_PC");
     expect(pcPractice?.everydayExample).toContain("郵便局");
     expect(pcPractice?.observationTitle).toBe("PCのネットワーク設定");
+    expect(pcPractice?.mission).toContain("このページをください");
+    expect(pcPractice?.beginnerStory).toContain("Webページそのものではありません");
+    expect(pcPractice?.beginnerStory).toContain("ページのデータをPCへ返します");
+    expect(pcPractice?.situation).toContain("DNSへの問い合わせが終わり");
+    expect(pcPractice?.successMeanings.join(" ")).toContain("このページをください");
 
     for (const task of PRACTICE_TASKS) {
       expect(task.purpose.length, task.id).toBeGreaterThan(20);
