@@ -9,6 +9,7 @@ import {
   PHASE_INDEX,
   PROTOCOL_STEPS,
   ROLE_DEFINITIONS,
+  phaseDefinition,
   roleDefinition,
 } from "../shared/scenario";
 import type {
@@ -27,6 +28,7 @@ import type {
   RoomPhase,
   RoomPublicState,
   RoomSnapshot,
+  SharedExplanation,
   SocketClientMessage,
   SocketServerMessage,
   TopologyLink,
@@ -85,6 +87,15 @@ interface ReflectionRow {
   participant_id: string;
   prompt_id: string;
   response: string;
+  submitted_at: string;
+}
+
+interface ExplanationRow {
+  [key: string]: SqlStorageValue;
+  participant_id: string;
+  display_name: string;
+  phase: RoomPhase;
+  text: string;
   submitted_at: string;
 }
 
@@ -232,6 +243,13 @@ export class RoomDurableObject extends DurableObject<Env> {
         response TEXT NOT NULL,
         submitted_at TEXT NOT NULL,
         PRIMARY KEY (participant_id, prompt_id)
+      );
+      CREATE TABLE IF NOT EXISTS explanations (
+        participant_id TEXT NOT NULL,
+        phase TEXT NOT NULL,
+        text TEXT NOT NULL,
+        submitted_at TEXT NOT NULL,
+        PRIMARY KEY (participant_id, phase)
       );
       CREATE TABLE IF NOT EXISTS snapshots (
         room_version INTEGER PRIMARY KEY,
@@ -390,8 +408,9 @@ export class RoomDurableObject extends DurableObject<Env> {
     const participants = this.loadParticipants().map(participantFromRow);
     const events = this.loadAllEvents();
     const reflections = this.loadReflections();
+    const explanations = this.loadExplanations();
     const { latestEvents: _latestEvents, ...roomWithoutEvents } = this.publicRoom(room, participants, [], true);
-    return { room: roomWithoutEvents, events, reflections };
+    return { room: roomWithoutEvents, events, reflections, explanations };
   }
 
   async applyAction(token: string, envelope: ActionEnvelope): Promise<ActionResult> {
@@ -603,11 +622,34 @@ export class RoomDurableObject extends DurableObject<Env> {
           actor,
           nowIso(),
           `diag_${crypto.randomUUID()}`,
+          { links: nextRoom.links, interfaceConfig: nextRoom.interfaceConfig },
         );
         nextRoom.diagnostics = [...nextRoom.diagnostics.slice(-11), result];
         eventType = "RUN_DIAGNOSTIC";
         summary = `${action.tool} を実行: ${result.success ? "成功" : "失敗"}`;
         payload = { tool: action.tool, target: action.target, success: result.success, diagnosticId: result.id };
+        break;
+      }
+      case "SUBMIT_EXPLANATION": {
+        if (!viewer.participantId) throw new Error("FORBIDDEN: 教員は受講者の説明を代理提出できません。");
+        const text = action.text.trim().slice(0, 1000);
+        if (text.length < 10) throw new Error("BAD_REQUEST: 説明は10文字以上で入力してください。");
+        const submittedAt = nowIso();
+        eventType = "SUBMIT_EXPLANATION";
+        summary = `${viewer.displayName}さんが「${phaseDefinition(action.phase).label}」の説明を共有しました`;
+        payload = { participantId: viewer.participantId, phase: action.phase };
+        extraWrite = () => {
+          this.ctx.storage.sql.exec(
+            `INSERT INTO explanations (participant_id, phase, text, submitted_at)
+             VALUES (?, ?, ?, ?)
+             ON CONFLICT(participant_id, phase)
+             DO UPDATE SET text = excluded.text, submitted_at = excluded.submitted_at`,
+            viewer.participantId!,
+            action.phase,
+            text,
+            submittedAt,
+          );
+        };
         break;
       }
       case "SUBMIT_REFLECTION": {
@@ -666,7 +708,10 @@ export class RoomDurableObject extends DurableObject<Env> {
           if (room.phase === "PROTOCOL") return;
           break;
         case "RUN_DIAGNOSTIC":
-          if (room.phase === "DIAGNOSIS") return;
+          if (["TOPOLOGY", "ADDRESSING", "PROTOCOL", "DIAGNOSIS"].includes(room.phase)) return;
+          break;
+        case "SUBMIT_EXPLANATION":
+          if (action.phase === room.phase && ["TOPOLOGY", "ADDRESSING", "PROTOCOL", "DIAGNOSIS"].includes(room.phase)) return;
           break;
         case "SUBMIT_REFLECTION":
           if (room.phase === "REFLECTION") return;
@@ -689,7 +734,10 @@ export class RoomDurableObject extends DurableObject<Env> {
         break;
       }
       case "RUN_DIAGNOSTIC":
-        if (room.phase === "DIAGNOSIS") return;
+        if (["TOPOLOGY", "ADDRESSING", "PROTOCOL", "DIAGNOSIS"].includes(room.phase)) return;
+        break;
+      case "SUBMIT_EXPLANATION":
+        if (action.phase === room.phase && ["TOPOLOGY", "ADDRESSING", "PROTOCOL", "DIAGNOSIS"].includes(room.phase)) return;
         break;
       case "SUBMIT_REFLECTION":
         if (room.phase === "REFLECTION") return;
@@ -808,6 +856,23 @@ export class RoomDurableObject extends DurableObject<Env> {
       }));
   }
 
+  private loadExplanations(): SharedExplanation[] {
+    return this.ctx.storage.sql
+      .exec<ExplanationRow>(
+        `SELECT e.participant_id, p.display_name, e.phase, e.text, e.submitted_at
+         FROM explanations e JOIN participants p ON p.id = e.participant_id
+         ORDER BY e.submitted_at ASC`,
+      )
+      .toArray()
+      .map((row) => ({
+        participantId: row.participant_id,
+        displayName: row.display_name,
+        phase: row.phase,
+        text: row.text,
+        submittedAt: row.submitted_at,
+      }));
+  }
+
   private publicRoom(
     room: StoredRoom,
     participants: ParticipantPublic[],
@@ -845,6 +910,7 @@ export class RoomDurableObject extends DurableObject<Env> {
     return {
       room: this.publicRoom(room, participants, this.loadLatestEvents(), viewer.kind === "teacher"),
       viewer,
+      explanations: this.loadExplanations(),
       reflections:
         viewer.kind === "teacher"
           ? allReflections

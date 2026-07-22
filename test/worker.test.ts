@@ -68,6 +68,56 @@ async function action(code: string, token: string, roomVersion: number, payload:
 }
 
 describe("Network Room API", () => {
+  it("shares a learner explanation with the other room participants", async () => {
+    const room = await createTestRoom();
+    const first = await join(room.code, "説明した人");
+    const second = await join(room.code, "読んだ人");
+    let state = await snapshot(room.code, room.teacherToken);
+
+    let response = await action(room.code, room.teacherToken, state.room.version, {
+      type: "CHANGE_PHASE",
+      phase: "ADDRESSING",
+    });
+    expect(response.status).toBe(200);
+
+    state = await snapshot(room.code, first.participantToken);
+    response = await action(room.code, first.participantToken, state.room.version, {
+      type: "SUBMIT_EXPLANATION",
+      phase: "ADDRESSING",
+      text: "IP設定を確認すると、通信前の間違いを切り分けられると分かりました。",
+    });
+    expect(response.status).toBe(200);
+
+    const sharedState = await snapshot(room.code, second.participantToken);
+    expect(sharedState.explanations).toEqual([
+      expect.objectContaining({
+        displayName: "説明した人",
+        phase: "ADDRESSING",
+        text: "IP設定を確認すると、通信前の間違いを切り分けられると分かりました。",
+      }),
+    ]);
+  });
+
+  it("lets a solo learner disconnect a link and verify the result with ping", async () => {
+    const room = await createSoloRoom();
+    const token = room.participantToken!;
+    let state = await snapshot(room.code, token);
+
+    let response = await action(room.code, token, state.room.version, { type: "CHANGE_PHASE", phase: "TOPOLOGY" });
+    expect(response.status).toBe(200);
+    state = await snapshot(room.code, token);
+
+    response = await action(room.code, token, state.room.version, { type: "TOGGLE_LINK", linkId: "ap-switch" });
+    expect(response.status).toBe(200);
+    state = await snapshot(room.code, token);
+
+    response = await action(room.code, token, state.room.version, { type: "RUN_DIAGNOSTIC", tool: "PING", target: "192.168.10.1" });
+    expect(response.status).toBe(200);
+    state = await snapshot(room.code, token);
+    expect(state.room.diagnostics.at(-1)?.success).toBe(false);
+    expect(state.room.diagnostics.at(-1)?.output.join(" ")).toContain("ap-switch");
+  });
+
   it("lets one learner operate every role and progress at their own pace", async () => {
     const room = await createSoloRoom();
     expect(room.participantToken).toBeTruthy();

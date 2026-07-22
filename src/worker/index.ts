@@ -64,6 +64,13 @@ const actionSchema = z.discriminatedUnion("type", [
     .strict(),
   z
     .object({
+      type: z.literal("SUBMIT_EXPLANATION"),
+      phase: phaseSchema,
+      text: z.string().trim().min(10).max(1000),
+    })
+    .strict(),
+  z
+    .object({
       type: z.literal("SUBMIT_REFLECTION"),
       promptId: z.string().trim().min(1).max(80),
       text: z.string().trim().min(10).max(3000),
@@ -178,6 +185,15 @@ function exportCsv(data: RoomExportData): string {
       reflection.promptId,
       reflection.submittedAt,
       reflection.response,
+    ]),
+    [],
+    ["participantId", "displayName", "phase", "submittedAt", "explanation"],
+    ...data.explanations.map((explanation) => [
+      explanation.participantId,
+      explanation.displayName,
+      explanation.phase,
+      explanation.submittedAt,
+      explanation.text,
     ]),
   ];
   return `\uFEFF${lines.map((line) => line.map(csvCell).join(",")).join("\r\n")}`;

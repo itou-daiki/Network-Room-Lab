@@ -373,6 +373,66 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
 .fault-controls button.active { @apply border-red-400 bg-red-50 text-red-700; }
 .room-error { @apply rounded-xl border-red-200 bg-red-50 text-sm text-red-700; }
 .room-error button { @apply text-red-700; }
+
+/* Experiential practice and contextual learning */
+.practice-panel, .glossary-panel { grid-column: 1 / -1; }
+.practice-heading, .glossary-heading { @apply items-center; }
+.practice-heading > span { @apply rounded-full border border-dodger-200 bg-dodger-50 px-3 py-2 text-xs font-bold text-dodger-700; }
+.practice-cycle { @apply grid grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr] items-center gap-3 border-b border-dodger-100 bg-dodger-50 px-5 py-4; }
+.practice-cycle > div { @apply grid grid-cols-[32px_1fr] items-center gap-x-3; }
+.practice-cycle > div > span { @apply row-span-2 grid h-8 w-8 place-items-center rounded-full bg-dodger-500 text-xs font-black text-white; }
+.practice-cycle b { @apply text-sm text-slate-800; }.practice-cycle small { @apply text-xs text-slate-500; }.practice-cycle > i { @apply text-dodger-300; font-style: normal; }
+.practice-layout { display: grid; grid-template-columns: minmax(230px,.72fr) minmax(420px,1.5fr) minmax(250px,.8fr); gap: 16px; padding: 18px; align-items: start; }
+.practice-tasks, .practice-observation { @apply rounded-2xl border border-slate-200 bg-slate-50 p-4; }
+.practice-tasks h3, .practice-observation h3 { @apply mb-3 text-sm font-extrabold text-slate-900; }
+.practice-tasks > button { @apply mb-2 grid w-full grid-cols-[24px_1fr] gap-2 rounded-xl border border-slate-200 bg-white p-3 text-left; }
+.practice-tasks > button:hover:not(:disabled) { @apply border-dodger-300 bg-dodger-50; }
+.practice-tasks > button.done { @apply border-emerald-200 bg-emerald-50; }
+.practice-tasks > button > span { @apply pt-0.5 text-center text-sm font-black text-dodger-500; }
+.practice-tasks > button.done > span { @apply text-emerald-600; }
+.practice-tasks > button div { @apply flex min-w-0 flex-col gap-1; }
+.practice-tasks > button b { @apply text-xs text-slate-800; }.practice-tasks > button code { @apply overflow-hidden text-ellipsis whitespace-nowrap rounded bg-slate-900 px-2 py-1 text-[10px] text-cyan-300; }.practice-tasks > button small { @apply text-[11px] leading-relaxed text-slate-500; }
+.practice-note-field, .practice-observation label { @apply mt-4 flex flex-col gap-2 text-xs font-bold text-slate-700; }
+.practice-terminal { @apply overflow-hidden rounded-2xl border border-slate-700 bg-slate-950 shadow-xl; }
+.terminal-titlebar { @apply flex items-center gap-1.5 border-b border-slate-700 bg-slate-900 px-3 py-2.5; }
+.terminal-titlebar > span { @apply h-2.5 w-2.5 rounded-full bg-red-400; }.terminal-titlebar > span:nth-child(2) { @apply bg-amber-400; }.terminal-titlebar > span:nth-child(3) { @apply bg-emerald-400; }
+.terminal-titlebar b { @apply ml-2 text-[10px] font-medium text-slate-400; }
+.terminal-output { min-height: 300px; max-height: 430px; overflow: auto; padding: 14px; font: 500 11px/1.75 var(--mono); }
+.terminal-entry { @apply mb-3 border-l-2 border-transparent pl-2 text-slate-300; }.terminal-entry.success { @apply border-emerald-500; }.terminal-entry.failure { @apply border-red-400; }
+.terminal-entry > code { @apply mb-1 block whitespace-pre-wrap text-cyan-300; }.terminal-entry > code b { @apply text-emerald-400; }
+.terminal-entry pre { @apply m-0 whitespace-pre-wrap text-slate-300; font: inherit; }.terminal-entry.failure pre { @apply text-red-300; }
+.terminal-entry p { @apply mt-2 rounded-lg border border-dodger-900 bg-dodger-950/50 p-2.5 text-xs leading-relaxed text-dodger-100; font-family: var(--sans); }
+.terminal-entry p b { @apply text-cyan-300; }
+.terminal-pending { @apply flex items-center gap-2 text-xs text-amber-300; }.terminal-pending i { @apply h-2 w-2 animate-pulse rounded-full bg-amber-300; }
+.quick-command-list { @apply flex gap-1.5 overflow-x-auto border-t border-slate-800 bg-slate-900 px-3 py-2; }
+.quick-command-list button { @apply shrink-0 rounded-lg border border-slate-700 bg-slate-800 px-2 py-1 text-[9px] text-slate-300; }.quick-command-list button:hover:not(:disabled) { @apply border-cyan-500 text-cyan-200; }
+.terminal-input-line { @apply grid grid-cols-[auto_1fr_auto] items-center gap-2 border-t border-slate-700 bg-slate-900 px-3 py-3; }
+.terminal-input-line > span { @apply font-mono text-sm font-black text-emerald-400; }.terminal-input-line input { @apply min-w-0 rounded-lg border-slate-700 bg-slate-950 px-3 py-2 font-mono text-xs text-white shadow-none; }.terminal-input-line button { @apply rounded-lg bg-dodger-500 px-3 py-2 text-xs font-bold text-white; }
+.practice-observation textarea, .practice-note-field textarea { @apply bg-white text-xs leading-relaxed; }
+.explanation-ready, .explanation-waiting { @apply mt-3 flex gap-2 rounded-xl border p-3; }.explanation-ready { @apply border-emerald-200 bg-emerald-50; }.explanation-waiting { @apply border-amber-200 bg-amber-50; }
+.explanation-ready > span, .explanation-waiting > span { @apply grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-black text-white; }.explanation-ready > span { @apply bg-emerald-500; }.explanation-waiting > span { @apply bg-amber-500; }
+.explanation-ready p, .explanation-waiting p { @apply m-0 flex flex-col text-[11px] leading-relaxed text-slate-600; }.explanation-ready b, .explanation-waiting b { @apply text-xs text-slate-800; }
+.share-explanation-button { @apply mt-3 w-full justify-center text-xs; }
+.shared-explanations { @apply mt-4 overflow-hidden rounded-xl border border-dodger-200 bg-white; }
+.shared-explanations-heading { @apply flex items-center gap-2 border-b border-dodger-100 bg-dodger-50 px-3 py-2.5; }.shared-explanations-heading h4 { @apply m-0 text-xs font-extrabold text-dodger-900; }.shared-explanations-heading span { @apply ml-auto rounded-full bg-dodger-500 px-2 py-0.5 text-[9px] font-black text-white; }
+.shared-explanations-guide { @apply m-0 border-b border-slate-100 px-3 py-2.5 text-[10px] leading-relaxed text-slate-500; }
+.shared-explanations-empty { @apply m-0 px-3 py-4 text-center text-[11px] text-slate-500; }
+.shared-explanation-list { @apply max-h-64 divide-y divide-slate-100 overflow-y-auto; }.shared-explanation-list article { @apply p-3; }.shared-explanation-list article.mine { @apply bg-dodger-50/70; }.shared-explanation-list header { @apply flex items-center gap-2; }.shared-explanation-list header b { @apply text-xs text-slate-800; }.shared-explanation-list header span { @apply rounded bg-dodger-100 px-1.5 py-0.5 text-[9px] font-bold text-dodger-700; }.shared-explanation-list time { @apply ml-auto text-[9px] text-slate-400; }.shared-explanation-list article > p { @apply mt-2 mb-0 whitespace-pre-wrap text-xs leading-relaxed text-slate-600; }
+
+.context-terms { @apply mt-4 overflow-hidden rounded-xl border border-dodger-200 bg-white; }
+.context-terms-heading { @apply flex items-center gap-2 border-b border-dodger-100 bg-dodger-50 px-3 py-2.5; }.context-terms-heading > span { @apply grid h-5 w-5 place-items-center rounded-full bg-dodger-500 text-[10px] font-black text-white; }.context-terms-heading b { @apply text-xs text-dodger-900; }.context-terms-heading small { @apply ml-auto text-[10px] text-slate-500; }
+.context-term-list { @apply grid grid-cols-2 gap-px bg-slate-200; }.context-term { @apply bg-white; }.context-term summary { @apply cursor-pointer list-none px-3 py-2.5 text-xs font-bold text-dodger-700; }.context-term summary::-webkit-details-marker { display: none; }.context-term summary::after { content: "+"; float: right; }.context-term[open] summary::after { content: "−"; }.context-term summary small { @apply font-normal text-slate-500; }
+.context-term p { @apply m-0 border-t border-slate-100 px-3 pt-3 text-xs leading-relaxed text-slate-600; }.context-term p b { @apply mr-1 text-slate-900; }.context-term > span { @apply block px-3 pt-2 pb-3 text-[11px] leading-relaxed text-slate-500; }
+
+.decision-challenge { @apply my-4 grid gap-2 border-0 p-0; }.decision-challenge legend { @apply mb-2 text-sm font-extrabold text-slate-800; }.decision-challenge button { @apply grid grid-cols-[30px_1fr] items-start gap-3 rounded-xl border border-slate-200 bg-white p-3 text-left; }.decision-challenge button:hover:not(:disabled) { @apply border-dodger-300 bg-dodger-50; }.decision-challenge button > span { @apply grid h-7 w-7 place-items-center rounded-full bg-slate-100 text-xs font-black text-slate-500; }.decision-challenge button b { @apply pt-1 text-xs leading-relaxed text-slate-700; }.decision-challenge button.selected.correct { @apply border-emerald-400 bg-emerald-50 ring-2 ring-emerald-100; }.decision-challenge button.selected.wrong { @apply border-amber-400 bg-amber-50 ring-2 ring-amber-100; }.decision-challenge button.selected.correct > span { @apply bg-emerald-500 text-white; }.decision-challenge button.selected.wrong > span { @apply bg-amber-500 text-white; }
+.decision-feedback, .config-feedback, .latest-observation { @apply my-3 flex gap-3 rounded-xl border p-3; }.decision-feedback > span, .config-feedback > span, .latest-observation > span { @apply grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-black text-white; }.decision-feedback p, .config-feedback p, .latest-observation p { @apply m-0 text-xs leading-relaxed text-slate-600; }.decision-feedback p, .latest-observation > div { @apply flex flex-col; }.decision-feedback b, .config-feedback b, .latest-observation b { @apply text-sm text-slate-800; }.decision-feedback.success, .config-feedback.success, .latest-observation.success { @apply border-emerald-200 bg-emerald-50; }.decision-feedback.success > span, .config-feedback.success > span, .latest-observation.success > span { @apply bg-emerald-500; }.decision-feedback.failure, .config-feedback.failure, .latest-observation.failure { @apply border-amber-200 bg-amber-50; }.decision-feedback.failure > span, .config-feedback.failure > span, .latest-observation.failure > span { @apply bg-amber-500; }
+.config-feedback > div { @apply min-w-0; }.config-feedback ul { @apply mt-2 list-disc space-y-1 pl-5 text-xs text-red-700; }.config-feedback code, .topology-mission code, .diagnosis-next code { @apply rounded bg-slate-900 px-1.5 py-0.5 font-mono text-[11px] text-cyan-300; }
+.address-experiment-actions { @apply mb-3 flex flex-wrap gap-2; }.address-experiment-actions button { @apply min-h-9 px-3 py-2 text-xs; }
+.hypothesis-choices { @apply my-3 grid grid-cols-2 gap-2; }.hypothesis-choices button { @apply flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-3 text-left text-xs font-bold text-slate-700; }.hypothesis-choices button.active { @apply border-dodger-500 bg-dodger-50 text-dodger-800 ring-2 ring-dodger-100; }.hypothesis-choices span { @apply text-dodger-500; }.diagnosis-next { @apply rounded-xl bg-slate-50 p-3 text-xs leading-relaxed text-slate-600; }.diagnosis-next b { @apply mr-1 text-slate-900; }
+
+.glossary-heading label { @apply m-0 w-full max-w-xs; }.glossary-heading input { @apply w-full px-3 py-2 text-xs; }
+.glossary-guide { @apply m-0 border-b border-dodger-100 bg-dodger-50 px-5 py-3 text-xs leading-relaxed text-slate-600; }
+.glossary-grid { @apply grid grid-cols-4 gap-3 p-4; }.glossary-card { @apply overflow-hidden rounded-xl border border-slate-200 bg-white; }.glossary-card summary { @apply flex cursor-pointer list-none flex-col gap-1 bg-slate-50 p-3; }.glossary-card summary::-webkit-details-marker { display: none; }.glossary-card summary > span { @apply text-[9px] font-bold text-dodger-600; }.glossary-card summary > b { @apply text-sm text-slate-900; }.glossary-card summary > small { @apply text-[10px] text-slate-500; }.glossary-card > div { @apply border-t border-slate-100 p-3; }.glossary-card > div > b { @apply text-xs text-dodger-900; }.glossary-card p { @apply my-2 text-xs leading-relaxed text-slate-600; }.glossary-card > div > small { @apply block rounded-lg bg-amber-50 p-2 text-[11px] leading-relaxed text-amber-900; }
 .loading-screen { @apply bg-dodger-50; background: radial-gradient(circle, rgba(30,144,255,.12), transparent 24rem), #eff8ff; }
 
 @media (max-width: 1150px) {
@@ -382,6 +442,8 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
   .room-user { min-width: 0; }
   .room-user > div { display: none; }
   .room-grid { grid-template-columns: 1fr 330px; }
+  .practice-layout { grid-template-columns: 240px minmax(0,1fr); }.practice-observation { grid-column: 1 / -1; }
+  .glossary-grid { grid-template-columns: repeat(3,1fr); }
   .teacher-grid { grid-template-columns: 1fr 1fr; }.teacher-grid > div:last-child { grid-column: 1 / -1; border-top: 1px solid var(--line); }
   .field-grid { grid-template-columns: 1fr 1fr; }
 }
@@ -391,7 +453,8 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
   .landing-network { grid-template-columns: 1fr; gap: 8px; }.landing-node-wrap { flex-direction: column; }.landing-node { width: 100%; }.packet-link { height: 28px; width: 30px; transform: rotate(90deg); }.packet-link i { animation: none; }
   .principles-grid { grid-template-columns: 1fr; }.principles-grid article { border-left: 1px solid var(--line); border-bottom: 1px solid var(--line); }
   .phase-step div { display: none; }.phase-step { min-height: 48px; }.phase-step > span { width: 20px; height: 20px; }
-  .room-grid { grid-template-columns: 1fr; }.topology-panel,.mission-panel,.packet-panel,.participants-panel,.events-panel,.teacher-panel { grid-column: 1; grid-row: auto; }.packet-panel { position: static; }
+  .room-grid { grid-template-columns: 1fr; }.topology-panel,.mission-panel,.packet-panel,.practice-panel,.participants-panel,.events-panel,.glossary-panel,.teacher-panel { grid-column: 1; grid-row: auto; }.packet-panel { position: static; }
+  .practice-cycle { grid-template-columns: 1fr 1fr; }.practice-cycle > i { display: none; }.practice-layout { grid-template-columns: 1fr; }.practice-observation { grid-column: auto; }.glossary-grid { grid-template-columns: repeat(2,1fr); }
   .participant-list { grid-template-columns: 1fr 1fr; }
   .teacher-grid { grid-template-columns: 1fr; }.teacher-grid > div { border-right: 0; border-bottom: 1px solid var(--line); }.teacher-grid > div:last-child { grid-column: auto; }
   .room-heading h1 { max-width: 180px; overflow: hidden; text-overflow: ellipsis; }.room-heading > div { display: none; }
@@ -409,6 +472,7 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
   .room-grid { padding: 10px; }.panel-heading { padding: 13px 14px; }
   .topology-canvas { padding-left: 14px; }.participant-list { grid-template-columns: 1fr; }
   .field-grid { grid-template-columns: 1fr; }.topology-mission ul { grid-template-columns: 1fr 1fr; }.diagnostic-tools { grid-template-columns: 1fr 1fr; }
+  .practice-heading, .glossary-heading { align-items: flex-start; flex-direction: column; gap: 10px; }.practice-cycle { grid-template-columns: 1fr; }.practice-layout { padding: 10px; }.terminal-output { min-height: 270px; }.context-term-list, .hypothesis-choices, .glossary-grid { grid-template-columns: 1fr; }.context-terms-heading small { display: none; }.glossary-heading label { max-width: none; }
   .reflection-item { grid-template-columns: 24px 1fr; }.reflection-item button { grid-column: 2; justify-self: end; }
   .teacher-phase-buttons { grid-template-columns: repeat(4,1fr); }.fault-controls { grid-template-columns: 1fr; }
 }

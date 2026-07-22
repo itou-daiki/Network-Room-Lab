@@ -145,6 +145,14 @@ export interface ReflectionResponse {
   submittedAt: string;
 }
 
+export interface SharedExplanation {
+  participantId: string;
+  displayName: string;
+  phase: RoomPhase;
+  text: string;
+  submittedAt: string;
+}
+
 export interface RoomPublicState {
   code: string;
   title: string;
@@ -179,6 +187,7 @@ export interface RoomSnapshot {
   room: RoomPublicState;
   viewer: ViewerContext;
   reflections: ReflectionResponse[];
+  explanations: SharedExplanation[];
 }
 
 export interface CreateRoomRequest {
@@ -224,6 +233,7 @@ export type ClientAction =
   | { type: "INJECT_FAULT"; faultType: FaultType }
   | { type: "CLEAR_FAULT"; faultType?: FaultType }
   | { type: "RUN_DIAGNOSTIC"; tool: DiagnosticTool; target: string }
+  | { type: "SUBMIT_EXPLANATION"; phase: RoomPhase; text: string }
   | { type: "SUBMIT_REFLECTION"; promptId: string; text: string }
   | { type: "TEACHER_MESSAGE"; text: string };
 
@@ -263,4 +273,5 @@ export interface RoomExportData {
   room: Omit<RoomPublicState, "latestEvents">;
   events: RoomEvent[];
   reflections: ReflectionResponse[];
+  explanations: SharedExplanation[];
 }

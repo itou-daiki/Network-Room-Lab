@@ -1,5 +1,12 @@
 import { FAULT_DEFINITIONS } from "./scenario";
-import type { ActiveFault, DiagnosticResult, DiagnosticTool, FaultType } from "./types";
+import type {
+  ActiveFault,
+  DiagnosticResult,
+  DiagnosticTool,
+  FaultType,
+  InterfaceConfig,
+  TopologyLink,
+} from "./types";
 
 function parseIpv4(value: string): number[] | null {
   const parts = value.trim().split(".");
@@ -56,6 +63,11 @@ function hasFault(faults: ActiveFault[], type: FaultType): boolean {
   return faults.some((fault) => fault.type === type);
 }
 
+export interface DiagnosticEnvironment {
+  links?: TopologyLink[];
+  interfaceConfig?: InterfaceConfig;
+}
+
 export function simulateDiagnostic(
   tool: DiagnosticTool,
   target: string,
@@ -63,12 +75,47 @@ export function simulateDiagnostic(
   actorId: string,
   now: string,
   id: string,
+  environment: DiagnosticEnvironment = {},
 ): DiagnosticResult {
   let success = true;
   let output: string[] = [];
   let inference = "要求は最後まで到達しました。正常系の経路と各層の働きを説明できます。";
 
-  if (hasFault(faults, "AP_DOWN")) {
+  const targetIsIp = isValidIpv4(target);
+  const gatewayTarget = target === "192.168.10.1";
+  const needsDns = tool === "NSLOOKUP" || !targetIsIp;
+  const downLinks = new Set(environment.links?.filter((link) => !link.up).map((link) => link.id) ?? []);
+  const localLinkDown = ["pc-ap", "ap-switch", "switch-router"].find((linkId) => downLinks.has(linkId));
+  const externalLinkDown = downLinks.has("router-internet");
+  const dnsLinkDown = downLinks.has("internet-dns");
+  const webLinkDown = downLinks.has("internet-web");
+  const config = environment.interfaceConfig;
+
+  if (localLinkDown) {
+    success = false;
+    output = [`link: ${localLinkDown} is down`, "reply: none"];
+    inference = "PCからルータまでの途中で接続が切れています。全体図で赤いリンクを探し、接続を戻して比較します。";
+  } else if (externalLinkDown && !gatewayTarget) {
+    success = false;
+    output = ["hop 1: 192.168.10.1 reachable", "hop 2: uplink is down"];
+    inference = "ルータまでは正常ですが、その先のWANリンクで止まっています。最後に成功した地点はルータです。";
+  } else if (dnsLinkDown && needsDns) {
+    success = false;
+    output = [`query: ${target}`, "server: 198.51.100.53", "result: timed out"];
+    inference = "DNSサーバへ向かうリンクで応答が途切れています。IP直指定のpingと比較します。";
+  } else if (webLinkDown && tool !== "NSLOOKUP") {
+    success = false;
+    output = ["DNS: 203.0.113.80", "last reachable hop: internet", "destination: timed out"];
+    inference = "名前解決はできていますが、Webサーバへ向かう最後のリンクで止まっています。";
+  } else if (config && config.gateway !== "192.168.10.1" && !gatewayTarget) {
+    success = false;
+    output = [`local LAN: ${config.address}/${config.prefix}`, `gateway ${config.gateway}: no route to host`];
+    inference = "PCの出口が実験用ルータと一致していません。ipconfigでデフォルトゲートウェイを確認します。";
+  } else if (config && config.dns !== "198.51.100.53" && needsDns) {
+    success = false;
+    output = [`query: ${target}`, `server: ${config.dns}`, "result: server not found"];
+    inference = "設定されているDNSサーバが実験環境と一致していません。IP直指定の結果と比較します。";
+  } else if (hasFault(faults, "AP_DOWN")) {
     success = false;
     output = ["link: Wi-Fi association failed", "reply: none"];
     inference = "最初のリンクで失敗しています。無線APの状態を確認します。";
@@ -76,15 +123,15 @@ export function simulateDiagnostic(
     success = false;
     output = ["hop 1: 192.168.10.1 reachable", "hop 2: request timed out"];
     inference = "LAN内は正常で、ルータ上流の共通リンクが最初の失敗地点です。";
-  } else if (hasFault(faults, "BAD_GATEWAY") && tool !== "NSLOOKUP") {
+  } else if (hasFault(faults, "BAD_GATEWAY") && !gatewayTarget) {
     success = false;
-    output = ["local LAN: reachable", "gateway: no route to host"];
-    inference = "同一LANには届くため、PCのサブネット判定かデフォルトGWを確認します。";
-  } else if (hasFault(faults, "DNS_DOWN") && tool === "NSLOOKUP") {
+    output = ["local LAN: reachable", "configured gateway: no route to host"];
+    inference = "ゲートウェイのIPへ直接pingし、その後ipconfigの出口設定と見比べます。";
+  } else if (hasFault(faults, "DNS_DOWN") && needsDns) {
     success = false;
     output = [`query: ${target}`, "server: 198.51.100.53", "result: timed out"];
-    inference = "IP到達性とは別に、名前解決が失敗しています。DNSサーバを確認します。";
-  } else if (hasFault(faults, "ROUTE_MISSING") && tool !== "NSLOOKUP") {
+    inference = "名前解決が失敗しています。203.0.113.80へIP直指定でpingし、IP通信とDNSを分けて確認します。";
+  } else if (hasFault(faults, "ROUTE_MISSING") && !gatewayTarget) {
     success = false;
     output = ["hop 1: 192.168.10.1", "router: no matching route"];
     inference = "ルータまでは届いています。宛先ネットワークに一致する経路がありません。";
@@ -92,18 +139,25 @@ export function simulateDiagnostic(
     success = false;
     output = ["TCP: connected to 203.0.113.80:443", "TLS: certificate name mismatch"];
     inference = "TCP接続後のTLS認証で停止しています。証明書の名前・期限・信頼性を確認します。";
-  } else if (hasFault(faults, "WEB_DOWN") && (tool === "HTTPS" || tool === "PING")) {
+  } else if (hasFault(faults, "WEB_DOWN") && tool === "HTTPS") {
     success = false;
     output = ["DNS: 203.0.113.80", "network: reachable", "application: connection refused"];
-    inference = "ネットワーク層までは正常です。対象Webサービスが最初の失敗地点です。";
+    inference = "pingが成功するのにHTTPSだけ失敗するなら、ネットワークより上のWebサービスを確認します。";
   } else if (tool === "PING") {
-    output = [`PING ${target}`, "reply from 203.0.113.80: time=18ms TTL=61", "1 packets transmitted, 1 received"];
+    const replyAddress = gatewayTarget ? "192.168.10.1" : targetIsIp ? target : "203.0.113.80";
+    output = [`PING ${target} (${replyAddress})`, `reply from ${replyAddress}: time=${gatewayTarget ? "1" : "18"}ms TTL=${gatewayTarget ? "64" : "61"}`, "1 packets transmitted, 1 received, 0% packet loss"];
+    inference = gatewayTarget
+      ? "PCからデフォルトゲートウェイまでのLAN内経路は正常です。次は外部IPへ範囲を広げます。"
+      : "IP通信は目的地まで届いています。ただし、Webサービスや証明書が正常とはまだ判断できません。";
   } else if (tool === "NSLOOKUP") {
-    output = [`name: ${target}`, "address: 203.0.113.80", "TTL: 300 seconds"];
+    output = ["server: 198.51.100.53", `name: ${target}`, "address: 203.0.113.80", "TTL: 300 seconds"];
+    inference = "ドメイン名をIPアドレスへ変換できました。次は得られたIPへpingして、到達性を分けて確認します。";
   } else if (tool === "TRACEROUTE") {
     output = ["1  192.168.10.1  1 ms", "2  198.18.0.1  8 ms", "3  203.0.113.80  18 ms"];
+    inference = "3つのホップを順番に通り、Webサーバまで到達しています。TTLを変えながら各中継点の応答を確認した結果です。";
   } else {
     output = ["TCP 443: connected", "TLS: certificate valid", "HTTP/2 200 OK"];
+    inference = "IP到達性、TCP、証明書、HTTP応答まで正常です。Webページを安全に取得できました。";
   }
 
   return { id, tool, target, success, output, inference, createdAt: now, actorId };
