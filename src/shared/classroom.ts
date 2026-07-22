@@ -13,6 +13,7 @@ export function buildClassroomRoomRequests(
   baseTitle: string,
   roomCount: number,
   capacity: number,
+  targetUrl: string,
 ): CreateRoomRequest[] {
   if (!baseTitle.trim()) throw new Error("授業名を入力してください。");
   if (!Number.isInteger(roomCount) || roomCount < 1 || roomCount > MAX_CLASSROOM_BATCH_SIZE) {
@@ -21,11 +22,13 @@ export function buildClassroomRoomRequests(
   if (!Number.isInteger(capacity) || capacity < MIN_CLASSROOM_GROUP_SIZE || capacity > MAX_CLASSROOM_GROUP_SIZE) {
     throw new Error(`1部屋の定員は${MIN_CLASSROOM_GROUP_SIZE}〜${MAX_CLASSROOM_GROUP_SIZE}人で指定してください。`);
   }
+  if (!targetUrl.trim()) throw new Error("学習対象URLを入力してください。");
 
   return Array.from({ length: roomCount }, (_, index) => ({
     title: classroomRoomTitle(baseTitle, index, roomCount),
     capacity,
     scenario: "STANDARD_WEB_ACCESS",
     learningMode: "CLASSROOM",
+    targetUrl: targetUrl.trim(),
   }));
 }

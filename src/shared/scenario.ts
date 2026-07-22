@@ -1,6 +1,7 @@
 import type {
   DeviceDefinition,
   FaultType,
+  LearningTarget,
   PhaseDefinition,
   ProtocolStep,
   RoleDefinition,
@@ -8,12 +9,23 @@ import type {
   RoomPhase,
   TopologyLink,
 } from "./types";
+import { materializeTargetText, targetPageLabel, targetPageShortLabel } from "./learningTarget";
 
 export const LEARNING_SCENARIO_GOAL = {
   title: "文部科学省の学習指導要領ページを見る",
   url: "https://www.mext.go.jp/a_menu/shotou/new-cs/1384661.htm",
-  detail: "誰でも閲覧できる文部科学省の「平成29・30・31年改訂学習指導要領（本文、解説）」ページを題材に、PCのブラウザへURLを入力してからページが表示されるまで、6つの機器が何を確認し、どんな操作をするかを順番に体験します。このアプリは学習用の通信モデルであり、実際の文部科学省サイトへは接続しません。",
+  detail: "誰でも閲覧できる文部科学省の「平成29・30・31年改訂学習指導要領（本文、解説）」ページを題材に、PCのブラウザへURLを入力してからページが表示されるまで、6つの機器が何を確認し、どんな操作をするかを順番に体験します。部屋の作成時にホスト名を実際にDNSへ問い合わせ、Webページ本体の送受信は学習用モデルで再現します。",
 } as const;
+
+export function learningScenarioGoal(target: LearningTarget) {
+  const pageLabel = targetPageLabel(target);
+  const addresses = target.ipv4Addresses.join("、");
+  return {
+    title: `${pageLabel}を見る`,
+    url: target.url,
+    detail: `教員が指定したURLをPCのブラウザへ入力してからページが表示されるまで、6つの機器が何を確認し、どんな操作をするかを順番に体験します。部屋の作成時に${target.resolver}へ実際にAレコードを問い合わせ、${target.hostname}から返ったIPv4アドレス「${addresses}」を保存しています。Webページ本体の送受信は、安全に繰り返せる学習モデルとして再現します。`,
+  };
+}
 
 export const ROLE_DEFINITIONS: RoleDefinition[] = [
   {
@@ -60,7 +72,7 @@ export const ROLE_DEFINITIONS: RoleDefinition[] = [
     id: "WEB_SERVER",
     label: "Webサーバ",
     shortLabel: "Web",
-    description: "PCから届いた「このページをください」という要求を読み、成功を表す200 OKと学習指導要領ページのデータを安全な通信で返します。",
+    description: "PCから届いた「このページをください」という要求を読み、成功を表す200 OKと指定されたWebページのデータを安全な通信で返します。",
     observes: ["PCとの通信路", "暗号化の状態", "してほしい操作", "求められたページ"],
     accent: "#ff7e8c",
   },
@@ -87,7 +99,7 @@ export const PHASE_DEFINITIONS: PhaseDefinition[] = [
     index: 1,
     label: "役割確認",
     shortLabel: "役割",
-    instruction: "学習指導要領ページを表示するために、6つの機器が担当する仕事を順番に確認します。",
+    instruction: "指定されたWebページを表示するために、6つの機器が担当する仕事を順番に確認します。",
   },
   {
     id: "TOPOLOGY",
@@ -108,21 +120,21 @@ export const PHASE_DEFINITIONS: PhaseDefinition[] = [
     index: 4,
     label: "通信実験",
     shortLabel: "通信",
-    instruction: "学習指導要領ページが表示されるまで、6つの機器の判断を1つずつ動かします。",
+    instruction: "指定されたWebページが表示されるまで、6つの機器の判断を1つずつ動かします。",
   },
   {
     id: "DIAGNOSIS",
     index: 5,
     label: "障害診断",
     shortLabel: "診断",
-    instruction: "学習指導要領ページが表示されない原因を、予想と確認コマンドで順番に絞ります。",
+    instruction: "指定されたWebページが表示されない原因を、予想と確認コマンドで順番に絞ります。",
   },
   {
     id: "REFLECTION",
     index: 6,
     label: "振り返り",
     shortLabel: "説明",
-    instruction: "学習指導要領ページが表示されるまでに分かったことを、自分の言葉で整理します。",
+    instruction: "指定されたWebページが表示されるまでに分かったことを、自分の言葉で整理します。",
   },
 ];
 
@@ -132,9 +144,13 @@ export const DEVICES: DeviceDefinition[] = [
   { id: "switch", type: "switch", label: "L2スイッチ", role: "L2_SWITCH" },
   { id: "router", type: "router", label: "ルータ", role: "ROUTER", address: "192.168.10.1" },
   { id: "internet", type: "internet", label: "インターネット", role: null },
-  { id: "dns", type: "dns", label: "DNSサーバ", role: "DNS_SERVER", address: "198.51.100.53" },
+  { id: "dns", type: "dns", label: "DNSサーバ", role: "DNS_SERVER", address: "1.1.1.1" },
   { id: "web", type: "web", label: "Webサーバ", role: "WEB_SERVER", address: "203.0.113.80" },
 ];
+
+export function devicesForTarget(target: LearningTarget): DeviceDefinition[] {
+  return DEVICES.map((device) => device.id === "web" ? { ...device, address: target.primaryIpv4 } : { ...device });
+}
 
 export const DEFAULT_LINKS: TopologyLink[] = [
   { id: "pc-ap", from: "pc", to: "ap", medium: "Wi-Fi", up: true },
@@ -181,7 +197,7 @@ const allLayers = (protocol: ProtocolStep["protocol"], ttl: number): ProtocolSte
     {
       id: "network",
       label: "送信元と最終宛先のIP",
-      value: `IPv4 192.168.10.23 → ${protocol === "DNS" ? "198.51.100.53" : "203.0.113.80"} / TTL ${ttl}`,
+      value: `IPv4 192.168.10.23 → ${protocol === "DNS" ? "1.1.1.1" : "203.0.113.80"} / TTL ${ttl}`,
       visibleTo: ["CLIENT_PC", "ROUTER", "OBSERVER"],
     },
     {
@@ -235,6 +251,15 @@ export const PROTOCOL_STEPS: ProtocolStep[] = [
   step(16, "HTTPS", "Webサーバから届いたページのデータを、ブラウザに表示する", "PCはTLSの暗号化を解除し、TCPで分けて運ばれた受信データを正しい順番に戻します。ブラウザがHTMLを読み取り、学習指導要領ページを画面に表示します。", "CLIENT_PC", "pc", "FORWARD_PACKET", 62),
 ];
 
+export function protocolStepsForTarget(target: LearningTarget): ProtocolStep[] {
+  return PROTOCOL_STEPS.map((protocolStep) => ({
+    ...protocolStep,
+    title: materializeTargetText(protocolStep.title, target),
+    description: materializeTargetText(protocolStep.description, target),
+    layers: protocolStep.layers.map((layer) => ({ ...layer, value: materializeTargetText(layer.value, target) })),
+  }));
+}
+
 export const FAULT_DEFINITIONS: Array<{
   type: FaultType;
   label: string;
@@ -252,10 +277,15 @@ export const FAULT_DEFINITIONS: Array<{
 ];
 
 export const REFLECTION_PROMPTS = [
-  { id: "explain-flow", label: "文部科学省の学習指導要領ページを見るために、PCからWebサーバまでの6つの機器は何をしましたか。順番に説明してください。" },
-  { id: "diagnosis", label: "学習指導要領ページが表示されない原因を調べたとき、どの結果から「ここまでは正常」「この先に問題がある」と判断しましたか。" },
+  { id: "explain-flow", label: "指定されたWebページを見るために、PCからWebサーバまでの6つの機器は何をしましたか。順番に説明してください。" },
+  { id: "diagnosis", label: "指定されたWebページが表示されない原因を調べたとき、どの結果から「ここまでは正常」「この先に問題がある」と判断しましたか。" },
   { id: "lesson-design", label: "今回いちばん理解できた機器の仕事と、もう一度確認したいことを書いてください。" },
 ];
+
+export function reflectionPromptsForTarget(target: LearningTarget) {
+  const pageShortLabel = targetPageShortLabel(target);
+  return REFLECTION_PROMPTS.map((prompt) => ({ ...prompt, label: prompt.label.replaceAll("指定されたWebページ", pageShortLabel) }));
+}
 
 export const PHASE_INDEX = Object.fromEntries(
   PHASE_DEFINITIONS.map((phase) => [phase.id, phase.index]),

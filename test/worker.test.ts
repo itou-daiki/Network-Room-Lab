@@ -6,8 +6,9 @@ import type {
   JoinRoomResponse,
   RoomSnapshot,
 } from "../src/shared/types";
+import { DEFAULT_TARGET_URL } from "../src/shared/learningTarget";
 
-async function createTestRoom(capacity = 6) {
+async function createTestRoom(capacity = 6, targetUrl = DEFAULT_TARGET_URL) {
   const response = await SELF.fetch("http://example.com/api/rooms", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -16,6 +17,7 @@ async function createTestRoom(capacity = 6) {
       capacity,
       scenario: "STANDARD_WEB_ACCESS",
       learningMode: "CLASSROOM",
+      targetUrl,
     }),
   });
   expect(response.status).toBe(201);
@@ -31,6 +33,7 @@ async function createSoloRoom() {
       capacity: 1,
       scenario: "STANDARD_WEB_ACCESS",
       learningMode: "SOLO",
+      targetUrl: DEFAULT_TARGET_URL,
       displayName: "ひとり学習者",
     }),
   });
@@ -68,6 +71,22 @@ async function action(code: string, token: string, roomVersion: number, payload:
 }
 
 describe("Network Room API", () => {
+  it("stores the teacher-selected URL and a real public DNS A-record result", async () => {
+    const room = await createTestRoom(4, "https://example.com/network/lesson?unit=1#start");
+    const state = await snapshot(room.code, room.teacherToken);
+
+    expect(room.learningTarget.hostname).toBe("example.com");
+    expect(room.learningTarget.ipv4Addresses.length).toBeGreaterThan(0);
+    expect(state.room.learningTarget.url).toBe("https://example.com/network/lesson?unit=1#start");
+    expect(state.room.learningTarget.hostname).toBe("example.com");
+    expect(state.room.learningTarget.requestTarget).toBe("/network/lesson?unit=1");
+    expect(state.room.learningTarget.resolver).toContain("Cloudflare 1.1.1.1");
+    expect(state.room.learningTarget.ipv4Addresses.length).toBeGreaterThan(0);
+    expect(state.room.learningTarget.primaryIpv4).toMatch(/^\d{1,3}(?:\.\d{1,3}){3}$/);
+    expect(state.room.learningTarget.primaryIpv4).not.toBe("203.0.113.80");
+    expect(state.room.devices.find((device) => device.id === "web")?.address).toBe(state.room.learningTarget.primaryIpv4);
+  });
+
   it("accepts 2 to 6 learners per classroom room and rejects larger groups", async () => {
     const room = await createTestRoom(2);
     await join(room.code, "1人目");

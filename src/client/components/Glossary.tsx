@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
 
-import { NETWORK_GLOSSARY, glossaryTerm } from "../../shared/glossary";
+import { NETWORK_GLOSSARY, glossaryTerm, glossaryTermForTarget, networkGlossaryForTarget } from "../../shared/glossary";
+import type { LearningTarget } from "../../shared/types";
 
-export function ContextTerms({ ids, title = "この場面の用語" }: { ids: string[]; title?: string }) {
-  const terms = ids.map(glossaryTerm).filter((term) => term !== undefined);
+export function ContextTerms({ ids, title = "この場面の用語", target }: { ids: string[]; title?: string; target?: LearningTarget }) {
+  const terms = ids.map((id) => target ? glossaryTermForTarget(id, target) : glossaryTerm(id)).filter((term) => term !== undefined);
   if (terms.length === 0) return null;
 
   return (
@@ -26,17 +27,18 @@ export function ContextTerms({ ids, title = "この場面の用語" }: { ids: st
   );
 }
 
-export function GlossaryPanel() {
+export function GlossaryPanel({ target }: { target?: LearningTarget }) {
   const [query, setQuery] = useState("");
   const terms = useMemo(() => {
+    const glossary = target ? networkGlossaryForTarget(target) : NETWORK_GLOSSARY;
     const normalized = query.trim().toLowerCase();
-    if (!normalized) return NETWORK_GLOSSARY;
-    return NETWORK_GLOSSARY.filter((term) =>
+    if (!normalized) return glossary;
+    return glossary.filter((term) =>
       [term.label, term.reading, term.fullName, term.short, term.detail, term.example, term.category]
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(normalized)),
     );
-  }, [query]);
+  }, [query, target]);
 
   return (
     <section className="panel glossary-panel" aria-labelledby="glossary-title">

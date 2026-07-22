@@ -3,14 +3,16 @@ import { timingSafeEqual } from "node:crypto";
 import { DurableObject } from "cloudflare:workers";
 
 import { MAX_CLASSROOM_GROUP_SIZE, MIN_CLASSROOM_GROUP_SIZE } from "../shared/classroom";
+import { unavailableLegacyTarget } from "../shared/learningTarget";
 import { faultDetails, simulateDiagnostic, validateInterfaceConfig } from "../shared/network";
 import {
   DEFAULT_LINKS,
   DEVICES,
   PHASE_INDEX,
-  PROTOCOL_STEPS,
   ROLE_DEFINITIONS,
+  devicesForTarget,
   phaseDefinition,
+  protocolStepsForTarget,
   roleDefinition,
 } from "../shared/scenario";
 import type {
@@ -20,6 +22,7 @@ import type {
   DiagnosticResult,
   FaultType,
   JsonValue,
+  LearningTarget,
   LearningMode,
   ParticipantPublic,
   ReflectionResponse,
@@ -49,6 +52,7 @@ interface StoredRoom {
   expiresAt: string;
   teacherTokenHash: string;
   teacherMessage: string;
+  learningTarget: LearningTarget;
   links: TopologyLink[];
   interfaceConfig: {
     address: string;
@@ -119,6 +123,7 @@ interface InitInput {
   scenario: "STANDARD_WEB_ACCESS";
   learningMode: LearningMode;
   displayName?: string;
+  learningTarget: LearningTarget;
   teacherToken: string;
   expiresAt: string;
 }
@@ -293,12 +298,13 @@ export class RoomDurableObject extends DurableObject<Env> {
         input.learningMode === "SOLO"
           ? "青い案内を上から順に進めます。今は表示されている1つだけを見れば大丈夫です。"
           : "まずは自分の担当機器が見られる情報を確認しましょう。",
+      learningTarget: structuredClone(input.learningTarget),
       links: structuredClone(DEFAULT_LINKS),
       interfaceConfig: {
         address: "192.168.10.23",
         prefix: 24,
         gateway: "192.168.10.1",
-        dns: "198.51.100.53",
+        dns: "1.1.1.1",
       },
       protocolIndex: 0,
       activeFaults: [],
@@ -317,7 +323,7 @@ export class RoomDurableObject extends DurableObject<Env> {
         "ROOM_CREATED",
         "teacher",
         input.learningMode === "SOLO" ? "ひとり学習を開始しました" : "実験ルームを作成しました",
-        JSON.stringify({ title: room.title, capacity: room.capacity, learningMode: room.learningMode }),
+        JSON.stringify({ title: room.title, capacity: room.capacity, learningMode: room.learningMode, targetUrl: room.learningTarget.url, targetHostname: room.learningTarget.hostname, targetIpv4: room.learningTarget.primaryIpv4 }),
         createdAt,
       );
       if (soloParticipantId && soloParticipantTokenHash && soloDisplayName) {
@@ -579,7 +585,7 @@ export class RoomDurableObject extends DurableObject<Env> {
         break;
       }
       case "ADVANCE_PROTOCOL": {
-        const current = PROTOCOL_STEPS[nextRoom.protocolIndex];
+        const current = protocolStepsForTarget(nextRoom.learningTarget)[nextRoom.protocolIndex];
         if (!current) throw new Error("CONFLICT: 教材ページが表示されるまでの17段階は完了しています。");
         nextRoom.protocolIndex += 1;
         eventType = current.eventType;
@@ -626,7 +632,7 @@ export class RoomDurableObject extends DurableObject<Env> {
           actor,
           nowIso(),
           `diag_${crypto.randomUUID()}`,
-          { links: nextRoom.links, interfaceConfig: nextRoom.interfaceConfig },
+          { links: nextRoom.links, interfaceConfig: nextRoom.interfaceConfig, learningTarget: nextRoom.learningTarget },
         );
         nextRoom.diagnostics = [...nextRoom.diagnostics.slice(-11), result];
         eventType = "RUN_DIAGNOSTIC";
@@ -733,7 +739,7 @@ export class RoomDurableObject extends DurableObject<Env> {
         if (room.phase === "ADDRESSING" && role === "CLIENT_PC") return;
         break;
       case "ADVANCE_PROTOCOL": {
-        const current = PROTOCOL_STEPS[room.protocolIndex];
+        const current = protocolStepsForTarget(room.learningTarget)[room.protocolIndex];
         const actorAssigned = current
           ? this.loadParticipants().some((participant) => participant.role === current.actorRole)
           : false;
@@ -798,7 +804,11 @@ export class RoomDurableObject extends DurableObject<Env> {
       .toArray()[0];
     if (!row) return null;
     const parsed = JSON.parse(row.state_json) as StoredRoom;
-    return { ...parsed, learningMode: parsed.learningMode ?? "CLASSROOM" };
+    return {
+      ...parsed,
+      learningMode: parsed.learningMode ?? "CLASSROOM",
+      learningTarget: parsed.learningTarget ?? unavailableLegacyTarget(),
+    };
   }
 
   private loadRoom(): StoredRoom {
@@ -898,8 +908,9 @@ export class RoomDurableObject extends DurableObject<Env> {
       createdAt: room.createdAt,
       expiresAt: room.expiresAt,
       teacherMessage: room.teacherMessage,
+      learningTarget: structuredClone(room.learningTarget),
       participants,
-      devices: structuredClone(DEVICES),
+      devices: devicesForTarget(room.learningTarget),
       links: structuredClone(room.links),
       interfaceConfig: structuredClone(room.interfaceConfig),
       protocolIndex: room.protocolIndex,

@@ -1,4 +1,5 @@
-import type { RoleId } from "./types";
+import { materializeTargetText } from "./learningTarget";
+import type { LearningTarget, RoleId } from "./types";
 
 export type CoreRoleId = Exclude<RoleId, "OBSERVER">;
 
@@ -304,4 +305,79 @@ export const ROLE_PRACTICES: RolePracticeDefinition[] = [
 
 export function rolePractice(role: RoleId): RolePracticeDefinition | undefined {
   return ROLE_PRACTICES.find((practice) => practice.role === role);
+}
+
+function materializePractice(practice: RolePracticeDefinition, target: LearningTarget): RolePracticeDefinition {
+  const mapped: RolePracticeDefinition = {
+    ...practice,
+    mission: materializeTargetText(practice.mission, target),
+    beginnerStory: materializeTargetText(practice.beginnerStory, target),
+    everydayExample: materializeTargetText(practice.everydayExample, target),
+    situation: materializeTargetText(practice.situation, target),
+    observationTitle: materializeTargetText(practice.observationTitle, target),
+    observationPurpose: materializeTargetText(practice.observationPurpose, target),
+    observations: practice.observations.map((item) => ({
+      label: materializeTargetText(item.label, target),
+      value: materializeTargetText(item.value, target),
+      meaning: materializeTargetText(item.meaning, target),
+    })),
+    decisionHint: materializeTargetText(practice.decisionHint, target),
+    question: materializeTargetText(practice.question, target),
+    choices: practice.choices.map((choice) => ({
+      ...choice,
+      label: materializeTargetText(choice.label, target),
+      feedback: materializeTargetText(choice.feedback, target),
+    })),
+    successTitle: materializeTargetText(practice.successTitle, target),
+    successOutput: practice.successOutput.map((value) => materializeTargetText(value, target)),
+    successMeanings: practice.successMeanings.map((value) => materializeTargetText(value, target)),
+    explainPrompt: materializeTargetText(practice.explainPrompt, target),
+    sentenceStarter: materializeTargetText(practice.sentenceStarter, target),
+    explainKeywords: practice.explainKeywords.map((value) => materializeTargetText(value, target)),
+  };
+
+  if (mapped.role === "DNS_SERVER") {
+    const ttlText = target.dnsTtl > 0 ? `${target.dnsTtl}秒` : "TTL情報なし";
+    mapped.situation = `PCから「${target.hostname}のIPv4アドレスを教えて」という質問が届きました。この部屋を作ったとき、${target.resolver}へ実際に問い合わせて回答を保存しています。`;
+    mapped.observations = [
+      { label: "PCが入力したWebサイト名（問い合わせ名）", value: target.hostname, meaning: "URLから取り出し、PCがIPv4アドレスを知りたいWebサイトの名前です。" },
+      { label: "PCが知りたい情報（Aレコード）", value: "A（IPv4アドレス）", meaning: "Aは「この名前に対応するIPv4アドレスを教えて」という質問の種類です。" },
+      { label: "実際のDNS問い合わせで返ったIPv4アドレス", value: target.ipv4Addresses.join(" / "), meaning: `部屋の作成時に${target.resolver}から返ったAレコードです。複数返った場合、この学習モデルの経路では先頭の${target.primaryIpv4}を使います。` },
+      { label: "答えを一時保存できる時間（DNSのTTL）", value: ttlText, meaning: "実際のDNS回答に含まれていた、答えをキャッシュできる時間です。ルータ通過回数のTTLとは別の意味です。" },
+    ];
+    mapped.decisionHint = `質問は「A（IPv4アドレス）」です。実際に返った${target.ipv4Addresses.length}件のIPv4アドレスと、回答に含まれるTTLを返します。`;
+    mapped.choices = mapped.choices.map((choice) => choice.id === "dns-a-record"
+      ? { ...choice, label: `実DNS回答 ${target.ipv4Addresses.join(" / ")} とTTL ${ttlText}を返す`, feedback: "問い合わせ名と種類が一致したため、部屋作成時の実DNS問い合わせで得たAレコードを回答します。" }
+      : choice);
+    mapped.successOutput = [
+      "質問の処理結果：成功（NOERROR）",
+      `実際のDNS回答：${target.hostname} → ${target.ipv4Addresses.join(" / ")}（TTL ${ttlText}）`,
+      `問い合わせ先：${target.resolver} / 問い合わせ日時：${target.resolvedAt}`,
+    ];
+    mapped.successMeanings = [
+      "問い合わせを問題なく処理できました。",
+      `部屋作成時に返った${target.ipv4Addresses.length}件のAレコードを確認しました。`,
+      "この値は教材用に作った架空値ではなく、表示された日時に公開DNSへ問い合わせて得た値です。DNSの回答は時間や接続場所によって変わることがあります。",
+    ];
+  }
+  return mapped;
+}
+
+export function rolePracticesForTarget(target: LearningTarget): RolePracticeDefinition[] {
+  return ROLE_PRACTICES.map((practice) => materializePractice(practice, target));
+}
+
+export function rolePracticeForTarget(role: RoleId, target: LearningTarget): RolePracticeDefinition | undefined {
+  return rolePracticesForTarget(target).find((practice) => practice.role === role);
+}
+
+export function roleReadingGuidesForTarget(target: LearningTarget): Record<CoreRoleId, RoleReadingGuideItem[]> {
+  return Object.fromEntries(CORE_ROLE_IDS.map((role) => [
+    role,
+    ROLE_READING_GUIDES[role].map((item) => ({
+      target: materializeTargetText(item.target, target),
+      reading: materializeTargetText(item.reading, target),
+      check: materializeTargetText(item.check, target),
+    })),
+  ])) as Record<CoreRoleId, RoleReadingGuideItem[]>;
 }

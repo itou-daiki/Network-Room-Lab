@@ -1,9 +1,13 @@
+import { materializeTargetText, targetPageLabel } from "../../shared/learningTarget";
+import type { LearningTarget } from "../../shared/types";
+
 type RouteFocus = "all" | "gateway" | "dns" | "web";
 
 interface LearningRouteMapProps {
   activeNodeId?: string;
   focus?: RouteFocus;
   compact?: boolean;
+  target: LearningTarget;
 }
 
 interface RouteNode {
@@ -65,31 +69,42 @@ const routes: Array<{
     returnText: "Webサーバが、成功の返事「200 OK」と学習指導要領ページのデータをPCへ返します。",
     afterLabel: "往復2が終わったら",
     afterReturn: "PCが受け取ったデータをブラウザで組み立て、学習指導要領ページを画面に表示します。これで大きなゴールを達成します。",
-    destination: { id: "web", label: "Webサーバ", action: "要求された学習指導要領ページを返す" },
+    destination: { id: "web", label: "Webサーバ", action: "PCがURLで指定したページのデータを返す" },
   },
 ];
 
-export function LearningRouteMap({ activeNodeId, focus = "all", compact = false }: LearningRouteMapProps) {
+export function LearningRouteMap({ activeNodeId, focus = "all", compact = false, target }: LearningRouteMapProps) {
+  const targetRoutes = routes.map((route) => ({
+    ...route,
+    title: materializeTargetText(route.title, target),
+    purpose: materializeTargetText(route.purpose, target),
+    startState: materializeTargetText(route.startState, target),
+    roundGoal: materializeTargetText(route.roundGoal, target),
+    outbound: materializeTargetText(route.outbound, target),
+    returnText: materializeTargetText(route.returnText, target),
+    afterReturn: materializeTargetText(route.afterReturn, target),
+    destination: { ...route.destination, action: materializeTargetText(route.destination.action, target) },
+  }));
   return (
     <section className={`learning-route-map ${compact ? "compact" : ""}`} aria-labelledby={compact ? undefined : "learning-route-title"}>
       <header>
         <div>
           <small>この実習全体のゴール</small>
-          <h2 id={compact ? undefined : "learning-route-title"}>PCのブラウザに、文部科学省の学習指導要領ページを表示する</h2>
+          <h2 id={compact ? undefined : "learning-route-title"}>PCのブラウザに、{targetPageLabel(target)}を表示する</h2>
           <p>一度にページを取りに行くのではありません。まず往復1で通信先のIPアドレスを調べ、その答えを使って往復2でページを取りに行きます。</p>
         </div>
         <div className="gateway-explanation"><b>ルータとゲートウェイは別の機器？</b><span>この実習では同じ機器です。PCから見て、外部への最初の出口として働くルータを「デフォルトゲートウェイ」と呼びます。</span></div>
       </header>
 
-      <ol className="route-overview" aria-label="学習指導要領ページが表示されるまでの全体の順番">
+      <ol className="route-overview" aria-label={`${targetPageLabel(target)}が表示されるまでの全体の順番`}>
         <li><span>1</span><div><b>往復1：住所を調べる</b><small>Webサイト名 → IPアドレス</small></div></li>
         <li><i aria-hidden="true">→</i><span>2</span><div><b>往復2：ページを受け取る</b><small>IPアドレス → ページのデータ</small></div></li>
         <li><i aria-hidden="true">→</i><span>✓</span><div><b>大きなゴール</b><small>PCのブラウザにページを表示</small></div></li>
       </ol>
 
       <div className="route-lanes">
-        {routes.map((route) => {
-          const nodes = [...commonRoute(route.id), route.destination];
+        {targetRoutes.map((route) => {
+          const nodes = [...commonRoute(route.id).map((node) => ({ ...node, action: materializeTargetText(node.action, target) })), route.destination];
           const focused = focus === "all" || focus === "gateway" || focus === route.id;
           return (
             <article className={`route-lane route-${route.id} ${focused ? "focused" : "muted"}`} key={route.id}>

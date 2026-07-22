@@ -1,4 +1,6 @@
 import type { RoomPhase } from "./types";
+import type { LearningTarget } from "./types";
+import { materializeTargetText } from "./learningTarget";
 
 export type GlossaryCategory = "機器・接続" | "アドレス" | "通信" | "安全" | "調査コマンド";
 
@@ -30,7 +32,7 @@ export const NETWORK_GLOSSARY: NetworkTerm[] = [
   { id: "arp", label: "ARP", reading: "アープ", fullName: "Address Resolution Protocol（アドレス・リゾリューション・プロトコル／アドレス解決プロトコル）", short: "同じLAN内で、次に渡す機器のIPv4アドレスからMACアドレスを調べる仕組みです。", detail: "Addressは「住所」、Resolutionは「対応する答えを見つけること」、Protocolは「通信の約束」を表します。PCは同じLAN内の全機器へ「このIPv4アドレスを持つ機器は、あなたですか。MACアドレスを教えてください」と問い合わせます。該当する機器だけが自分のMACアドレスを返し、PCはその組をARPキャッシュへ一時保存します。Webサーバが別ネットワークにある場合、PCがARPで調べるのはWebサーバではなく、最初の出口であるデフォルトゲートウェイです。画面に出る問い合わせ文はコマンドではなく、機器同士が交換する通信内容です。", example: "PCは、デフォルトゲートウェイ192.168.10.1にデータを渡すため、ARPで対応するMACアドレス02-00-00-00-10-01を調べます。", category: "通信" },
   { id: "arp-cache", label: "ARPキャッシュ", short: "ARPで調べたIPアドレスとMACアドレスの組を、一時的に覚える表。", detail: "近くの同じ機器へ送るたびに問い合わせなくてよいよう、PCが調べた組を保存します。", example: "PCで実際に表を見るときは、arp -aという確認コマンドを使います。192.168.10.1と02-00-00-00-10-01が同じ行にあれば、出口の番号を覚えています。", category: "通信" },
   { id: "broadcast", label: "ブロードキャスト", short: "同じLAN内の全機器へ、まとめて問い合わせを届ける送り方です。", detail: "ARPを始める時点では、調べたい相手のMACアドレスがまだ分かりません。そこで宛先MACアドレスをFF-FF-FF-FF-FF-FFとして同じLAN全体へ送り、該当するIPアドレスを持つ機器だけが回答します。ルータを越えてインターネット全体へ広がるものではありません。", example: "PCが「192.168.10.1を持つ機器はMACアドレスを教えてください」と校内LANへ送るARPの質問です。", category: "通信" },
-  { id: "dns", label: "DNS", reading: "ディーエヌエス", fullName: "Domain Name System（ドメイン・ネーム・システム）", short: "Webサイト名などのドメイン名を、通信に使うIPアドレスへ対応付ける仕組みです。", detail: "Domain Name Systemの略です。人はwww.mext.go.jpのような名前を使いますが、PCがデータの最終的な届け先を指定するときはIPアドレスが必要です。そこでPCはDNSサーバへ名前を質問し、対応するIPアドレスを受け取ってからWebサーバへの通信を始めます。DNSが返すのはWebページ本体ではなく、通信先を探すための情報です。", example: "この学習モデルでは、www.mext.go.jpを質問すると203.0.113.80が返ります。この値は実サイトの調査結果ではなく、実習用の値です。", category: "通信" },
+  { id: "dns", label: "DNS", reading: "ディーエヌエス", fullName: "Domain Name System（ドメイン・ネーム・システム）", short: "Webサイト名などのドメイン名を、通信に使うIPアドレスへ対応付ける仕組みです。", detail: "Domain Name Systemの略です。人はwww.mext.go.jpのような名前を使いますが、PCがデータの最終的な届け先を指定するときはIPアドレスが必要です。そこでPCはDNSサーバへ名前を質問し、対応するIPアドレスを受け取ってからWebサーバへの通信を始めます。DNSが返すのはWebページ本体ではなく、通信先を探すための情報です。", example: "この部屋では、教員が指定したURLのホスト名を公開DNSへ実際に問い合わせ、そのとき返ったAレコードを表示します。回答は時間や接続場所によって変わることがあります。", category: "通信" },
   { id: "domain", label: "ドメイン名", short: "人が読みやすい形で付けられた、ネットワーク上の名前です。", detail: "点で区切られた部分を右から左へたどると、所属する名前の範囲がしだいに細かくなります。PCは通信前にDNSへ問い合わせ、この名前に対応するIPアドレスを取得します。URL全体ではなく、通信先を表す名前の部分です。", example: "https://www.mext.go.jp/a_menu/... というURLでは、www.mext.go.jpがドメイン名です。", category: "アドレス" },
   { id: "url", label: "URL", reading: "ユーアールエル", fullName: "Uniform Resource Locator（ユニフォーム・リソース・ロケーター）", short: "Webページなど、インターネット上の情報がある場所を表す文字列です。", detail: "Uniformは「共通の形式」、Resourceは「Webページなどの情報」、Locatorは「場所を示すもの」という意味です。URLには、通信方法を表すhttps、通信先を表すドメイン名、サーバ内のページ位置を表すパスなどが含まれます。ブラウザはURLを読み、まずDNSで通信先IPアドレスを調べます。", example: "https://www.mext.go.jp/a_menu/shotou/new-cs/1384661.htm では、httpsが通信方法、www.mext.go.jpがドメイン名、/a_menu/shotou/new-cs/1384661.htmがページの場所です。", category: "アドレス" },
   { id: "route", label: "経路表", short: "届け先の範囲ごとに、次に送る方向をまとめた道案内の表。", detail: "ルータは、データの最終目的地となるIPアドレスと表の各範囲を比べ、当てはまる道を選びます。", example: "WebサーバのIPアドレスに当てはまる道がなければ、ルータはデータを先へ送れません。", category: "通信" },
@@ -72,4 +74,29 @@ export const PHASE_TERM_IDS: Partial<Record<RoomPhase, string[]>> = {
 
 export function glossaryTerm(id: string): NetworkTerm | undefined {
   return NETWORK_GLOSSARY.find((term) => term.id === id);
+}
+
+export function networkGlossaryForTarget(target: LearningTarget): NetworkTerm[] {
+  return NETWORK_GLOSSARY.map((term) => {
+    const mapped = {
+      ...term,
+      short: materializeTargetText(term.short, target),
+      detail: materializeTargetText(term.detail, target),
+      example: materializeTargetText(term.example, target),
+    };
+    if (term.id === "dns") {
+      mapped.example = `この部屋では、作成時に${target.resolver}へ${target.hostname}のAレコードを実際に問い合わせ、「${target.ipv4Addresses.join("、")}」が返りました。問い合わせ日時は${target.resolvedAt}です。`;
+    }
+    if (term.id === "dns-record") {
+      mapped.example = `実際のAレコードは「${target.hostname} → ${target.ipv4Addresses.join("、")}」です。TTLは${target.dnsTtl > 0 ? `${target.dnsTtl}秒` : "回答に記載なし"}でした。`;
+    }
+    if (term.id === "nslookup") {
+      mapped.example = `nslookup ${target.hostname} と入力し、部屋作成時に得た「${target.ipv4Addresses.join("、")}」と見比べます。`;
+    }
+    return mapped;
+  });
+}
+
+export function glossaryTermForTarget(id: string, target: LearningTarget): NetworkTerm | undefined {
+  return networkGlossaryForTarget(target).find((term) => term.id === id);
 }

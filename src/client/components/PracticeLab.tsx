@@ -1,12 +1,12 @@
 import { KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 
 import {
-  PRACTICE_TASKS,
-  QUICK_PRACTICE_COMMANDS,
   localPracticeOutput,
   parsePracticeCommand,
+  practiceTasksForTarget,
   type PracticeMilestone,
 } from "../../shared/practice";
+import { targetPageShortLabel } from "../../shared/learningTarget";
 import type { ClientAction, RoomPhase, RoomSnapshot } from "../../shared/types";
 import { ContextTerms } from "./Glossary";
 
@@ -41,6 +41,7 @@ const phaseTasks: Partial<Record<RoomPhase, PracticeMilestone[]>> = {
 };
 
 export function PracticeLab({ snapshot, busy, act, completed, onComplete }: PracticeLabProps) {
+  const practiceTasks = practiceTasksForTarget(snapshot.room.learningTarget);
   const [input, setInput] = useState("");
   const [predictions, setPredictions] = useState<Partial<Record<RoomPhase, string>>>({});
   const [observations, setObservations] = useState<Partial<Record<RoomPhase, string>>>({});
@@ -53,8 +54,8 @@ export function PracticeLab({ snapshot, busy, act, completed, onComplete }: Prac
   const nextEntryId = useRef(1);
   const outputRef = useRef<HTMLDivElement>(null);
 
-  const suggestedIds = phaseTasks[snapshot.room.phase] ?? PRACTICE_TASKS.map((task) => task.id);
-  const suggestedTasks = PRACTICE_TASKS.filter((task) => suggestedIds.includes(task.id));
+  const suggestedIds = phaseTasks[snapshot.room.phase] ?? practiceTasks.map((task) => task.id);
+  const suggestedTasks = practiceTasks.filter((task) => suggestedIds.includes(task.id));
   const completedSuggested = suggestedTasks.filter((task) => completed.has(task.id)).length;
   const prediction = predictions[snapshot.room.phase] ?? "";
   const observation = observations[snapshot.room.phase] ?? "";
@@ -98,7 +99,7 @@ export function PracticeLab({ snapshot, busy, act, completed, onComplete }: Prac
   }, [entries, pending]);
 
   const quickCommands = useMemo(
-    () => QUICK_PRACTICE_COMMANDS.filter((item) => suggestedTasks.some((task) => task.command === item.command)),
+    () => suggestedTasks.map(({ command, label }) => ({ command, label })),
     [suggestedTasks],
   );
 
@@ -107,7 +108,7 @@ export function PracticeLab({ snapshot, busy, act, completed, onComplete }: Prac
   };
 
   const execute = async (commandValue = input) => {
-    const parsed = parsePracticeCommand(commandValue);
+    const parsed = parsePracticeCommand(commandValue, snapshot.room.learningTarget);
     if (parsed.kind === "CLEAR") {
       setEntries([]);
       setInput("");
@@ -165,7 +166,7 @@ export function PracticeLab({ snapshot, busy, act, completed, onComplete }: Prac
   return (
     <section className="panel practice-panel" id="practice-lab" aria-labelledby="practice-title">
       <div className="panel-heading practice-heading">
-        <div><p className="panel-kicker">学習指導要領ページが表示されるまでを、順番に確認</p><h2 id="practice-title">コマンド実験：通信のどこまで正常か確かめる</h2></div>
+        <div><p className="panel-kicker">{targetPageShortLabel(snapshot.room.learningTarget)}が表示されるまでを、順番に確認</p><h2 id="practice-title">コマンド実験：通信のどこまで正常か確かめる</h2></div>
         <span>{completedSuggested} / {suggestedTasks.length} このステップの課題</span>
       </div>
 
@@ -198,7 +199,7 @@ export function PracticeLab({ snapshot, busy, act, completed, onComplete }: Prac
         </aside>
 
         <div className="practice-terminal">
-          <div className="terminal-titlebar"><span /><span /><span /><b>学習用の実行結果（実際の外部通信は行いません）</b></div>
+          <div className="terminal-titlebar"><span /><span /><span /><b>学習用の実行結果（DNS回答は部屋作成時の実問い合わせ結果）</b></div>
           <div className="terminal-reading-guide"><b>英語の行は何ですか？</b><span>実際のPCで表示される結果に近い見本です。暗記や入力は不要です。実行後に表示される「この結果から分かること」の日本語を読めば進めます。</span></div>
           <div className="terminal-output" ref={outputRef} aria-live="polite">
             {entries.map((entry) => (
@@ -248,7 +249,7 @@ export function PracticeLab({ snapshot, busy, act, completed, onComplete }: Prac
                 </article>
               ))}</div>}
           </div>
-          <ContextTerms ids={["ipconfig", "ping", "nslookup", "traceroute"]} title="この画面で使った確認コマンド" />
+          <ContextTerms ids={["ipconfig", "ping", "nslookup", "traceroute"]} title="この画面で使った確認コマンド" target={snapshot.room.learningTarget} />
         </aside>
       </div>
     </section>

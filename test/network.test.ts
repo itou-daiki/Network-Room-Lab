@@ -2,7 +2,18 @@ import { describe, expect, it } from "vitest";
 
 import { isSameSubnet, simulateDiagnostic, validateInterfaceConfig } from "../src/shared/network";
 import { DEFAULT_LINKS } from "../src/shared/scenario";
-import type { ActiveFault } from "../src/shared/types";
+import type { ActiveFault, LearningTarget } from "../src/shared/types";
+
+const learningTarget: LearningTarget = {
+  url: "https://example.com/lesson",
+  hostname: "example.com",
+  requestTarget: "/lesson",
+  ipv4Addresses: ["93.184.216.34"],
+  primaryIpv4: "93.184.216.34",
+  dnsTtl: 240,
+  resolvedAt: "2026-07-23T00:00:00.000Z",
+  resolver: "Cloudflare 1.1.1.1（DNS over HTTPS）",
+};
 
 describe("network learning model", () => {
   it("distinguishes local and remote IPv4 networks", () => {
@@ -16,7 +27,7 @@ describe("network learning model", () => {
       address: "192.168.10.23",
       prefix: 24,
       gateway: "192.168.20.1",
-      dns: "198.51.100.53",
+      dns: "1.1.1.1",
     });
     expect(errors.some((error) => error.includes("PC（192.168.10.23/24）と出口（192.168.20.1）が同じネットワークにありません"))).toBe(true);
   });
@@ -61,11 +72,23 @@ describe("network learning model", () => {
       "diag_link",
       {
         links,
-        interfaceConfig: { address: "192.168.10.23", prefix: 24, gateway: "192.168.10.1", dns: "198.51.100.53" },
+        interfaceConfig: { address: "192.168.10.23", prefix: 24, gateway: "192.168.10.1", dns: "1.1.1.1" },
       },
     );
     expect(result.success).toBe(false);
     expect(result.output.join(" ")).toContain("ap-switch");
+  });
+
+  it("shows the room creation DNS result only for the selected hostname", () => {
+    const saved = simulateDiagnostic("NSLOOKUP", "example.com", [], "p_1", "2026-07-23T00:00:00.000Z", "diag_dns", { learningTarget });
+    expect(saved.success).toBe(true);
+    expect(saved.output.join(" ")).toContain("93.184.216.34");
+    expect(saved.output.join(" ")).toContain("Cloudflare 1.1.1.1");
+    expect(saved.inference).toContain("実際に問い合わせ");
+
+    const other = simulateDiagnostic("NSLOOKUP", "www.mext.go.jp", [], "p_1", "2026-07-23T00:00:00.000Z", "diag_other", { learningTarget });
+    expect(other.success).toBe(false);
+    expect(other.output.join(" ")).not.toContain("93.184.216.34");
   });
 
   it("lets ping reach a stopped web server while HTTPS still fails", () => {

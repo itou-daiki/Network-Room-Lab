@@ -8,6 +8,7 @@ import type {
   JoinRoomResponse,
   RoomExportData,
 } from "../shared/types";
+import { resolveLearningTarget } from "./learningTarget";
 export { RoomDurableObject } from "./room";
 
 const createRoomSchema = z
@@ -16,6 +17,7 @@ const createRoomSchema = z
     capacity: z.number().int().min(1).max(MAX_CLASSROOM_GROUP_SIZE, `定員は最大${MAX_CLASSROOM_GROUP_SIZE}名です。`),
     scenario: z.literal("STANDARD_WEB_ACCESS"),
     learningMode: z.enum(["CLASSROOM", "SOLO"]).default("CLASSROOM"),
+    targetUrl: z.string().trim().min(1, "学習対象URLを入力してください。").max(2048, "学習対象URLが長すぎます。"),
     displayName: z.string().trim().min(1, "表示名を入力してください。").max(32).optional(),
   })
   .strict()
@@ -202,18 +204,20 @@ function exportCsv(data: RoomExportData): string {
 
 async function createRoom(request: Request, env: Env): Promise<Response> {
   const body = parseWithSchema(createRoomSchema, await readJson(request));
+  const learningTarget = await resolveLearningTarget(body.targetUrl);
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
   for (let attempt = 0; attempt < 6; attempt += 1) {
     const code = randomRoomCode();
     const teacherToken = randomToken();
     const stub = env.ROOMS.getByName(code);
-    const result = await stub.initialize({ ...body, code, teacherToken, expiresAt });
+    const result = await stub.initialize({ ...body, learningTarget, code, teacherToken, expiresAt });
     if (result.created) {
       const response: CreateRoomResponse = {
         code,
         teacherToken,
         expiresAt,
+        learningTarget,
         participantId: result.participantId,
         participantToken: result.participantToken,
       };

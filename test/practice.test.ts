@@ -4,11 +4,24 @@ import {
   PRACTICE_TASKS,
   localPracticeOutput,
   parsePracticeCommand,
+  practiceTasksForTarget,
   protocolDecisionChoices,
 } from "../src/shared/practice";
-import { LEARNING_SCENARIO_GOAL, PROTOCOL_STEPS } from "../src/shared/scenario";
-import { NETWORK_GLOSSARY } from "../src/shared/glossary";
-import { CORE_ROLE_IDS, ROLE_PRACTICES, ROLE_READING_GUIDES, ROLE_STAGE_TERM_IDS, rolePractice } from "../src/shared/rolePractice";
+import { LEARNING_SCENARIO_GOAL, PROTOCOL_STEPS, learningScenarioGoal, protocolStepsForTarget } from "../src/shared/scenario";
+import { NETWORK_GLOSSARY, networkGlossaryForTarget } from "../src/shared/glossary";
+import { CORE_ROLE_IDS, ROLE_PRACTICES, ROLE_READING_GUIDES, ROLE_STAGE_TERM_IDS, rolePractice, rolePracticesForTarget } from "../src/shared/rolePractice";
+import type { LearningTarget } from "../src/shared/types";
+
+const customTarget: LearningTarget = {
+  url: "https://example.com/course/start?unit=1",
+  hostname: "example.com",
+  requestTarget: "/course/start?unit=1",
+  ipv4Addresses: ["93.184.216.34", "93.184.216.35"],
+  primaryIpv4: "93.184.216.34",
+  dnsTtl: 240,
+  resolvedAt: "2026-07-23T00:00:00.000Z",
+  resolver: "Cloudflare 1.1.1.1（DNS over HTTPS）",
+};
 
 describe("experiential practice commands", () => {
   it("provides one hands-on exercise with a single correct action for every core role", () => {
@@ -95,6 +108,24 @@ describe("experiential practice commands", () => {
     expect(learnerText).not.toMatch(/ARP who has/i);
   });
 
+  it("materializes every learner-facing model with the selected URL and saved DNS result", () => {
+    const learnerText = JSON.stringify({
+      goal: learningScenarioGoal(customTarget),
+      practices: rolePracticesForTarget(customTarget),
+      tasks: practiceTasksForTarget(customTarget),
+      protocol: protocolStepsForTarget(customTarget),
+      glossary: networkGlossaryForTarget(customTarget),
+    });
+
+    expect(learnerText).toContain(customTarget.url);
+    expect(learnerText).toContain(customTarget.hostname);
+    expect(learnerText).toContain(customTarget.primaryIpv4);
+    expect(learnerText).toContain("93.184.216.35");
+    expect(learnerText).toContain("実際のDNS");
+    expect(learnerText).not.toContain("203.0.113.80");
+    expect(learnerText).not.toContain("www.mext.go.jp");
+  });
+
   it("explains common abbreviations with their full names and detailed beginner context", () => {
     const expectedFullNames: Record<string, string> = {
       url: "Uniform Resource Locator",
@@ -160,11 +191,11 @@ describe("experiential practice commands", () => {
       address: "192.168.10.23",
       prefix: 24,
       gateway: "192.168.10.1",
-      dns: "198.51.100.53",
+      dns: "1.1.1.1",
     });
     expect(result.lines.join("\n")).toContain("192.168.10.23");
     expect(result.lines.join("\n")).toContain("192.168.10.1");
-    expect(result.lines.join("\n")).toContain("198.51.100.53");
+    expect(result.lines.join("\n")).toContain("1.1.1.1");
   });
 
   it("requires a correct decision at every protocol step", () => {

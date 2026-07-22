@@ -1,10 +1,12 @@
 import { FAULT_DEFINITIONS } from "./scenario";
+import { targetPageShortLabel } from "./learningTarget";
 import type {
   ActiveFault,
   DiagnosticResult,
   DiagnosticTool,
   FaultType,
   InterfaceConfig,
+  LearningTarget,
   TopologyLink,
 } from "./types";
 
@@ -47,7 +49,7 @@ export function validateInterfaceConfig(input: {
     errors.push("同じネットワークの範囲を表す数は1〜30で入力します。この実習の推奨値は24です。");
   }
   if (!isValidIpv4(input.gateway)) errors.push("外部への出口は、192.168.10.1のようなIPアドレスの形で入力します。");
-  if (!isValidIpv4(input.dns)) errors.push("DNSサーバは、198.51.100.53のようなIPアドレスの形で入力します。");
+  if (!isValidIpv4(input.dns)) errors.push("DNSサーバは、1.1.1.1のようなIPアドレスの形で入力します。");
   if (
     isValidIpv4(input.address) &&
     isValidIpv4(input.gateway) &&
@@ -66,6 +68,7 @@ function hasFault(faults: ActiveFault[], type: FaultType): boolean {
 export interface DiagnosticEnvironment {
   links?: TopologyLink[];
   interfaceConfig?: InterfaceConfig;
+  learningTarget?: LearningTarget;
 }
 
 export function simulateDiagnostic(
@@ -90,6 +93,11 @@ export function simulateDiagnostic(
   const dnsLinkDown = downLinks.has("internet-dns");
   const webLinkDown = downLinks.has("internet-web");
   const config = environment.interfaceConfig;
+  const learningTarget = environment.learningTarget;
+  const targetAddress = learningTarget?.primaryIpv4 ?? "203.0.113.80";
+  const targetHostname = learningTarget?.hostname ?? "www.mext.go.jp";
+  const targetTtl = learningTarget?.dnsTtl ?? 300;
+  const pageLabel = learningTarget ? targetPageShortLabel(learningTarget) : "学習指導要領ページ";
 
   if (localLinkDown) {
     success = false;
@@ -101,17 +109,17 @@ export function simulateDiagnostic(
     inference = "出口のルータからは返事があるため、PCからルータまでは使えます。次の外部側接続で返事が途切れているため、原因の範囲をルータより先へ絞れます。";
   } else if (dnsLinkDown && needsDns) {
     success = false;
-    output = [`query: ${target}`, "server: 198.51.100.53", "result: timed out"];
+    output = [`query: ${target}`, "server: 1.1.1.1", "result: timed out"];
     inference = "DNSサーバへ向かう接続で返事が途切れています。次に、WebサーバのIPアドレスを直接指定して返事を比べます。";
   } else if (webLinkDown && tool !== "NSLOOKUP") {
     success = false;
-    output = ["DNS: 203.0.113.80", "last reachable hop: internet", "destination: timed out"];
+    output = [`DNS: ${targetAddress}`, "last reachable hop: internet", "destination: timed out"];
     inference = "DNSからIPアドレスの答えは返っているため、名前の確認は完了しています。一方、Webサーバからは返事がないため、原因はDNSではなくWebサーバへ向かう最後の接続側にあります。";
   } else if (config && config.gateway !== "192.168.10.1" && !gatewayTarget) {
     success = false;
     output = [`local LAN: ${config.address}/${config.prefix}`, `gateway ${config.gateway}: no route to host`];
     inference = "PCの出口が実験用ルータと一致していません。ipconfigでデフォルトゲートウェイを確認します。";
-  } else if (config && config.dns !== "198.51.100.53" && needsDns) {
+  } else if (config && config.dns !== "1.1.1.1" && needsDns) {
     success = false;
     output = [`query: ${target}`, `server: ${config.dns}`, "result: server not found"];
     inference = "PCに設定されたDNSサーバが、この実験で使うDNSサーバと一致していません。次に、WebサーバのIPアドレスを直接指定した結果と比べます。";
@@ -129,35 +137,41 @@ export function simulateDiagnostic(
     inference = "ゲートウェイのIPへ直接pingし、その後ipconfigの出口設定と見比べます。";
   } else if (hasFault(faults, "DNS_DOWN") && needsDns) {
     success = false;
-    output = [`query: ${target}`, "server: 198.51.100.53", "result: timed out"];
-    inference = "Webサイト名をIPアドレスへ変換できていません。次にWebサーバのIPアドレス203.0.113.80を直接指定し、通信経路とDNSの問題を分けて調べます。";
+    output = [`query: ${target}`, "server: 1.1.1.1", "result: timed out"];
+    inference = `Webサイト名をIPアドレスへ変換できていません。次にWebサーバのIPアドレス${targetAddress}を直接指定し、通信経路とDNSの問題を分けて調べます。`;
   } else if (hasFault(faults, "ROUTE_MISSING") && !gatewayTarget) {
     success = false;
     output = ["hop 1: 192.168.10.1", "router: no matching route"];
     inference = "ルータまでは届いています。宛先ネットワークに一致する経路がありません。";
   } else if (hasFault(faults, "CERT_ERROR") && tool === "HTTPS") {
     success = false;
-    output = ["TCP: connected to 203.0.113.80:443", "TLS: certificate name mismatch"];
+    output = [`TCP: connected to ${targetAddress}:443`, "TLS: certificate name mismatch"];
     inference = "Webサーバとの通信路（TCP）は作れましたが、暗号化を始める前の相手確認（TLS）で止まっています。証明書の名前・期限・発行元を確認します。";
   } else if (hasFault(faults, "WEB_DOWN") && tool === "HTTPS") {
     success = false;
-    output = ["DNS: 203.0.113.80", "network: reachable", "application: connection refused"];
-    inference = "WebサーバのIPアドレスまでは届いていますが、学習指導要領ページの応答が返りません。Webサーバ側でページを返す機能を確認します。";
+    output = [`DNS: ${targetAddress}`, "network: reachable", "application: connection refused"];
+    inference = `WebサーバのIPアドレスまでは届いていますが、${pageLabel}の応答が返りません。Webサーバ側でページを返す機能を確認します。`;
   } else if (tool === "PING") {
-    const replyAddress = gatewayTarget ? "192.168.10.1" : targetIsIp ? target : "203.0.113.80";
+    const replyAddress = gatewayTarget ? "192.168.10.1" : targetIsIp ? target : targetAddress;
     output = [`PING ${target} (${replyAddress})`, `reply from ${replyAddress}: time=${gatewayTarget ? "1" : "18"}ms TTL=${gatewayTarget ? "64" : "61"}`, "1 packets transmitted, 1 received, 0% packet loss"];
     inference = gatewayTarget
       ? "PCからデフォルトゲートウェイまでのLAN内経路は正常です。次は外部IPへ範囲を広げます。"
       : "IP通信は目的地まで届いています。ただし、Webサービスや証明書が正常とはまだ判断できません。";
   } else if (tool === "NSLOOKUP") {
-    output = ["server: 198.51.100.53", `name: ${target}`, "address: 203.0.113.80", "TTL: 300 seconds"];
-    inference = "Webサイト名をIPアドレスへ変換できました。次は、得られたIPアドレスへ返事が届くかを確認し、DNSと通信経路を分けて調べます。";
+    if (target !== targetHostname) {
+      success = false;
+      output = ["server: 1.1.1.1", `name: ${target}`, "result: この部屋では未取得"];
+      inference = `この部屋の作成時に実DNS問い合わせを行った名前は${targetHostname}です。nslookup ${targetHostname}を実行して、保存された実際の回答を確認します。`;
+    } else {
+      output = ["server: 1.1.1.1", `name: ${target}`, ...(learningTarget?.ipv4Addresses ?? [targetAddress]).map((address) => `address: ${address}`), `TTL: ${targetTtl} seconds`, `resolver: ${learningTarget?.resolver ?? "学習用DNS"}`, `resolved at: ${learningTarget?.resolvedAt ?? "部屋作成時"}`];
+      inference = "部屋の作成時に公開DNSへ実際に問い合わせて得たIPv4アドレスを確認できました。DNSの回答は時間や接続場所によって変わることがあります。次は、得られたIPアドレスへ返事が届くかを確認します。";
+    }
   } else if (tool === "TRACEROUTE") {
-    output = ["1  192.168.10.1  1 ms", "2  198.18.0.1  8 ms", "3  203.0.113.80  18 ms"];
+    output = ["1  192.168.10.1  1 ms", "2  198.18.0.1  8 ms", `3  ${targetAddress}  18 ms`];
     inference = "1番目、2番目、3番目の経由地点から順に返事があり、Webサーバまで届いています。各行は、途中で返事をしたルータを表します。";
   } else {
     output = ["TCP 443: connected", "TLS: certificate valid", "HTTP/2 200 OK"];
-    inference = "WebサーバのIPアドレスまで届き、通信路の準備、証明書の確認、学習指導要領ページの応答まで成功しました。ページを安全に取得できる状態です。";
+    inference = `WebサーバのIPアドレスまで届き、通信路の準備、証明書の確認、${pageLabel}の応答まで成功しました。ページを安全に取得できる状態です。`;
   }
 
   return { id, tool, target, success, output, inference, createdAt: now, actorId };

@@ -81,6 +81,25 @@ export interface InterfaceConfig {
   dns: string;
 }
 
+export interface LearningTarget {
+  /** 教員が指定し、正規化された学習対象のHTTPS URL */
+  url: string;
+  /** DNSへ問い合わせたホスト名 */
+  hostname: string;
+  /** WebサーバへGETで要求するパスとクエリ */
+  requestTarget: string;
+  /** 部屋作成時の実DNS問い合わせで返ったすべてのIPv4アドレス */
+  ipv4Addresses: string[];
+  /** 学習モデルで経路表示に使う、回答の先頭のIPv4アドレス */
+  primaryIpv4: string;
+  /** Aレコードをキャッシュできる秒数 */
+  dnsTtl: number;
+  /** DNS問い合わせを実行した日時 */
+  resolvedAt: string;
+  /** 問い合わせに使った公開DNSリゾルバ */
+  resolver: string;
+}
+
 export interface ProtocolLayer {
   id: "application" | "security" | "transport" | "network" | "link";
   label: string;
@@ -165,6 +184,7 @@ export interface RoomPublicState {
   createdAt: string;
   expiresAt: string;
   teacherMessage: string;
+  learningTarget: LearningTarget;
   participants: ParticipantPublic[];
   devices: DeviceDefinition[];
   links: TopologyLink[];
@@ -195,6 +215,7 @@ export interface CreateRoomRequest {
   capacity: number;
   scenario: "STANDARD_WEB_ACCESS";
   learningMode: LearningMode;
+  targetUrl: string;
   displayName?: string;
 }
 
@@ -202,6 +223,7 @@ export interface CreateRoomResponse {
   code: string;
   teacherToken: string;
   expiresAt: string;
+  learningTarget: LearningTarget;
   participantId?: string;
   participantToken?: string;
 }

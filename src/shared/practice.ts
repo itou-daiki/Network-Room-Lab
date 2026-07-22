@@ -1,4 +1,5 @@
-import type { DiagnosticTool, InterfaceConfig, ProtocolStep } from "./types";
+import { materializeTargetText } from "./learningTarget";
+import type { DiagnosticTool, InterfaceConfig, LearningTarget, ProtocolStep } from "./types";
 
 export type PracticeMilestone = "IPCONFIG" | "ARP" | "PING_GATEWAY" | "NSLOOKUP" | "PING_WEB" | "TRACEROUTE" | "HTTPS";
 
@@ -27,6 +28,22 @@ export const PRACTICE_TASKS: PracticeTask[] = [
 ];
 
 export const QUICK_PRACTICE_COMMANDS = PRACTICE_TASKS.map(({ command, label }) => ({ command, label }));
+
+export function practiceTasksForTarget(target: LearningTarget): PracticeTask[] {
+  return PRACTICE_TASKS.map((task) => {
+    const mapped = {
+      ...task,
+      command: materializeTargetText(task.command, target),
+      label: materializeTargetText(task.label, target),
+      purpose: materializeTargetText(task.purpose, target),
+      observation: materializeTargetText(task.observation, target),
+    };
+    if (task.id === "NSLOOKUP") {
+      mapped.observation = `部屋作成時の実DNS問い合わせで返ったIPv4アドレス「${target.ipv4Addresses.join("、")}」と見比べます。`;
+    }
+    return mapped;
+  });
+}
 
 const helpLines = [
   "使えるコマンド:",
@@ -57,7 +74,7 @@ function missingArgument(raw: string, command: string, example: string): ParsedP
   };
 }
 
-export function parsePracticeCommand(value: string): ParsedPracticeCommand {
+export function parsePracticeCommand(value: string, learningTarget?: LearningTarget): ParsedPracticeCommand {
   const raw = value.trim();
   if (!raw) return { kind: "OUTPUT", raw, success: false, lines: ["コマンドを入力してください。"], inference: "help と入力すると、使えるコマンドを確認できます。" };
 
@@ -73,25 +90,25 @@ export function parsePracticeCommand(value: string): ParsedPracticeCommand {
   }
 
   if (["nslookup", "ping", "traceroute", "tracert"].includes(command)) {
-    if (!args[0]) return missingArgument(raw, command === "tracert" ? "traceroute" : command, `${command === "nslookup" ? "nslookup www.mext.go.jp" : `${command} 203.0.113.80`}`);
+    if (!args[0]) return missingArgument(raw, command === "tracert" ? "traceroute" : command, `${command === "nslookup" ? `nslookup ${learningTarget?.hostname ?? "www.mext.go.jp"}` : `${command} ${learningTarget?.primaryIpv4 ?? "203.0.113.80"}`}`);
     const originalTarget = args[0];
-    const target = normalizeTarget(originalTarget);
-    if (target !== originalTarget) {
+    const normalizedTarget = normalizeTarget(originalTarget);
+    if (normalizedTarget !== originalTarget) {
       return {
         kind: "OUTPUT",
         raw,
         success: false,
-        lines: [`❌ URL全体ではなく、名前またはIPだけを指定します: ${originalTarget}`, `修正例: ${command === "tracert" ? "traceroute" : command} ${target}`],
+        lines: [`❌ URL全体ではなく、名前またはIPだけを指定します: ${originalTarget}`, `修正例: ${command === "tracert" ? "traceroute" : command} ${normalizedTarget}`],
         inference: "https:// は通信方式、/以降はWebページ内の場所です。ネットワーク調査ではまず相手の名前だけを指定します。",
       };
     }
     const tool: DiagnosticTool = command === "nslookup" ? "NSLOOKUP" : command === "ping" ? "PING" : "TRACEROUTE";
-    const milestone: PracticeMilestone = tool === "NSLOOKUP" ? "NSLOOKUP" : tool === "TRACEROUTE" ? "TRACEROUTE" : target === "192.168.10.1" ? "PING_GATEWAY" : "PING_WEB";
-    return { kind: "DIAGNOSTIC", raw, tool, target, milestone };
+    const milestone: PracticeMilestone = tool === "NSLOOKUP" ? "NSLOOKUP" : tool === "TRACEROUTE" ? "TRACEROUTE" : normalizedTarget === "192.168.10.1" ? "PING_GATEWAY" : "PING_WEB";
+    return { kind: "DIAGNOSTIC", raw, tool, target: normalizedTarget, milestone };
   }
 
   if (command === "curl") {
-    if (!args[0]) return missingArgument(raw, "curl", "curl https://www.mext.go.jp/a_menu/shotou/new-cs/1384661.htm");
+    if (!args[0]) return missingArgument(raw, "curl", `curl ${learningTarget?.url ?? "https://www.mext.go.jp/a_menu/shotou/new-cs/1384661.htm"}`);
     if (!/^https:\/\//i.test(args[0])) {
       return { kind: "OUTPUT", raw, success: false, lines: ["❌ この実験ではhttps://で始まるWebサイトのURLを指定します。", `修正例: curl https://${normalizeTarget(args[0])}`], inference: "curlでHTTPSを調べると、WebサーバのIPアドレスまで届くことに加え、証明書の確認と学習指導要領ページの応答まで確かめられます。" };
     }

@@ -1,12 +1,23 @@
 import { describe, expect, it } from "vitest";
 
 import { learningLead } from "../src/shared/learningLead";
+import { DEFAULT_TARGET_URL } from "../src/shared/learningTarget";
 import type { PracticeMilestone } from "../src/shared/practice";
 import type { CoreRoleId } from "../src/shared/rolePractice";
 import { DEFAULT_LINKS, DEVICES, PHASE_DEFINITIONS, PROTOCOL_STEPS, REFLECTION_PROMPTS } from "../src/shared/scenario";
 import type { RoomPublicState, RoomSnapshot } from "../src/shared/types";
 
 const now = "2026-07-22T00:00:00.000Z";
+const learningTarget = {
+  url: DEFAULT_TARGET_URL,
+  hostname: "www.mext.go.jp",
+  requestTarget: "/a_menu/shotou/new-cs/1384661.htm",
+  ipv4Addresses: ["202.238.130.103"],
+  primaryIpv4: "202.238.130.103",
+  dnsTtl: 300,
+  resolvedAt: now,
+  resolver: "Cloudflare 1.1.1.1（DNS over HTTPS）",
+};
 
 function makeSnapshot(roomOverrides: Partial<RoomPublicState> = {}, snapshotOverrides: Partial<RoomSnapshot> = {}): RoomSnapshot {
   const room: RoomPublicState = {
@@ -15,6 +26,7 @@ function makeSnapshot(roomOverrides: Partial<RoomPublicState> = {}, snapshotOver
     learningMode: "SOLO",
     phase: "ROLES",
     scenario: "STANDARD_WEB_ACCESS",
+    learningTarget,
     status: "active",
     version: 1,
     capacity: 1,
@@ -24,7 +36,7 @@ function makeSnapshot(roomOverrides: Partial<RoomPublicState> = {}, snapshotOver
     participants: [],
     devices: DEVICES,
     links: structuredClone(DEFAULT_LINKS),
-    interfaceConfig: { address: "192.168.10.23", prefix: 24, gateway: "192.168.10.1", dns: "198.51.100.53" },
+    interfaceConfig: { address: "192.168.10.23", prefix: 24, gateway: "192.168.10.1", dns: "1.1.1.1" },
     protocolIndex: 0,
     activeFaults: [],
     observedSymptoms: [],

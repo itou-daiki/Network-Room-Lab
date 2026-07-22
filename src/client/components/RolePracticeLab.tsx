@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { CORE_ROLE_IDS, ROLE_PRACTICES, ROLE_READING_GUIDES, ROLE_STAGE_TERM_IDS, rolePractice, type CoreRoleId, type RolePracticeStage } from "../../shared/rolePractice";
-import { LEARNING_SCENARIO_GOAL, roleDefinition } from "../../shared/scenario";
+import { CORE_ROLE_IDS, ROLE_STAGE_TERM_IDS, rolePracticesForTarget, roleReadingGuidesForTarget, type CoreRoleId, type RolePracticeStage } from "../../shared/rolePractice";
+import { targetPageShortLabel } from "../../shared/learningTarget";
+import { learningScenarioGoal, roleDefinition } from "../../shared/scenario";
 import type { ClientAction, RoomSnapshot } from "../../shared/types";
 import { ContextTerms } from "./Glossary";
 import { LearningRouteMap } from "./LearningRouteMap";
@@ -25,7 +26,11 @@ const ROLE_ROUTE_NODE: Record<CoreRoleId, string> = {
 };
 
 export function RolePracticeLab({ snapshot, completed, onComplete, act, busy = false, onContinue }: RolePracticeLabProps) {
-  const assignedPractice = snapshot.viewer.role ? rolePractice(snapshot.viewer.role) : undefined;
+  const target = snapshot.room.learningTarget;
+  const practices = rolePracticesForTarget(target);
+  const readingGuides = roleReadingGuidesForTarget(target);
+  const goal = learningScenarioGoal(target);
+  const assignedPractice = snapshot.viewer.role ? practices.find((practice) => practice.role === snapshot.viewer.role) : undefined;
   const isSolo = snapshot.room.learningMode === "SOLO";
   const canBrowseRoles = snapshot.viewer.kind === "teacher" || snapshot.viewer.role === "OBSERVER";
   const firstIncompleteRole = CORE_ROLE_IDS.find((roleId) => !completed.has(roleId));
@@ -46,7 +51,7 @@ export function RolePracticeLab({ snapshot, completed, onComplete, act, busy = f
     if (isSolo && firstIncompleteRole && completed.has(activeRole)) setActiveRole(firstIncompleteRole);
   }, [activeRole, assignedPractice?.role, canBrowseRoles, completed, firstIncompleteRole, isSolo]);
 
-  const practice = rolePractice(activeRole) ?? ROLE_PRACTICES[0]!;
+  const practice = practices.find((item) => item.role === activeRole) ?? practices[0]!;
   const role = roleDefinition(practice.role);
   const selected = practice.choices.find((choice) => choice.id === selections[practice.role]);
   const explanation = explanations[practice.role] ?? "";
@@ -113,7 +118,7 @@ export function RolePracticeLab({ snapshot, completed, onComplete, act, busy = f
 
       <div className="role-overall-goal" role="note">
         <span>この実習全体のゴール</span>
-        <div><h3>{LEARNING_SCENARIO_GOAL.title}</h3><code>{LEARNING_SCENARIO_GOAL.url}</code><p>{LEARNING_SCENARIO_GOAL.detail}</p></div>
+        <div><h3>{goal.title}</h3><code>{goal.url}</code><p>{goal.detail}</p></div>
       </div>
 
       <div className="role-sequence-note" role="note">
@@ -122,6 +127,7 @@ export function RolePracticeLab({ snapshot, completed, onComplete, act, busy = f
       </div>
 
       <LearningRouteMap
+        target={target}
         compact
         activeNodeId={ROLE_ROUTE_NODE[practice.role]}
         focus={practice.role === "DNS_SERVER" ? "dns" : practice.role === "WEB_SERVER" ? "web" : practice.role === "ROUTER" ? "gateway" : "all"}
@@ -137,7 +143,7 @@ export function RolePracticeLab({ snapshot, completed, onComplete, act, busy = f
 
       {(isSolo || canBrowseRoles) && (
         <div className="role-practice-tabs" role="tablist" aria-label="役割の進み具合">
-          {ROLE_PRACTICES.map((item, index) => {
+          {practices.map((item, index) => {
             const definition = roleDefinition(item.role);
             const unlocked = canBrowseRoles || completed.has(item.role) || item.role === firstIncompleteRole || allComplete;
             return (
@@ -178,7 +184,7 @@ export function RolePracticeLab({ snapshot, completed, onComplete, act, busy = f
       {currentStage === 1 && (
         <div className="role-guided-step">
           <header><span>1</span><div><small>今回あなたが担当する機器</small><h3>{role.label}</h3><p>{practice.beginnerStory}</p></div></header>
-          <div className="role-goal"><span>学習指導要領ページを見るための、{role.label}の仕事</span><p>{practice.mission}</p></div>
+          <div className="role-goal"><span>{targetPageShortLabel(target)}を見るための、{role.label}の仕事</span><p>{practice.mission}</p></div>
           <div className="role-analogy"><span aria-hidden="true">💡</span><p><b>身近なものに例えると</b>{practice.everydayExample}</p></div>
           <div className="role-situation"><span>いま起きたこと</span><p>{practice.situation}</p></div>
           <div className="role-safe-note"><span>✓</span><p><b>ここでは役割と目的だけ分かれば大丈夫です</b>次の段階で、判断に使う情報を1項目ずつ確認します。</p></div>
@@ -282,7 +288,7 @@ export function RolePracticeLab({ snapshot, completed, onComplete, act, busy = f
       <details className="role-support-details">
         <summary><span>?</span><div><b>実際のPCや機器で、今回見た情報を確かめる方法</b><small>役割の5段階を終えた後、同じ情報が実機のどこに表示されるかを知りたいときに開きます</small></div><em>＋</em></summary>
         <div className="role-reading-guide-grid">
-          {ROLE_READING_GUIDES[practice.role].map((item) => (
+          {readingGuides[practice.role].map((item) => (
             <article key={item.target}><code>{item.target}</code><p><b>画面での読み方</b>{item.reading}</p><p><b>実際の機器での確認手順</b>{item.check}</p></article>
           ))}
         </div>
@@ -290,7 +296,7 @@ export function RolePracticeLab({ snapshot, completed, onComplete, act, busy = f
 
       <details className="role-support-details term-support-details">
         <summary><span>あ</span><div><b>このセクションで出てきた用語</b><small>いま表示している「{currentStage === 1 ? "役割・目的を知る" : currentStage === 2 ? "情報・判断材料を見る" : currentStage === 3 ? "選ぶ・操作を決める" : currentStage === 4 ? "結果・起きたことを見る" : "説明・理由を言葉にする"}」の用語だけを表示します</small></div><em>＋</em></summary>
-        <ContextTerms ids={currentStageTerms} title="このセクションで出てきた用語" />
+        <ContextTerms ids={currentStageTerms} title="このセクションで出てきた用語" target={target} />
       </details>
     </section>
   );

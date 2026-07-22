@@ -298,6 +298,9 @@ input:disabled, select:disabled, textarea:disabled { @apply bg-slate-100 text-sl
 .created-room-list article small { @apply w-full overflow-hidden text-ellipsis whitespace-nowrap text-xs text-slate-500; }
 .created-room-list article b { @apply font-mono text-lg tracking-[.15em] text-dodger-900; }
 .created-room-list article em { @apply text-xs not-italic text-slate-500; }
+.created-room-list article .created-room-target { @apply whitespace-normal break-all; }
+.created-room-list article .created-room-dns { @apply whitespace-normal break-all text-dodger-700; }
+.created-room-list article .created-room-dns strong { @apply font-bold; }
 .created-room-buttons { @apply col-span-2 grid grid-cols-2 gap-2; }
 .created-room-buttons button { @apply min-h-10 rounded-lg border border-dodger-200 bg-white px-3 py-2 text-xs font-bold text-dodger-700; }
 .created-room-buttons button:hover { @apply border-dodger-400 bg-dodger-50 text-dodger-900; }
@@ -322,6 +325,20 @@ input:disabled, select:disabled, textarea:disabled { @apply bg-slate-100 text-sl
 .teacher-message-banner { @apply border-amber-200 bg-amber-50; }
 .teacher-message-banner span { @apply rounded-full border-amber-300 bg-white text-amber-700; letter-spacing: .02em; }
 .teacher-message-banner p { @apply text-sm text-amber-900; }
+.learning-target-summary { @apply mx-auto mt-3 grid w-[calc(100%_-_28px)] max-w-[1550px] grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] overflow-hidden rounded-2xl border border-dodger-200 bg-white shadow-sm; }
+.learning-target-goal,.learning-target-dns { @apply min-w-0 p-4; }
+.learning-target-goal { @apply border-r border-dodger-100 bg-dodger-50; }
+.learning-target-summary small { @apply block text-[10px] font-black tracking-wide text-dodger-700; }
+.learning-target-goal b { @apply mt-1 block text-base font-black text-slate-900; }
+.learning-target-goal code { @apply mt-2 block overflow-hidden text-ellipsis whitespace-nowrap rounded-lg border border-dodger-100 bg-white px-3 py-2 text-xs text-slate-700; }
+.learning-target-dns p { @apply mt-2 grid items-center gap-x-2 gap-y-1; grid-template-columns:auto minmax(0,1fr) auto auto minmax(0,1fr); }
+.learning-target-dns p span { @apply text-[10px] font-bold text-slate-500; }
+.learning-target-dns p b,.learning-target-dns p strong { @apply min-w-0 break-all text-sm font-black text-slate-900; }
+.learning-target-dns p strong { @apply text-dodger-700; }
+.learning-target-dns p i { @apply font-black not-italic text-dodger-400; }
+.learning-target-dns > em { @apply mt-2 block text-[10px] not-italic text-slate-500; }
+.learning-target-note { @apply col-span-2 m-0 border-t border-dodger-100 bg-slate-50 px-4 py-2 text-[11px] text-slate-600; }
+.learning-target-note b { @apply text-slate-800; }
 .phase-stepper { @apply border-dodger-100 bg-white shadow-sm; }
 .phase-step { @apply border-dodger-100 text-slate-400; }
 .phase-step > span { @apply border-slate-300 bg-white; }
@@ -777,6 +794,7 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
   .beginner-guide { align-items: flex-start; flex-wrap: wrap; margin: 12px 10px 0; padding: 15px; }.guide-task { padding-top: 2px; }.guide-role { width: 100%; margin-left: 59px; border-left: 0; border-top: 1px solid var(--line); padding: 10px 0 0; }
   .solo-progress { align-items: stretch; flex-direction: column; margin: 10px 10px 0; }.solo-progress-actions { display: grid; grid-template-columns: 1fr 1.4fr; }.solo-role-grid { grid-template-columns: 1fr; }
   .teacher-message-banner { justify-content: flex-start; }.teacher-message-banner p { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .learning-target-summary { @apply grid-cols-1; }.learning-target-goal { @apply border-r-0 border-b; }.learning-target-note { @apply col-span-1; }
   .room-grid { padding: 10px; }.panel-heading { padding: 13px 14px; }
   .topology-canvas { padding-left: 14px; }.participant-list { grid-template-columns: 1fr; }
   .field-grid { grid-template-columns: 1fr; }.topology-mission ul { grid-template-columns: 1fr 1fr; }.diagnostic-tools { grid-template-columns: 1fr 1fr; }
@@ -795,6 +813,7 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
   .role-support-details { @apply mt-3; }.role-support-details summary small { @apply text-[11px]; }
   .learning-support-drawer > summary { @apply px-4; }
   .learning-coach { top:72px; grid-template-columns:34px minmax(0,1fr); gap:10px; margin-top:8px; padding:10px 12px; border-radius:13px; }.learning-coach-icon { @apply h-8 w-8 text-sm; }.learning-coach-main small { @apply text-[9px]; }.learning-coach-main b { @apply text-sm; }.learning-coach-main p { display:none; }.learning-coach > button { @apply col-span-2 min-h-9 w-full px-3 py-1.5; }
+  .learning-target-summary { @apply mt-2 w-[calc(100%_-_20px)] rounded-xl; }.learning-target-goal,.learning-target-dns { @apply p-3; }.learning-target-dns p { @apply grid-cols-1; }.learning-target-dns p i { @apply rotate-90 justify-self-start; }.learning-target-goal code { @apply whitespace-normal break-all; }
   .learning-route-map { margin-left:10px; margin-right:10px; border-radius:14px; }.learning-route-map.compact { margin-left:10px; margin-right:10px; }.learning-route-map > header { @apply gap-3 p-4; }.learning-route-map > header h2 { @apply text-base; }.learning-route-map > header p { @apply text-xs; }.gateway-explanation { @apply p-3; }.route-overview { @apply grid-cols-1 gap-0 p-3; }.route-overview li { @apply border-r-0 border-b px-2 py-3 last:border-b-0; }.route-overview li > i { @apply -top-3 left-5 rotate-90; }.route-lanes { @apply gap-3 p-2; }.route-lane-heading { @apply p-3; }.route-lane-heading h3 { @apply text-sm; }.route-round-summary { @apply grid-cols-1 gap-2 p-3; }.route-round-summary > i { @apply rotate-90 justify-self-center; }.route-scroll { @apply p-3; scroll-snap-type:x proximity; }.route-scroll-hint { width:calc(100vw - 72px); @apply mb-2 block rounded-lg border border-dodger-200 bg-white px-3 py-2 text-center text-[10px] font-bold leading-relaxed text-dodger-700; }.route-outbound,.route-return,.route-track,.route-return-track,.route-after-return { min-width:780px; }.route-track > li { scroll-snap-align:start; }.route-node { min-height:140px; }.route-after-return { @apply grid-cols-[auto_1fr]; }.learning-route-map > footer { @apply items-start px-4 text-[10px]; }
   .inline-learning-lead { width:calc(100% - 20px); margin-left:10px; margin-right:10px; padding:12px; }.inline-learning-lead > span { @apply px-2.5 py-1 text-[9px]; }.inline-learning-lead b { @apply text-xs; }.inline-learning-lead p { @apply text-[11px]; }
   .mission-panel .inline-learning-lead { width:100%; margin-left:0; margin-right:0; }

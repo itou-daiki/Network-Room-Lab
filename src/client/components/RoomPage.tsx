@@ -3,17 +3,18 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   DEVICES,
   FAULT_DEFINITIONS,
-  LEARNING_SCENARIO_GOAL,
   PHASE_DEFINITIONS,
-  PROTOCOL_STEPS,
-  REFLECTION_PROMPTS,
   ROLE_DEFINITIONS,
+  learningScenarioGoal,
   phaseDefinition,
+  protocolStepsForTarget,
+  reflectionPromptsForTarget,
   roleDefinition,
 } from "../../shared/scenario";
 import { PHASE_TERM_IDS } from "../../shared/glossary";
+import { targetPageLabel, targetPageShortLabel } from "../../shared/learningTarget";
 import { learningLead, type LearningLead } from "../../shared/learningLead";
-import { PRACTICE_TASKS, protocolDecisionChoices, protocolTermIds, type PracticeMilestone } from "../../shared/practice";
+import { practiceTasksForTarget, protocolDecisionChoices, protocolTermIds, type PracticeMilestone } from "../../shared/practice";
 import { CORE_ROLE_IDS, type CoreRoleId } from "../../shared/rolePractice";
 import { validateInterfaceConfig } from "../../shared/network";
 import type {
@@ -98,6 +99,29 @@ function LearningCoach({ lead }: { lead: LearningLead }) {
   );
 }
 
+function LearningTargetSummary({ snapshot }: { snapshot: RoomSnapshot }) {
+  const target = snapshot.room.learningTarget;
+  const resolvedAt = target.resolvedAt
+    ? new Date(target.resolvedAt).toLocaleString("ja-JP", { dateStyle: "short", timeStyle: "short" })
+    : "この部屋では未取得";
+  const addresses = target.ipv4Addresses.length > 0 ? target.ipv4Addresses.join("、") : target.primaryIpv4;
+  return (
+    <section className="learning-target-summary" aria-label="この部屋の学習対象とDNS問い合わせ結果">
+      <div className="learning-target-goal">
+        <small>この部屋で表示を目指すWebページ</small>
+        <b>{targetPageLabel(target)}</b>
+        <code>{target.url}</code>
+      </div>
+      <div className="learning-target-dns">
+        <small>部屋作成時の実際のDNS問い合わせ結果</small>
+        <p><span>質問した名前</span><b>{target.hostname}</b><i aria-hidden="true">→</i><span>返ったIPv4アドレス</span><strong>{addresses}</strong></p>
+        <em>{target.resolver} / TTL {target.dnsTtl}秒 / {resolvedAt}</em>
+      </div>
+      <p className="learning-target-note"><b>実際に行う部分：</b>DNSへの問い合わせ　<b>学習モデルで再現する部分：</b>Webページ本体の送受信</p>
+    </section>
+  );
+}
+
 const PHASE_PRACTICE_REQUIREMENTS: Partial<Record<RoomSnapshot["room"]["phase"], PracticeMilestone[]>> = {
   TOPOLOGY: ["PING_GATEWAY"],
   ADDRESSING: ["IPCONFIG", "PING_GATEWAY"],
@@ -113,9 +137,11 @@ function SoloProgressControls({
   rolePracticeCompleted,
 }: SharedPanelProps & { practiceCompleted: ReadonlySet<PracticeMilestone>; rolePracticeCompleted: ReadonlySet<CoreRoleId> }) {
   const current = phaseDefinition(snapshot.room.phase);
+  const protocolSteps = protocolStepsForTarget(snapshot.room.learningTarget);
+  const practiceTasks = practiceTasksForTarget(snapshot.room.learningTarget);
   const previous = PHASE_DEFINITIONS.find((phase) => phase.index === current.index - 1 && phase.id !== "LOBBY");
   const next = PHASE_DEFINITIONS.find((phase) => phase.index === current.index + 1);
-  const protocolIncomplete = snapshot.room.phase === "PROTOCOL" && snapshot.room.protocolIndex < PROTOCOL_STEPS.length;
+  const protocolIncomplete = snapshot.room.phase === "PROTOCOL" && snapshot.room.protocolIndex < protocolSteps.length;
   const topologyIncomplete = snapshot.room.phase === "TOPOLOGY" && snapshot.room.links.some((link) => !link.up);
   const missingRoles = snapshot.room.phase === "ROLES" ? CORE_ROLE_IDS.filter((roleId) => !rolePracticeCompleted.has(roleId)) : [];
   const rolePracticeIncomplete = missingRoles.length > 0;
@@ -127,11 +153,11 @@ function SoloProgressControls({
   const progressHint = rolePracticeIncomplete
     ? `下の役割学習で、あと${missingRoles.length}役を「目的・情報・操作・結果・説明」の順に体験します。`
     : protocolIncomplete
-    ? "学習指導要領ページが表示されるまでの17段階を最後まで進めると、次へ移動できます。"
+    ? `${targetPageShortLabel(snapshot.room.learningTarget)}が表示されるまでの17段階を最後まで進めると、次へ移動できます。`
     : topologyIncomplete
       ? "切断を試した後は、すべての接続を元に戻してから進みます。"
       : practiceIncomplete
-        ? `下のコマンド実験で「${missingPractice.map((milestone) => PRACTICE_TASKS.find((task) => task.id === milestone)?.label ?? milestone).join("」「")}」を順番に実行します。`
+        ? `下のコマンド実験で「${missingPractice.map((milestone) => practiceTasks.find((task) => task.id === milestone)?.label ?? milestone).join("」「")}」を順番に実行します。`
         : explanationIncomplete
           ? "実行結果を観察し、「予想と比べて分かったこと」を10文字以上で説明します。"
           : undefined;
@@ -200,7 +226,7 @@ function LinkControl({ link, canEdit, busy, act }: { link: TopologyLink; canEdit
 
 function TopologyPanel({ snapshot, busy, act }: SharedPanelProps) {
   const room = snapshot.room;
-  const currentStep = PROTOCOL_STEPS[room.protocolIndex];
+  const currentStep = protocolStepsForTarget(room.learningTarget)[room.protocolIndex];
   const editableRole = snapshot.viewer.role && ["ACCESS_POINT", "L2_SWITCH", "ROUTER"].includes(snapshot.viewer.role);
   const canEdit = snapshot.viewer.kind === "teacher" || (room.phase === "TOPOLOGY" && (room.learningMode === "SOLO" || Boolean(editableRole)));
   const link = (id: string) => room.links.find((candidate) => candidate.id === id)!;
@@ -287,7 +313,7 @@ function AddressingMission({ snapshot, busy, act }: SharedPanelProps) {
       {canEdit && (
         <div className="address-experiment-actions">
           <button type="button" className={`secondary-button ${!triedBadGateway && !configSaved ? "guide-target" : ""}`} onClick={() => { setTriedBadGateway(true); setConfig({ ...config, gateway: "192.168.20.1" }); }}>誤った出口の設定を試す</button>
-          <button type="button" className={`secondary-button ${configErrors.length > 0 ? "guide-target" : ""}`} onClick={() => setConfig({ address: "192.168.10.23", prefix: 24, gateway: "192.168.10.1", dns: "198.51.100.53" })}>推奨値へ戻す</button>
+          <button type="button" className={`secondary-button ${configErrors.length > 0 ? "guide-target" : ""}`} onClick={() => setConfig({ address: "192.168.10.23", prefix: 24, gateway: "192.168.10.1", dns: "1.1.1.1" })}>推奨値へ戻す</button>
         </div>
       )}
       <div className={`config-feedback ${configErrors.length > 0 ? "failure" : "success"}`} role="status">
@@ -299,7 +325,7 @@ function AddressingMission({ snapshot, busy, act }: SharedPanelProps) {
         </div>
       </div>
       <div className="subnet-check"><span>PCがいるネットワーク</span><b>192.168.10.0/24</b><span>外部への出口</span><b>192.168.10.1</b></div>
-      <ContextTerms ids={PHASE_TERM_IDS.ADDRESSING ?? []} />
+      <ContextTerms ids={PHASE_TERM_IDS.ADDRESSING ?? []} target={snapshot.room.learningTarget} />
       {canEdit ? <button className={`primary-button ${triedBadGateway && configErrors.length === 0 && !configSaved ? "guide-target" : ""}`} disabled={busy || configErrors.length > 0}>この設定を保存してコマンドで確認</button> : <p className="waiting-note">PC担当の設定を観察しています。</p>}
     </form>
   );
@@ -307,8 +333,10 @@ function AddressingMission({ snapshot, busy, act }: SharedPanelProps) {
 
 function ProtocolMission({ snapshot, busy, act }: SharedPanelProps) {
   const [selectedChoiceId, setSelectedChoiceId] = useState<string | null>(null);
-  const step = PROTOCOL_STEPS[snapshot.room.protocolIndex];
-  const complete = snapshot.room.protocolIndex >= PROTOCOL_STEPS.length;
+  const protocolSteps = protocolStepsForTarget(snapshot.room.learningTarget);
+  const pageLabel = targetPageShortLabel(snapshot.room.learningTarget);
+  const step = protocolSteps[snapshot.room.protocolIndex];
+  const complete = snapshot.room.protocolIndex >= protocolSteps.length;
   const isSolo = snapshot.room.learningMode === "SOLO";
   const choices = useMemo(() => step ? protocolDecisionChoices(step) : [], [step]);
   const selectedChoice = choices.find((choice) => choice.id === selectedChoiceId);
@@ -325,7 +353,7 @@ function ProtocolMission({ snapshot, busy, act }: SharedPanelProps) {
     return (
       <div className="mission-complete">
         <span>✓</span><h3>Webページが表示されました</h3>
-        <p>学習指導要領ページを表示するために必要な、名前の確認・接続・暗号化・ページ取得の全17段階を完了しました。</p>
+        <p>{pageLabel}を表示するために必要な、名前の確認・接続・暗号化・ページ取得の全17段階を完了しました。</p>
         {(snapshot.viewer.kind === "teacher" || isSolo) && <button className="secondary-button" disabled={busy} onClick={() => void act({ type: "RESET_PROTOCOL" })}>最初から再生</button>}
       </div>
     );
@@ -341,18 +369,18 @@ function ProtocolMission({ snapshot, busy, act }: SharedPanelProps) {
         ? { title: "表示された理由を読み、別の答えを選びます", detail: "間違えても減点されません。A・B・Cは何度でも選び直せます。" }
         : sharedUnassignedRole
           ? { title: "この役割は、班のみんなで操作を選びます", detail: `${roleDefinition(activeStep.actorRole).label}の担当者がいないため、「${activeStep.title}」という目的を班で確認します。班の誰が操作しても大丈夫です。` }
-          : { title: "学習指導要領ページの表示に必要な操作を、A・B・Cから1つ選びます", detail: `いまは${roleDefinition(activeStep.actorRole).label}の担当です。「${activeStep.title}」という目的を手がかりにします。` };
+          : { title: `${pageLabel}の表示に必要な操作を、A・B・Cから1つ選びます`, detail: `いまは${roleDefinition(activeStep.actorRole).label}の担当です。「${activeStep.title}」という目的を手がかりにします。` };
 
   return (
     <div className="protocol-mission">
       <div className="inline-learning-lead" role="status"><span>次にやること</span><div><b>{protocolAction.title}</b><p>{protocolAction.detail}</p></div></div>
-      <div className="protocol-breadcrumb" aria-label="学習指導要領ページが表示されるまでに行うこと">
+      <div className="protocol-breadcrumb" aria-label={`${pageLabel}が表示されるまでに行うこと`}>
         {([
           ["ARP", "近くの機器番号を調べる"],
           ["DNS", "Webサイト名から住所を調べる"],
           ["TCP", "通信路を準備する"],
           ["TLS", "相手確認と暗号化を行う"],
-          ["HTTPS", "学習指導要領ページを受け取る"],
+          ["HTTPS", `${pageLabel}を受け取る`],
         ] as const).map(([protocol, purpose]) => (
           <span key={protocol} className={activeStep.protocol === protocol ? "active" : ""} title={purpose}>{protocol}<small>{purpose}</small></span>
         ))}
@@ -365,7 +393,7 @@ function ProtocolMission({ snapshot, busy, act }: SharedPanelProps) {
         {(isSolo || snapshot.viewer.role === activeStep.actorRole || sharedUnassignedRole) && <em>{isSolo ? "この役割として考えます" : sharedUnassignedRole ? "班で担当します" : "あなたの番です"}</em>}
       </div>
       <fieldset className="decision-challenge" disabled={!canAdvance || busy}>
-        <legend>学習指導要領ページの表示に近づけるために、この機器は次に何をする？</legend>
+        <legend>{pageLabel}の表示に近づけるために、この機器は次に何をする？</legend>
         {choices.map((choice, index) => (
           <button type="button" key={choice.id} className={selectedChoiceId === choice.id ? choice.correct ? "selected correct" : "selected wrong" : ""} aria-pressed={selectedChoiceId === choice.id} onClick={() => setSelectedChoiceId(choice.id)}>
             <span>{String.fromCharCode(65 + index)}</span><b>{choice.label}</b>
@@ -378,7 +406,7 @@ function ProtocolMission({ snapshot, busy, act }: SharedPanelProps) {
           <p><b>{selectedChoice.correct ? "この操作で目的に近づけます" : "いまの機器の目的をもう一度確認します"}</b>{selectedChoice.correct ? activeStep.description : `「${activeStep.title}」を行うために必要な操作はどれか、選択肢をもう一度比べます。`}</p>
         </div>
       )}
-      <ContextTerms ids={protocolTermIds(activeStep)} title="この画面で出てきた用語を確認する" />
+      <ContextTerms ids={protocolTermIds(activeStep)} title="この画面で出てきた用語を確認する" target={snapshot.room.learningTarget} />
       {canAdvance ? (
         <button className="primary-button packet-action" disabled={busy || !selectedChoice?.correct} onClick={() => void act({ type: "ADVANCE_PROTOCOL", decision: selectedChoice?.label ?? "" })}>
           この操作で次の段階へ進む <span>→</span>
@@ -397,19 +425,19 @@ function DiagnosisMission({ snapshot }: SharedPanelProps) {
     { id: "LINK", label: "PCからルータまでの接続" },
     { id: "GATEWAY", label: "PCの住所・外部への出口・ルータの道案内" },
     { id: "DNS", label: "Webサイト名をIPアドレスへ変えるDNSサーバ" },
-    { id: "WEB", label: "Webサイトの証明書または学習指導要領ページを返す機能" },
+    { id: "WEB", label: `Webサイトの証明書または${targetPageShortLabel(snapshot.room.learningTarget)}を返す機能` },
   ];
   const latestToolLabel = latest
     ? ({
         PING: "相手まで届くかの確認（ping）",
         NSLOOKUP: "Webサイト名からIPアドレスを調べる確認（nslookup）",
         TRACEROUTE: "目的地までに通った道の確認（traceroute）",
-        HTTPS: "学習指導要領ページの応答の確認（curl）",
+        HTTPS: `${targetPageShortLabel(snapshot.room.learningTarget)}の応答の確認（curl）`,
       } as const)[latest.tool]
     : "";
   return (
     <div className="diagnosis-mission">
-      <div className="mission-callout warning"><span>この実験の目的</span><p>学習指導要領ページが表示されない原因を見つけます。まず原因になりそうな場所を予想し、その後に確認コマンドの結果を見て予想を直します。</p></div>
+      <div className="mission-callout warning"><span>この実験の目的</span><p>{targetPageShortLabel(snapshot.room.learningTarget)}が表示されない原因を見つけます。まず原因になりそうな場所を予想し、その後に確認コマンドの結果を見て予想を直します。</p></div>
       <div className="inline-learning-lead" role="status"><span>次にやること</span><div><b>{hypothesis ? "下のコマンド実験で「通った道から失敗地点を絞る」を押します" : "4つの候補から、原因だと思う場所を1つ選びます"}</b><p>{hypothesis ? "最初の予想を記録できました。通過したルータを順に表示して、最後に返事があった場所を確認します。" : "最初から正解する必要はありません。今の予想を1つ選べば進めます。"}</p></div></div>
       <div className="hypothesis-choices" role="group" aria-label="原因についての最初の予想">
         {hypotheses.map((item) => (
@@ -422,12 +450,13 @@ function DiagnosisMission({ snapshot }: SharedPanelProps) {
           <span>{latest.success ? "✓" : "!"}</span><div><b>直前の結果：{latestToolLabel}は{latest.success ? "成功" : "失敗"}</b><p>{latest.inference}</p></div>
         </div>
       )}
-      <ContextTerms ids={PHASE_TERM_IDS.DIAGNOSIS ?? []} title="原因を調べるときに出てきた用語" />
+      <ContextTerms ids={PHASE_TERM_IDS.DIAGNOSIS ?? []} title="原因を調べるときに出てきた用語" target={snapshot.room.learningTarget} />
     </div>
   );
 }
 
 function ReflectionMission({ snapshot, busy, act }: SharedPanelProps) {
+  const reflectionPrompts = reflectionPromptsForTarget(snapshot.room.learningTarget);
   const existing = useMemo(
     () => Object.fromEntries(snapshot.reflections.filter((item) => item.participantId === snapshot.viewer.participantId).map((item) => [item.promptId, item.response])),
     [snapshot.reflections, snapshot.viewer.participantId],
@@ -444,15 +473,15 @@ function ReflectionMission({ snapshot, busy, act }: SharedPanelProps) {
     );
   }
 
-  const nextPromptIndex = REFLECTION_PROMPTS.findIndex((prompt) => existing[prompt.id] === undefined);
-  const nextPrompt = nextPromptIndex >= 0 ? REFLECTION_PROMPTS[nextPromptIndex] : undefined;
+  const nextPromptIndex = reflectionPrompts.findIndex((prompt) => existing[prompt.id] === undefined);
+  const nextPrompt = nextPromptIndex >= 0 ? reflectionPrompts[nextPromptIndex] : undefined;
   const nextDraftReady = nextPrompt ? (responses[nextPrompt.id]?.trim().length ?? 0) >= 10 : false;
 
   return (
     <div className="reflection-form">
       <div className="inline-learning-lead" role="status"><span>次にやること</span><div><b>{nextPrompt ? nextDraftReady ? `振り返り ${nextPromptIndex + 1} の「保存」を押します` : `振り返り ${nextPromptIndex + 1} を10文字以上で書きます` : "3つの振り返りを保存できました"}</b><p>{nextPrompt ? nextDraftReady ? "必要なら文を読み直し、保存すると次の問いへ進みます。" : "正解は1つではありません。体験中に確認した情報や選んだ操作を1つ入れます。" : "これで学習完了です。必要なら前の学習段階へ戻って復習できます。"}</p></div></div>
-      <ContextTerms ids={PHASE_TERM_IDS.REFLECTION ?? []} title="説明に使える用語" />
-      {REFLECTION_PROMPTS.map((prompt, index) => (
+      <ContextTerms ids={PHASE_TERM_IDS.REFLECTION ?? []} title="説明に使える用語" target={snapshot.room.learningTarget} />
+      {reflectionPrompts.map((prompt, index) => (
         <div className="reflection-item" key={prompt.id}>
           <span>0{index + 1}</span>
           <label>{prompt.label}
@@ -477,6 +506,7 @@ function ReflectionMission({ snapshot, busy, act }: SharedPanelProps) {
 function MissionPanel({ snapshot, busy, act }: SharedPanelProps) {
   const phase = phaseDefinition(snapshot.room.phase);
   const role = snapshot.viewer.role ? roleDefinition(snapshot.viewer.role) : null;
+  const goal = learningScenarioGoal(snapshot.room.learningTarget);
   let content: React.ReactNode;
 
   if (snapshot.room.phase === "LOBBY") {
@@ -484,7 +514,7 @@ function MissionPanel({ snapshot, busy, act }: SharedPanelProps) {
   } else if (snapshot.room.phase === "ROLES") {
     content = snapshot.room.learningMode === "SOLO" ? (
       <div className="solo-role-overview">
-        <div className="mission-callout"><span>この実習全体のゴール</span><p><b>{LEARNING_SCENARIO_GOAL.title}</b><br />6つの機器を順番に担当し、それぞれがページ表示のために行う仕事を確かめます。</p></div>
+        <div className="mission-callout"><span>この実習全体のゴール</span><p><b>{goal.title}</b><br />6つの機器を順番に担当し、それぞれがページ表示のために行う仕事を確かめます。</p><small>{goal.url}</small><p>{goal.detail}</p></div>
         <div className="solo-role-grid">
           {ROLE_DEFINITIONS.filter((definition) => definition.id !== "OBSERVER").map((definition, index) => (
             <article key={definition.id} style={{ "--role-accent": definition.accent } as React.CSSProperties}>
@@ -492,20 +522,20 @@ function MissionPanel({ snapshot, busy, act }: SharedPanelProps) {
             </article>
           ))}
         </div>
-        <ContextTerms ids={PHASE_TERM_IDS.ROLES ?? []} />
+        <ContextTerms ids={PHASE_TERM_IDS.ROLES ?? []} target={snapshot.room.learningTarget} />
       </div>
     ) : role ? (
       <div className="role-mission" style={{ "--role-accent": role.accent } as React.CSSProperties}>
         <span className="role-id">あなたの担当 / {role.shortLabel.toUpperCase()}</span>
         <h3>{role.label}</h3><p>{role.description}</p>
         <h4>この担当で確認できる情報</h4><div className="tag-list">{role.observes.map((item) => <span key={item}>{item}</span>)}</div>
-        <div className="mission-callout"><span>この担当の目的</span><p>下の役割学習で、学習指導要領ページを表示するために、この機器が担当する仕事を順番に確かめます。</p></div>
+        <div className="mission-callout"><span>この担当の目的</span><p>下の役割学習で、{targetPageShortLabel(snapshot.room.learningTarget)}を表示するために、この機器が担当する仕事を順番に確かめます。</p></div>
         {snapshot.room.participants.length < 6 && <div className="mission-callout shared-role-callout"><span>担当者がいない機器について</span><p>この班は{snapshot.room.participants.length}人です。割り当てられていない機器の通信段階では、班のみんなが選択肢を操作できます。</p></div>}
-        <ContextTerms ids={PHASE_TERM_IDS.ROLES ?? []} />
+        <ContextTerms ids={PHASE_TERM_IDS.ROLES ?? []} target={snapshot.room.learningTarget} />
       </div>
     ) : <p>教員モードです。参加者へ役割を割り当ててください。</p>;
   } else if (snapshot.room.phase === "TOPOLOGY") {
-    content = <div className="topology-mission"><div className="mission-callout"><span>この実験の目的</span><p>DNSへの質問とWebサーバへのページ要求が、PCからどの機器を通って校外へ進むかを確かめます。サーバからの答えとページのデータは、同じ機器を反対向きに通ってPCへ戻ります。次に接続線を1本だけ切り、どこから先へ届かなくなるかを確認してから、同じ線を押して元に戻します。</p></div><ul>{snapshot.room.links.map((link) => <li key={link.id}><span className={link.up ? "ok" : "ng"}>{link.up ? "接続中" : "切断"}</span><b>{deviceLabel(link.from)} → {deviceLabel(link.to)}</b><small>{link.medium}</small></li>)}</ul><ContextTerms ids={PHASE_TERM_IDS.TOPOLOGY ?? []} /></div>;
+    content = <div className="topology-mission"><div className="mission-callout"><span>この実験の目的</span><p>DNSへの質問とWebサーバへのページ要求が、PCからどの機器を通って校外へ進むかを確かめます。サーバからの答えとページのデータは、同じ機器を反対向きに通ってPCへ戻ります。次に接続線を1本だけ切り、どこから先へ届かなくなるかを確認してから、同じ線を押して元に戻します。</p></div><ul>{snapshot.room.links.map((link) => <li key={link.id}><span className={link.up ? "ok" : "ng"}>{link.up ? "接続中" : "切断"}</span><b>{deviceLabel(link.from)} → {deviceLabel(link.to)}</b><small>{link.medium}</small></li>)}</ul><ContextTerms ids={PHASE_TERM_IDS.TOPOLOGY ?? []} target={snapshot.room.learningTarget} /></div>;
   } else if (snapshot.room.phase === "ADDRESSING") {
     content = <AddressingMission snapshot={snapshot} busy={busy} act={act} />;
   } else if (snapshot.room.phase === "PROTOCOL") {
@@ -527,8 +557,9 @@ function MissionPanel({ snapshot, busy, act }: SharedPanelProps) {
 
 function PacketInspector({ snapshot }: { snapshot: RoomSnapshot }) {
   const index = snapshot.room.protocolIndex;
-  const step = PROTOCOL_STEPS[Math.min(index, PROTOCOL_STEPS.length - 1)]!;
-  const complete = index >= PROTOCOL_STEPS.length;
+  const protocolSteps = protocolStepsForTarget(snapshot.room.learningTarget);
+  const step = protocolSteps[Math.min(index, protocolSteps.length - 1)]!;
+  const complete = index >= protocolSteps.length;
   const role = snapshot.viewer.role;
   const layers = step.layers.filter((layer) => snapshot.viewer.kind === "teacher" || snapshot.room.learningMode === "SOLO" || role === "OBSERVER" || (role && layer.visibleTo.includes(role)));
 
@@ -544,7 +575,7 @@ function PacketInspector({ snapshot }: { snapshot: RoomSnapshot }) {
           </div>
         ))}
       </div>
-      <div className="packet-progress"><div><span>学習指導要領ページが表示されるまでの進み具合</span><b>{Math.min(index, PROTOCOL_STEPS.length)} / {PROTOCOL_STEPS.length}</b></div><progress max={PROTOCOL_STEPS.length} value={index} /></div>
+      <div className="packet-progress"><div><span>{targetPageShortLabel(snapshot.room.learningTarget)}が表示されるまでの進み具合</span><b>{Math.min(index, protocolSteps.length)} / {protocolSteps.length}</b></div><progress max={protocolSteps.length} value={index} /></div>
       <p className="model-note"><b>学習用モデル</b> まず全体の流れをつかめるよう、細かな処理は省略しています。</p>
     </section>
   );
@@ -663,7 +694,7 @@ export function RoomPage({ session, onLeave }: RoomPageProps) {
   const focusedSoloPhase = isSolo && snapshot.room.phase !== "ROLES";
   const showPractice = Boolean(PHASE_PRACTICE_REQUIREMENTS[snapshot.room.phase]);
   const nextAction = learningLead(snapshot, practiceCompleted, rolePracticeCompleted);
-  const activeProtocolStep = PROTOCOL_STEPS[snapshot.room.protocolIndex];
+  const activeProtocolStep = protocolStepsForTarget(snapshot.room.learningTarget)[snapshot.room.protocolIndex];
   const routeFocus = snapshot.room.phase === "ADDRESSING"
     ? "gateway"
     : snapshot.room.phase === "PROTOCOL" && activeProtocolStep?.protocol === "DNS"
@@ -697,9 +728,10 @@ export function RoomPage({ session, onLeave }: RoomPageProps) {
       </header>
 
       {(!focusedRolePractice || !isSolo) && <div className="teacher-message-banner"><span>{isSolo ? "学習ガイド" : "先生からの案内"}</span><p>{snapshot.room.teacherMessage}</p></div>}
+      <LearningTargetSummary snapshot={snapshot} />
       <PhaseStepper snapshot={snapshot} />
       <LearningCoach lead={nextAction} />
-      {snapshot.room.phase !== "ROLES" && <LearningRouteMap activeNodeId={activeRouteNode} focus={routeFocus} />}
+      {snapshot.room.phase !== "ROLES" && <LearningRouteMap activeNodeId={activeRouteNode} focus={routeFocus} target={snapshot.room.learningTarget} />}
       {isSolo && snapshot.room.phase !== "ROLES" && <SoloProgressControls snapshot={snapshot} busy={busy} act={act} practiceCompleted={practiceCompleted} rolePracticeCompleted={rolePracticeCompleted} />}
       {error && <div className="room-error" role="alert"><span>!</span>{error}<button onClick={dismissError}>閉じる</button></div>}
 
@@ -719,7 +751,7 @@ export function RoomPage({ session, onLeave }: RoomPageProps) {
               <div className="room-support-grid">
                 <TopologyPanel snapshot={snapshot} busy={busy} act={act} />
                 <PacketInspector snapshot={snapshot} />
-                <GlossaryPanel />
+                <GlossaryPanel target={snapshot.room.learningTarget} />
               </div>
             </details>
           </>
@@ -734,7 +766,7 @@ export function RoomPage({ session, onLeave }: RoomPageProps) {
                 {snapshot.room.phase !== "TOPOLOGY" && <TopologyPanel snapshot={snapshot} busy={busy} act={act} />}
                 <PacketInspector snapshot={snapshot} />
                 <EventPanel snapshot={snapshot} />
-                <GlossaryPanel />
+                <GlossaryPanel target={snapshot.room.learningTarget} />
               </div>
             </details>
           </>
@@ -753,7 +785,7 @@ export function RoomPage({ session, onLeave }: RoomPageProps) {
             />}
             <ParticipantsPanel snapshot={snapshot} />
             <EventPanel snapshot={snapshot} />
-            <GlossaryPanel />
+            <GlossaryPanel target={snapshot.room.learningTarget} />
             {snapshot.viewer.kind === "teacher" && <TeacherPanel snapshot={snapshot} busy={busy} act={act} session={session} />}
           </>
         )}
