@@ -499,6 +499,13 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
 .gateway-explanation { @apply flex flex-col rounded-xl border border-amber-200 bg-amber-50 p-3; }
 .gateway-explanation b { @apply text-xs font-black text-amber-900; }
 .gateway-explanation span { @apply mt-1 text-xs leading-relaxed text-amber-900; }
+.route-overview { @apply m-0 grid list-none grid-cols-3 border-b border-dodger-100 bg-white p-4; }
+.route-overview li { @apply relative flex items-center gap-3 border-r border-dodger-100 px-4 last:border-r-0; }
+.route-overview li > span { @apply grid h-9 w-9 shrink-0 place-items-center rounded-full bg-dodger-500 text-sm font-black text-white; }
+.route-overview li > div { @apply flex min-w-0 flex-col; }
+.route-overview li b { @apply text-xs font-black text-slate-900; }
+.route-overview li small { @apply mt-1 text-[10px] leading-relaxed text-slate-500; }
+.route-overview li > i { @apply absolute -left-3 z-10 grid h-6 w-6 place-items-center rounded-full bg-white text-sm font-black not-italic text-dodger-500; }
 .route-lanes { @apply grid gap-4 p-4; }
 .route-lane { @apply overflow-hidden rounded-2xl border-2 bg-white transition-opacity; }
 .route-lane.route-dns { @apply border-cyan-200; }
@@ -512,6 +519,14 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
 .route-web .route-lane-heading > span { @apply bg-dodger-600; }
 .route-lane-heading h3 { @apply m-0 text-base font-black text-slate-900; }
 .route-lane-heading p { @apply m-0 mt-1 text-xs leading-relaxed text-slate-600; }
+.route-round-summary { @apply grid grid-cols-[1fr_auto_1fr] items-stretch gap-3 border-b border-slate-100 bg-white p-4; }
+.route-round-summary > div { @apply rounded-xl border border-slate-200 bg-slate-50 p-3; }
+.route-round-summary > div:last-child { @apply border-dodger-300 bg-dodger-50; }
+.route-round-summary span { @apply text-[10px] font-black text-slate-500; }
+.route-round-summary > div:last-child span { @apply text-dodger-700; }
+.route-round-summary p { @apply m-0 mt-1 text-xs leading-relaxed text-slate-700; }
+.route-round-summary b { @apply text-dodger-950; }
+.route-round-summary > i { @apply self-center text-xl font-black not-italic text-dodger-400; }
 .route-scroll { @apply overflow-x-auto p-4 outline-none; scrollbar-color:#8ecbff #eff8ff; scrollbar-width:thin; }
 .route-scroll:focus-visible { @apply ring-4 ring-inset ring-dodger-100; }
 .route-scroll-hint { display:none; }
@@ -521,8 +536,9 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
 .route-outbound > span,.route-return > span { @apply rounded-full px-2 py-0.5 text-[9px] font-black text-white; }
 .route-outbound > span { @apply bg-dodger-600; }
 .route-return > span { @apply bg-emerald-600; }
-.route-outbound > b { @apply ml-auto text-lg text-dodger-500; }
-.route-return > b { @apply text-lg text-emerald-600; }
+.route-outbound > b,.route-return > b { @apply min-w-0 text-[11px] leading-relaxed; }
+.route-outbound > i { @apply ml-auto text-lg font-black not-italic text-dodger-500; }
+.route-return > i { @apply text-lg font-black not-italic text-emerald-600; }
 .route-track { min-width:920px; @apply m-0 flex list-none items-stretch p-0; }
 .route-track > li { @apply flex min-w-0 flex-1 items-center; }
 .route-node { min-height:132px; @apply relative flex min-w-0 flex-1 flex-col rounded-xl border-2 border-slate-200 bg-slate-50 p-3; }
@@ -530,10 +546,21 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
 .route-node > b { @apply mt-2 text-sm font-black text-slate-900; }
 .route-node > em { @apply mt-1 text-[9px] font-bold not-italic leading-snug text-amber-700; }
 .route-node > small { @apply mt-1 text-[10px] leading-relaxed text-slate-500; }
+.route-node > mark { @apply mt-auto w-fit rounded-full bg-emerald-100 px-2 py-1 text-[9px] font-black text-emerald-800; }
 .route-track > li.active .route-node { @apply border-dodger-500 bg-dodger-50 ring-4 ring-dodger-100; }
 .route-track > li.active .route-node > span { @apply bg-dodger-600 text-white; }
 .route-node > strong { @apply absolute top-2 right-2 rounded-full bg-dodger-600 px-2 py-0.5 text-[9px] font-black text-white; }
 .route-arrow { width:28px; @apply shrink-0 text-center text-xl font-black not-italic text-dodger-400; }
+.route-return-track { min-width:920px; @apply m-0 mt-2 flex list-none items-center rounded-xl border border-emerald-200 bg-white p-2; }
+.route-return-track > li { @apply flex min-w-0 flex-1 items-center; }
+.route-return-track span { @apply min-h-9 flex-1 rounded-lg border border-emerald-100 bg-emerald-50 px-2 py-2 text-center text-[9px] font-bold text-emerald-900; }
+.route-return-track i { width:28px; @apply shrink-0 text-center text-base font-black not-italic text-emerald-500; }
+.route-after-return { min-width:920px; @apply mt-3 grid grid-cols-[auto_1fr] items-center gap-3 rounded-xl border-2 border-dodger-300 bg-dodger-50 p-3; }
+.route-after-return > span { @apply rounded-full bg-dodger-600 px-3 py-1 text-[9px] font-black text-white; }
+.route-after-return > b { @apply text-xs leading-relaxed text-dodger-950; }
+.route-after-return.complete { @apply border-emerald-400 bg-emerald-50; }
+.route-after-return.complete > span { @apply bg-emerald-600; }
+.route-after-return.complete > b { @apply text-emerald-950; }
 .learning-route-map > footer { @apply flex items-center gap-2 border-t border-slate-100 bg-slate-50 px-5 py-3 text-[11px] text-slate-600; }
 .route-current-key { @apply h-3 w-3 rounded border-2 border-dodger-500 bg-dodger-50; }
 .learning-route-map.compact { max-width:none; @apply mx-5 mt-0 border-dodger-200 shadow-none; }
@@ -754,7 +781,7 @@ progress, progress::-webkit-progress-bar { @apply bg-slate-200; }
   .role-support-details { @apply mt-3; }.role-support-details summary small { @apply text-[11px]; }
   .learning-support-drawer > summary { @apply px-4; }
   .learning-coach { top:72px; grid-template-columns:34px minmax(0,1fr); gap:10px; margin-top:8px; padding:10px 12px; border-radius:13px; }.learning-coach-icon { @apply h-8 w-8 text-sm; }.learning-coach-main small { @apply text-[9px]; }.learning-coach-main b { @apply text-sm; }.learning-coach-main p { display:none; }.learning-coach > button { @apply col-span-2 min-h-9 w-full px-3 py-1.5; }
-  .learning-route-map { margin-left:10px; margin-right:10px; border-radius:14px; }.learning-route-map.compact { margin-left:10px; margin-right:10px; }.learning-route-map > header { @apply gap-3 p-4; }.learning-route-map > header h2 { @apply text-base; }.learning-route-map > header p { @apply text-xs; }.gateway-explanation { @apply p-3; }.route-lanes { @apply gap-3 p-2; }.route-lane-heading { @apply p-3; }.route-lane-heading h3 { @apply text-sm; }.route-scroll { @apply p-3; scroll-snap-type:x proximity; }.route-scroll-hint { width:calc(100vw - 72px); @apply mb-2 block rounded-lg border border-dodger-200 bg-white px-3 py-2 text-center text-[10px] font-bold leading-relaxed text-dodger-700; }.route-outbound,.route-return,.route-track { min-width:780px; }.route-track > li { scroll-snap-align:start; }.route-node { min-height:128px; }.learning-route-map > footer { @apply items-start px-4 text-[10px]; }
+  .learning-route-map { margin-left:10px; margin-right:10px; border-radius:14px; }.learning-route-map.compact { margin-left:10px; margin-right:10px; }.learning-route-map > header { @apply gap-3 p-4; }.learning-route-map > header h2 { @apply text-base; }.learning-route-map > header p { @apply text-xs; }.gateway-explanation { @apply p-3; }.route-overview { @apply grid-cols-1 gap-0 p-3; }.route-overview li { @apply border-r-0 border-b px-2 py-3 last:border-b-0; }.route-overview li > i { @apply -top-3 left-5 rotate-90; }.route-lanes { @apply gap-3 p-2; }.route-lane-heading { @apply p-3; }.route-lane-heading h3 { @apply text-sm; }.route-round-summary { @apply grid-cols-1 gap-2 p-3; }.route-round-summary > i { @apply rotate-90 justify-self-center; }.route-scroll { @apply p-3; scroll-snap-type:x proximity; }.route-scroll-hint { width:calc(100vw - 72px); @apply mb-2 block rounded-lg border border-dodger-200 bg-white px-3 py-2 text-center text-[10px] font-bold leading-relaxed text-dodger-700; }.route-outbound,.route-return,.route-track,.route-return-track,.route-after-return { min-width:780px; }.route-track > li { scroll-snap-align:start; }.route-node { min-height:140px; }.route-after-return { @apply grid-cols-[auto_1fr]; }.learning-route-map > footer { @apply items-start px-4 text-[10px]; }
   .inline-learning-lead { width:calc(100% - 20px); margin-left:10px; margin-right:10px; padding:12px; }.inline-learning-lead > span { @apply px-2.5 py-1 text-[9px]; }.inline-learning-lead b { @apply text-xs; }.inline-learning-lead p { @apply text-[11px]; }
   .mission-panel .inline-learning-lead { width:100%; margin-left:0; margin-right:0; }
   .reflection-item { grid-template-columns: 24px 1fr; }.reflection-item button { grid-column: 2; justify-self: end; }
